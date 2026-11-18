@@ -594,7 +594,7 @@ function renderAnsFx() {
   const val = inp.value.toUpperCase();
   if (val === ansFxLast) return;
   const prev = ansFxLast || ''; ansFxLast = val;
-  if (!val) { fx.innerHTML = `<span class="ph">${esc(inp.placeholder || 'Your answer')}</span><i class="cur"></i>`; fx.classList.remove('end'); return; }
+  if (!val) { fx.innerHTML = `<span class="ph">${esc(inp.placeholder || 'Your answer')}</span>`; fx.classList.remove('end'); return; }
   const keep = prev && val.startsWith(prev) ? prev.length : 0;
   fx.innerHTML = [...val].map((c, i) => `<span class="ch${i >= keep ? ' pop' : ''}">${c === ' ' ? '&nbsp;' : esc(c)}</span>`).join('') + '<i class="cur"></i>';
   fx.classList.toggle('end', fx.scrollWidth > fx.clientWidth + 2);
