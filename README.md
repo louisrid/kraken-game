@@ -16,8 +16,8 @@ Any static host works (GitHub Pages, Vercel, Cloudflare Pages).
 - Refresh = rejoin your seat. Players drop after 30s gone. If the host leaves, everyone is told.
 
 ## Modes
-- **Versus**: everyone answers the same prompt. Matching someone = JINX (0). Depth tiers: Shallows 10, Fool's gold 15, Open sea 30, Deep water 60, Abyss 85, Kraken 100. Last round doubles.
-- **Crew** (co-op): the kraken orders answers at specific depths; the crew calls slots and fills them before the timer. Wrong depth costs a plank (−6s).
+- **Versus**: everyone answers the same prompt, no timer (optional 30s/60s). Your answer's rarity decides how deep you dive: Shallows 100 m, Fool's gold 150 m, Open sea 300 m, Deep water 600 m, The abyss 850 m, Kraken 1,000 m. Same answer as someone else = sunk (+0 m). Deepest diver wins. Last round doubles. Host can hit Reveal now if someone's AFK.
+- **Crew** (co-op): the captain orders answers at specific depths; the crew calls slots and fills them. No timer. Three wrong depths and the kraken takes a plank.
 - **Practice**: solo, no network.
 
 ## Playing

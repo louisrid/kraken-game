@@ -356,7 +356,7 @@ html[data-theme="deep"] .kraken .k-ink path,html[data-theme="deep"] .kraken .k-i
   .lobby-grid,.rgrid{grid-template-columns:1fr}
   .pgrid{grid-template-columns:1fr;gap:14px;margin-top:14px}
   .pleft{grid-template-columns:auto auto;grid-template-areas:"stage num" "stage who" "stage hull" "avs avs";align-items:center;justify-content:center;column-gap:16px;order:2}
-  .pleft .stage{grid-area:stage;width:150px}
+  .pleft .gauge{grid-area:stage;width:150px;height:260px}
   .pleft .num{grid-area:num;font-size:2.6rem;min-width:84px}
   .pleft .who{grid-area:who;font-size:1.35rem}
   .pleft .hull{grid-area:hull}
@@ -376,6 +376,52 @@ html[data-theme="deep"] .kraken .k-ink path,html[data-theme="deep"] .kraken .k-i
   .avs{grid-template-columns:repeat(5, minmax(0,1fr))}
 }
 @media (prefers-reduced-motion: reduce){*{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}}
+
+/* depth gauge (play) */
+.gauge{position:relative;width:min(300px,100%);height:400px;border:3px solid var(--k);border-radius:18px;overflow:hidden;background:linear-gradient(to bottom,var(--d0) 0%,var(--d2) 16%,var(--d3) 40%,var(--d4) 66%,var(--d5) 88%,#2a0707 100%);box-shadow:4px 4px 0 var(--k)}
+.gauge::before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.16) 1px,transparent 1.4px);background-size:14px 14px;pointer-events:none}
+.gticks span{position:absolute;left:8px;transform:translateY(-50%);font:italic 900 .74rem/1 var(--cond);color:#fff;letter-spacing:.02em;background:rgba(10,10,10,.72);padding:3px 5px;border-radius:5px;white-space:nowrap}
+.gd{position:absolute;transform:translate(-50%,-50%);transition:top 1.1s cubic-bezier(.3,1.2,.4,1),left .4s;display:grid;justify-items:center;gap:3px;z-index:2}
+.gd .av{width:34px;height:34px;background:var(--card);animation:bob 2.2s ease-in-out infinite}
+.gd.me{z-index:3}
+.gd.me .av{width:46px;height:46px;box-shadow:0 0 0 3px var(--r)}
+.gd.dim{opacity:.45}
+.gd .ck{position:absolute;right:-7px;top:-7px;width:20px;height:20px;border-radius:50%;background:var(--r);border:2px solid #0a0a0a;display:grid;place-items:center}
+.gd .ck svg{width:12px;height:12px}
+.gd b{background:#0a0a0a;color:#fff;font:italic 900 .76rem/1 var(--cond);text-transform:uppercase;padding:3px 6px;border-radius:6px;white-space:nowrap}
+.geyes{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);display:flex;gap:16px;pointer-events:none}
+.geyes i{width:28px;height:14px;background:var(--r);clip-path:polygon(0 0,100% 40%,85% 100%,10% 90%);animation:glow 2.6s ease-in-out infinite}
+.geyes i:last-child{transform:scaleX(-1)}
+@keyframes glow{50%{opacity:.3}}
+.force{text-align:center}
+/* the dive */
+.moment.dive{display:block;overflow:hidden;background:var(--d5);background-image:none}
+.dsea{position:absolute;left:0;right:0;top:0;height:500vh;transform:translateY(calc(var(--f,0) * -400vh));will-change:transform;
+  background:linear-gradient(to bottom,var(--bg) 0,var(--bg) 50vh,var(--d0) 50vh,var(--d2) 95vh,var(--d3) 170vh,var(--d4) 270vh,var(--d5) 380vh,#140405 450vh,#140405 500vh)}
+.dwave{position:absolute;left:0;width:100%;top:calc(50vh - 22px);height:44px}
+.dwave path{fill:var(--d0);stroke:#0a0a0a;stroke-width:3;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.dmk{position:absolute;left:0;right:0;top:calc(50vh + var(--p) * 400vh);border-top:3px dashed var(--tc)}
+.dmk span{position:absolute;left:max(16px,env(safe-area-inset-left));top:-15px;background:var(--tc);color:var(--tt);border:2.5px solid #0a0a0a;border-radius:8px;padding:4px 9px;font:italic 900 .95rem/1 var(--cond);text-transform:uppercase}
+.dmk b{position:absolute;right:max(16px,env(safe-area-inset-right));top:-13px;background:rgba(10,10,10,.8);color:#fff;padding:4px 8px;border-radius:7px;font:italic 900 .95rem/1 var(--cond)}
+.dbed{position:absolute;left:50%;top:calc(450vh + 30px);width:min(440px,92vw);transform:translate(-50%,40%);transition:transform 1s cubic-bezier(.2,1.3,.4,1)}
+.is-kr.landed .dbed{transform:translate(-50%,-62%)}
+.dhud{position:absolute;top:max(22px,env(safe-area-inset-top));left:0;right:0;display:grid;justify-items:center;gap:8px;z-index:4;pointer-events:none}
+.dlab{background:var(--r);color:#0a0a0a;border:3px solid #0a0a0a;font:italic 900 1.25rem/1 var(--cond);text-transform:uppercase;padding:7px 14px;border-radius:9px;transform:rotate(-3deg);box-shadow:3px 3px 0 #0a0a0a}
+.dm{font:italic 900 clamp(3.6rem,13vw,6.4rem)/.9 var(--cond);color:#fff;-webkit-text-stroke:3px #0a0a0a;paint-order:stroke fill;text-shadow:5px 5px 0 #0a0a0a;font-variant-numeric:tabular-nums}
+.dm.x{text-decoration:line-through;text-decoration-color:var(--r);text-decoration-thickness:8px}
+.ddiver{position:absolute;left:50%;top:50vh;transform:translate(-50%,-50%);display:grid;justify-items:center;gap:10px;z-index:3}
+.ddiver .av{width:104px;height:104px;background:var(--card);border-width:4px;box-shadow:5px 5px 0 #0a0a0a;animation:bob 1.1s ease-in-out infinite}
+.ddiver.yank .av{background:var(--r);animation:shk .5s 2}
+.dans{background:#0a0a0a;color:#fff;font:italic 900 1.35rem/1 var(--cond);text-transform:uppercase;padding:7px 13px;border-radius:9px;border:3px solid #fff;max-width:86vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dres{position:absolute;left:0;right:0;top:calc(50vh + 118px);display:grid;justify-items:center;gap:8px;z-index:4;text-align:center;padding:0 16px;animation:boom .45s cubic-bezier(.2,1.6,.4,1)}
+.dres .stamp{position:static;transform:rotate(-6deg);font-size:2.1rem;padding:8px 14px}
+.dres p{color:#fff;font:italic 900 clamp(1.7rem,6vw,2.4rem)/1 var(--cond);text-transform:uppercase;margin:0;text-shadow:3px 3px 0 #0a0a0a}
+.dres small{color:#fff;font:700 1rem/1.3 var(--body);text-shadow:1px 1px 0 #0a0a0a}
+.dfx{position:absolute;inset:0;pointer-events:none;z-index:2}
+.dfx i{position:absolute;top:62vh;border:2.5px solid rgba(255,255,255,.75);border-radius:50%;opacity:0;animation:dbub linear infinite}
+@keyframes dbub{0%{transform:translateY(0);opacity:0}10%{opacity:1}100%{transform:translateY(-62vh);opacity:0}}
+.landed .dfx i{animation-play-state:paused;opacity:0}
+.dskip{position:absolute;right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));z-index:5;background:var(--card);color:var(--k);border:3px solid #0a0a0a;border-radius:10px;font:italic 900 1.05rem/1 var(--cond);text-transform:uppercase;padding:10px 16px;cursor:pointer;box-shadow:3px 3px 0 #0a0a0a}
 </style>
 </head>
 <body data-scr="home">
@@ -449,17 +495,12 @@ html[data-theme="deep"] .kraken .k-ink path,html[data-theme="deep"] .kraken .k-i
       <div class="pleft">
         <div class="avrow" id="avrow"></div>
         <div class="who" id="who"></div>
-        <div class="stage" id="stage"><div class="kwrap" id="kwrap"></div>
-          <svg class="waves" viewBox="0 0 300 100" preserveAspectRatio="none" aria-hidden="true">
-            <path class="w1" d="M-10 30 Q 15 10 40 30 T 90 30 T 140 30 T 190 30 T 240 30 T 290 30 T 340 30 V 110 H -10 Z"/>
-            <path class="w2" d="M-10 62 Q 20 44 50 62 T 110 62 T 170 62 T 230 62 T 290 62 T 350 62 V 110 H -10 Z"/>
-          </svg>
-        </div>
-        <div class="num" id="num"><span>25</span></div>
+        <div class="gauge" id="gauge" aria-label="How deep everyone is"></div>
+        <div class="num" id="num" hidden><span></span></div>
         <div class="hull" id="hull" hidden></div>
       </div>
       <div class="pright">
-        <div class="fuse"><i id="fill"></i></div>
+        <div class="fuse" id="fuseW" hidden><i id="fill"></i></div>
         <div class="card orders" id="orders" hidden></div>
         <form class="ansrow" id="ansF" autocomplete="off">
           <input class="field" id="ans" maxlength="80" placeholder="Type an answer" aria-label="Your answer" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="send">
@@ -469,6 +510,7 @@ html[data-theme="deep"] .kraken .k-ink path,html[data-theme="deep"] .kraken .k-i
         <div class="card sealed" id="sealed" hidden></div>
         <div class="card watching" id="watching" hidden><b class="cond" style="font-size:1.5rem">You’re watching this round</b><p class="hint" style="margin:6px 0 0">You’ll be in the next game.</p></div>
         <div class="status" id="status"></div>
+        <div class="force" id="force" hidden></div>
         <ul class="feed" id="feed" hidden></ul>
         <div class="ladder" id="ladder"></div>
       </div>
@@ -485,22 +527,22 @@ html[data-theme="deep"] .kraken .k-ink path,html[data-theme="deep"] .kraken .k-i
 <div class="modal" id="howM" hidden>
   <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="howT">
     <h2 id="howT">How to play</h2>
-    <p>Every prompt has loads of right answers, like “Name a type of pasta”. Type one. If it’s valid, it sinks to a depth. The rarer it is, the deeper it goes and the more it scores.</p>
+    <p>Every prompt has loads of right answers, like “Name a type of pasta”. Type one. If it’s valid, it sinks to a depth. The rarer it is, the deeper you dive. Deepest diver wins.</p>
     <div class="ladder" id="howLadder"></div>
     <p><b>Fool’s gold</b> is the trap: the “obscure” answer every clever person reaches for.</p>
     <h3>Versus</h3>
     <ul>
       <li>Everyone gets the same prompt and answers at the same time.</li>
-      <li>Wrong or misspelt? You’ll know straight away. Keep trying until the kraken surfaces.</li>
+      <li>Wrong or misspelt? You’ll know straight away. Keep trying. No timer: the round ends when everyone’s locked in.</li>
       <li>Answers stay sealed until the round ends.</li>
-      <li>Say the same thing as someone else and you’re both <b>sunk</b>: zero points.</li>
+      <li>Say the same thing as someone else and you’re both <b>sunk</b>: +0 m.</li>
       <li>The last round counts double.</li>
     </ul>
     <h3>Crew</h3>
     <ul>
       <li>The captain’s order lists the depths you need, like Shallows · Deep water · The abyss.</li>
       <li>Anyone can answer, any time. An answer fills an open slot at its depth.</li>
-      <li>Right answer, wrong depth? The kraken takes 6 seconds off the clock.</li>
+      <li>Right answer, wrong depth? That’s a strike. Three strikes and the order’s lost.</li>
       <li>Miss an order and the kraken takes a plank. Three planks. Find the kraken’s pick for a spare.</li>
     </ul>
     <div class="row"><button class="btn red" type="button" id="howX">Got it</button></div>
