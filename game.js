@@ -17,7 +17,7 @@ const BANK = BANK_SRC.map(parseQuestion);
 const QMAP = Object.fromEntries(BANK.map(q => [q.id, q]));
 const ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
 const MAXP = 8, GRACE = 30000, OFF_AFTER = 7000, PING_MS = 2500, HOST_SILENT = 9000, GIVEUP = 45000;
-const INTRO = 2200, STRIKES = 3, MAXSUBS = 24;
+const INTRO = 0, STRIKES = 3, MAXSUBS = 24;
 const SECS = [0, 30, 60], ROUNDS = [5, 7, 10];
 const M = (pts) => (pts * 10).toLocaleString('en-GB') + ' m';
 const secLbl = (n) => (n ? n + 's' : 'Off');

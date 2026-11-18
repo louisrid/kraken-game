@@ -9,7 +9,7 @@
 <link rel="icon" id="favicon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;600;700;800&family=Barlow+Condensed:ital,wght@1,700;1,800;1,900&family=Anton&family=Bangers&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;600;700;800&family=Barlow+Condensed:ital,wght@1,700;1,800;1,900&family=Anton&display=swap" rel="stylesheet">
 <style>
 :root{
   --r:#FF2B2B; --on-r:#0a0a0a;
@@ -1226,6 +1226,58 @@ body .scr .av,body .scr .av *,body .mprail .av,body .mprail .av *{text-shadow:no
   .dv-in .field{font-size:2.1rem !important}.dv-in .field::placeholder{font-size:1.9rem !important}
   .dv-q h2{font-size:clamp(2.2rem,9vw,2.8rem) !important}
 }
+
+/* ═════════════ FINAL TYPE: bold italic + thick black outline, nothing grey ═════════════ */
+:root{--disp:'Barlow Condensed','Arial Narrow',sans-serif}
+body .scr,body .scr *,body .dlg h2,body .dlg h3,body .dlg .btn,body .dlg .label,body .dlg .field,body .dlg .ladder *,body .mprail,body .mprail *,body .toast,body .nav,body .scr input::placeholder{font-family:var(--disp) !important;font-weight:900 !important;font-style:italic !important;letter-spacing:0 !important}
+/* outline drawn behind the letters: thick and clean */
+body .scr *,body .mprail *,body .toast,body .dlg h2,body .dlg h3,body .dlg .btn,body .dlg .label,body .dlg .field,body .dlg .ladder *{-webkit-text-stroke:5px #000;paint-order:stroke fill;text-shadow:2px 2px 0 #000 !important}
+body .scr .pod b,body .scr .dv-q h2,body .scr .lt-a,body .scr .lt-p,body .scr .lt-k b,body .scr .room .rt b,body .scr .room .ra,body .scr .lb-start,body .scr .lob-ready,body .scr .dv-in .btn,body .scr .btn.desc,body .scr .fn-b,body .scr .lob-modes button,body .scr .dv-mp,body .scr .fn-sub,body .scr .fn-log b,body .scr .fn-board b,body .scr .fn-board .n,body .scr .dvr .tag,body .scr .lob-state,body .scr .dv-mk.z b,body .scr .lb-eye,body .mprail .rl b,body .dlg h2,body .dlg .btn,body .toast,body .scr .dv-in .field,body .scr .dv-in .field::placeholder{-webkit-text-stroke:7px #000;text-shadow:3px 3px 0 #000 !important}
+body .scr .hm-logo,body .scr .lob-name,body .scr .lob-cd,body .scr .lt-t,body .scr .fn-big{-webkit-text-stroke:12px #000;text-shadow:6px 6px 0 #000 !important}
+/* black words on white stay clean; avatars and dialog sentences untouched */
+body .scr .lob-ready.on,body .scr .lob-modes button[aria-pressed="true"],body .scr .lob-state,body .scr .room.busy .ra,body .scr .dvr .tag.rdy,body .dlg .ladder *,body .scr .dv-crew .slot:not(.empty) *{-webkit-text-stroke:0 !important;text-shadow:none !important}
+body .dlg p,body .dlg li{-webkit-text-stroke:0 !important;text-shadow:none !important}
+body .scr .av,body .scr .av *,body .mprail .av,body .mprail .av *{-webkit-text-stroke:0 !important;text-shadow:none !important}
+/* no tilt, no grey */
+.hm-logo,.lob-name,.fn-big,.lt-t{transform:none !important}
+.lob-cd{transform:translate(-50%,-50%) !important}
+.dv-in .field::placeholder,.dlg .field::placeholder{color:#fff !important;opacity:1 !important}
+.scr *,.mprail *{opacity:1}
+.dv-mk,.dv-mk.z b,.dv-ruler i b,.dv-ruler i.big b,.room .rt small,.lt-k span,.lboard .n small,.fn-board .n small,.pod .label,.lb-eye,.mechip i{color:#fff !important;opacity:1 !important}
+.dv-mk{opacity:.9 !important}
+/* a touch smaller */
+.hm-logo{font-size:clamp(6.4rem,27vw,11.5rem) !important;line-height:.88 !important}
+.lob-name{font-size:clamp(4.2rem,12.5vw,7.2rem) !important}
+.lt-t{font-size:clamp(3.4rem,10vw,5.6rem) !important;line-height:.95 !important}
+.fn-big{font-size:clamp(4.6rem,14.5vw,7.2rem) !important}
+.dv-q h2{font-size:clamp(2.2rem,5vw,3.3rem) !important;line-height:1 !important}
+.pod b{font-size:2.2rem !important}
+.lb-start{font-size:2.6rem !important}.lob-ready{font-size:2.9rem !important}
+.dv-in .btn{font-size:2.5rem !important}.btn.desc{font-size:2.2rem !important}
+.room .rt b{font-size:2.2rem !important}.room .ra{font-size:1.7rem !important}
+.fn-b{font-size:1.7rem !important}.dlg .btn{font-size:1.8rem !important}
+.dv-in .field{font-size:2.1rem !important}.dv-in .field::placeholder{font-size:2rem !important}
+.lt-a,.lt-p{font-size:2rem !important}
+.lob-cd{font-size:clamp(9rem,28vw,15rem) !important}
+@media (max-width:700px){
+  .pod b{font-size:1.85rem !important}
+  .lb-start{font-size:2.3rem !important}.lob-ready{font-size:2.5rem !important}.dv-in .btn{font-size:2.1rem !important}
+  .btn.desc{font-size:2rem !important}.room .rt b{font-size:2rem !important}.room .ra{font-size:1.5rem !important}
+  .dv-in .field{font-size:1.85rem !important}.dv-in .field::placeholder{font-size:1.75rem !important}
+  .dv-q h2{font-size:clamp(2rem,8vw,2.5rem) !important}
+  .hm-logo{font-size:clamp(5.6rem,27vw,8rem) !important}
+}
+
+body .scr .tp,body .scr .tp *,body .dlg .tp{-webkit-text-stroke:0 !important;text-shadow:none !important;color:#000 !important}
+
+/* way thicker black edges */
+body .scr *,body .mprail *,body .toast,body .dlg h2,body .dlg h3,body .dlg .btn,body .dlg .label,body .dlg .field{-webkit-text-stroke:9px #000;text-shadow:3px 3px 0 #000 !important}
+body .scr .pod b,body .scr .dv-q h2,body .scr .lt-a,body .scr .lt-p,body .scr .lt-k b,body .scr .room .rt b,body .scr .room .ra,body .scr .lb-start,body .scr .lob-ready,body .scr .dv-in .btn,body .scr .btn.desc,body .scr .fn-b,body .scr .lob-modes button,body .scr .dv-mp,body .scr .fn-sub,body .scr .fn-log b,body .scr .fn-board b,body .scr .fn-board .n,body .scr .dvr .tag,body .scr .dv-mk.z b,body .scr .lb-eye,body .mprail .rl b,body .dlg h2,body .dlg .btn,body .toast,body .scr .dv-in .field,body .scr .dv-in .field::placeholder{-webkit-text-stroke:13px #000;text-shadow:5px 5px 0 #000 !important}
+body .scr .hm-logo,body .scr .lob-name,body .scr .lob-cd,body .scr .lt-t,body .scr .fn-big{-webkit-text-stroke:22px #000;text-shadow:9px 9px 0 #000 !important}
+body .scr .lob-ready.on,body .scr .lob-modes button[aria-pressed="true"],body .scr .lob-state,body .scr .room.busy .ra,body .scr .dvr .tag.rdy,body .scr .tp,body .scr .tp *,body .dlg .ladder *,body .scr .dv-crew .slot:not(.empty) *,body .dlg p,body .dlg li,body .scr .av,body .scr .av *,body .mprail .av,body .mprail .av *{-webkit-text-stroke:0 !important;text-shadow:none !important}
+/* room for the fatter letters */
+.lb-start,.lob-ready,.dv-in .btn,.btn.desc,.room .ra,.fn-b,.dlg .btn,.lob-modes button,.dv-mp{padding-left:max(18px,1em) !important;padding-right:max(18px,1em) !important}
+.hm-logo,.lob-name,.fn-big,.lt-t{padding:0 .12em}
 </style>
 </head>
 <body data-scr="boot">
