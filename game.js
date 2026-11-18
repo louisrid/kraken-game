@@ -83,6 +83,11 @@ const SFX = (() => {
     roar, on: () => on, set: (v) => { on = v; LS.set('snd', v); },
   };
 })();
+/* no sound in this game: every effect is a no-op */
+for (const k of Object.keys(SFX)) SFX[k] = () => {};
+SFX.on = () => false;
+(() => {
+})();
 const vib = (p) => { try { if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return; navigator.vibrate && navigator.vibrate(p); } catch {} };
 let wake = null;
 async function wakeLock(onoff) {
@@ -434,11 +439,16 @@ function onPhase(v, prev) {
   if (v.ph === 'play') {
     C.myLock = null; C.mySubs = []; C.fb = null; C.lastTickSec = -1;
     $('ans').value = '';
-    SFX.start(); vib(40); wakeLock(true);
+    vib(40); wakeLock(true);
+    if (v.r === 0 || !C.myTiers) C.myTiers = {};
+    DV.sink = null; $('land').hidden = true; $('playScr').classList.remove('landed');
     setTimeout(() => { const i = $('ans'); if (i && !i.disabled && !matchMedia('(pointer: coarse)').matches) i.focus(); }, Math.max(0, C.introUntil - pnow()) + 40);
   }
-  if (v.ph === 'reveal') { C.revealAt = pnow(); C.revealKey = ''; showMoment(v); }
-  if (v.ph === 'final') { C.finalSig = ''; SFX.win(); bubbles(26); }
+  if (v.ph === 'reveal') { C.revealAt = pnow(); startSink(v); }
+  if (v.ph === 'final') {
+    C.finalSig = ''; bubbles(26);
+    if (v.solo) { const me = meIn(v); if (me && me.pts > LS.get('best', 0)) LS.set('best', me.pts); }
+  }
   if (v.ph === 'lobby') { wakeLock(false); C.finalSig = ''; }
 }
 function onDirect(m) {
@@ -616,6 +626,221 @@ function renderGauge(v) {
     return `<span class="gd ${p.id === ME.id ? 'me' : ''} ${p.off || p.gone ? 'dim' : ''}" style="top:calc(${(8 + f * 84).toFixed(2)}% + ${(i % 2) * 12}px);left:${left.toFixed(1)}%" title="${esc(p.nm)} · ${M(p.pts)}">${avatar(p.av)}${p.lk ? `<i class="ck">${ART.ui.check}</i>` : ''}${p.id === ME.id ? `<b>You · ${M(p.pts)}</b>` : ''}</span>`;
   }).join('');
 }
+
+/* ═════════════════ THE DIVE: one continuous descent ═════════════════ */
+const DV = { S: 1.6, SKY: 500, built: false, anchor: 0.6, lastT: 0, sink: null, landShown: '', tlKey: '' };
+const DV_MAX = 8200, DV_OFF = 64;
+const DV_MARKS = [
+  [30, 'r', 'most recreational divers turn back here'],
+  [150, 'l', 'reef corals give up around here'],
+  [200, 'z', 'The twilight zone', 'sunlight starts to run out'],
+  [332, 'r', 'deepest scuba dive ever · 332 m'],
+  [500, 'l', 'pressure: 50× the surface'],
+  [650, 'r', 'swordfish hunt down to here'],
+  [1000, 'z', 'The midnight zone', 'no sunlight reaches this far'],
+  [1300, 'l', 'sperm whales chase giant squid'],
+  [1800, 'r', 'anglerfish dangle glowing lures'],
+  [2300, 'l', 'the water is barely above freezing'],
+  [2992, 'r', 'deepest whale dive ever · 2,992 m'],
+  [3800, 'l', 'the Titanic lies here · 3,800 m'],
+  [4000, 'z', 'The abyss', '2°C and pitch black'],
+  [4800, 'r', 'the abyssal plain runs flat for miles'],
+  [6000, 'z', 'The hadal zone', 'named after Hades'],
+  [6600, 'l', 'most submarines would crumple by now'],
+  [7300, 'r', 'snailfish still live down here'],
+  [7900, 'z', 'The kraken’s trench', 'a perfect dive ends here'],
+];
+const yOf = (m) => DV.SKY + m * DV.S;
+const SHIP = `<svg viewBox="0 0 200 140" aria-hidden="true"><path d="M97 8 V98" stroke="#0a0a0a" stroke-width="6"/><path d="M97 8 L124 15 L97 22 Z" fill="#ff2b2b" stroke="#0a0a0a" stroke-width="4" stroke-linejoin="round"/><path d="M101 26 Q 152 56 101 90 Z" fill="#fff" stroke="#0a0a0a" stroke-width="5" stroke-linejoin="round"/><path d="M93 30 Q 50 58 93 88 Z" fill="#f1ebdc" stroke="#0a0a0a" stroke-width="5" stroke-linejoin="round"/><circle cx="116" cy="56" r="8" fill="#0a0a0a"/><path d="M110 66 l12 -2" stroke="#0a0a0a" stroke-width="4"/><path d="M16 98 H184 L162 130 H40 Z" fill="#3b2a21" stroke="#0a0a0a" stroke-width="6" stroke-linejoin="round"/><path d="M26 108 H176" stroke="#ff2b2b" stroke-width="6"/></svg>`;
+function lifeHTML() {
+  const R = rng('kraken-life'); let h = '';
+  const school = (n) => { let s = ''; for (let i = 0; i < n; i++) { const x = (R() * 64) | 0, y = (R() * 34) | 0, sc = (0.7 + R() * 0.6).toFixed(2); s += `<path transform="translate(${x} ${y}) scale(${sc})" d="M0 6 Q8 0 16 6 Q8 12 0 6 Z M15 6 L22 1 L22 11 Z"/>`; } return `<svg viewBox="0 0 92 50">${s}</svg>`; };
+  for (let i = 0; i < 10; i++) { const m = 30 + R() * 950; h += `<div class="dv-fish ${R() < 0.5 ? 'l' : 'r'}" style="top:${yOf(m).toFixed(0)}px;animation-duration:${(26 + R() * 34).toFixed(0)}s;animation-delay:-${(R() * 50).toFixed(0)}s">${school(4 + ((R() * 6) | 0))}</div>`; }
+  for (let i = 0; i < 7; i++) { const m = 350 + R() * 1800; h += `<div class="dv-jelly" style="top:${yOf(m).toFixed(0)}px;left:${(10 + R() * 78).toFixed(0)}%;animation-delay:-${(R() * 6).toFixed(1)}s"><svg viewBox="0 0 40 62"><path class="b" d="M4 22 Q20 -4 36 22 Q20 17 4 22 Z"/><path class="t" d="M10 22 q-4 12 2 22 M17 22 q4 15 -2 32 M24 22 q-4 13 2 26 M31 22 q4 10 -1 18"/></svg></div>`; }
+  for (let i = 0; i < 16; i++) { const m = 1300 + R() * 5900; h += `<i class="dv-lure" style="top:${yOf(m).toFixed(0)}px;left:${(6 + R() * 88).toFixed(0)}%;animation-delay:-${(R() * 4).toFixed(1)}s"></i>`; }
+  h += `<div class="dv-whale" style="top:${yOf(1250).toFixed(0)}px"><svg viewBox="0 0 220 80"><path d="M0 40 Q40 4 120 10 Q190 14 200 40 L220 22 L214 44 L220 66 L200 50 Q170 76 100 72 Q30 70 0 40 Z"/></svg></div>`;
+  return h;
+}
+function buildWorld() {
+  const vh = innerHeight;
+  DV.S = Math.min(2.2, Math.max(1.1, vh / 520)); DV.SKY = Math.round(vh * 0.64);
+  const w = $('world');
+  w.style.setProperty('--S', DV.S + 'px'); w.style.setProperty('--sky', DV.SKY + 'px');
+  w.style.height = Math.round(yOf(DV_MAX) + 500) + 'px';
+  let ruler = '';
+  for (let m = 100; m <= 8000; m += 100) ruler += `<i style="top:${(m * DV.S).toFixed(1)}px"${m % 500 ? '' : ' class="big"'}><b>${m.toLocaleString('en-GB')} m</b></i>`;
+  const marks = DV_MARKS.map(([m, side, a, b]) => side === 'z'
+    ? `<div class="dv-mk z" style="top:${yOf(m).toFixed(0)}px"><b>${esc(a)}</b><span>${esc(b)}</span></div>`
+    : `<div class="dv-mk ${side}" style="top:${yOf(m).toFixed(0)}px">${esc(a)}</div>`).join('');
+  w.innerHTML = `<div class="dv-sun"></div><i class="dv-cloud c1"></i><i class="dv-cloud c2"></i><i class="dv-cloud c3"></i>
+    <div class="dv-ship">${SHIP}</div><div class="dv-surf"></div><div class="dv-rays"></div>
+    <div class="dv-ruler">${ruler}</div>${marks}${lifeHTML()}
+    <div class="dv-kraken" style="top:${yOf(7600).toFixed(0)}px">${ART.kraken()}</div>
+    <div id="tlines"></div><div id="divers"></div>`;
+  try { ART.suckers(w.querySelector('.dv-kraken svg')); } catch {}
+  DV.built = true; DV.tlKey = '';
+  if (C.view && (C.view.ph === 'play' || C.view.ph === 'reveal')) { renderDivers(C.view); renderTierLines(C.view); }
+}
+function startSink(v) {
+  const res = v.res || [];
+  DV.sink = { t0: pnow() + 350, from: {}, to: {}, dur: {} };
+  for (const p of v.pl) {
+    const r = res.find(x => x[0] === p.id); const gain = r ? r[2] : 0;
+    DV.sink.to[p.id] = p.pts * 10; DV.sink.from[p.id] = (p.pts - gain) * 10;
+    DV.sink.dur[p.id] = gain > 0 ? 1600 + 1900 * Math.min(1, gain / 100) : 700;
+  }
+  DV.landShown = '';
+  const mine = res.find(r => r[0] === ME.id); const q = QMAP[v.q];
+  C.myTiers = C.myTiers || {};
+  if (mine) C.myTiers[v.r] = mine[1] < 0 ? 'none' : mine[3] ? 'sunk' : q.answers[mine[1]].tier;
+}
+function dispDepth(p) {
+  const s = DV.sink, v = C.view;
+  if (!s || !v || v.ph !== 'reveal' || !(p.id in s.to)) return p.pts * 10;
+  const k = Math.max(0, Math.min(1, (pnow() - s.t0) / s.dur[p.id]));
+  const e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+  return s.from[p.id] + (s.to[p.id] - s.from[p.id]) * e;
+}
+function myBase(v) {
+  const me = meIn(v); if (!me || me.spec) return 0;
+  return v.ph === 'reveal' && DV.sink && ME.id in DV.sink.from ? DV.sink.from[ME.id] : me.pts * 10;
+}
+function renderTierLines(v) {
+  if (v.set.mode === 'crew') { $('tlines').innerHTML = ''; DV.tlKey = ''; return; }
+  const base = myBase(v); const key = base + ':' + DV.S + ':' + v.r;
+  if (DV.tlKey === key) return; DV.tlKey = key;
+  $('tlines').innerHTML = TORDER.map(t => { const m = base + TIERS[t].pts * 10; return `<div class="dv-tl ${TCLS[t]}" data-m="${m}" style="top:${(yOf(m) + DV_OFF).toFixed(1)}px"><span>${esc(TIERS[t].name)} · +${(TIERS[t].pts * 10).toLocaleString('en-GB')} m</span></div>`; }).join('');
+}
+function renderDivers(v) {
+  const q = QMAP[v.q]; const rv = v.ph === 'reveal';
+  const act = v.pl.filter(p => !p.spec && !p.gone); const n = act.length;
+  const box = $('divers');
+  const key = act.map(p => p.id + p.av + p.nm).join('|');
+  if (box._key !== key) {
+    box._key = key;
+    box.innerHTML = act.map(p => `<div class="dvr ${p.id === ME.id ? 'me' : ''}" data-pid="${esc(p.id)}"><span class="bb"><i></i><i></i><i></i><i></i><i></i><i></i></span>${avatar(p.av)}<span class="nm">${esc(p.id === ME.id && n > 1 ? 'you' : p.nm)}</span><span class="tag" hidden></span></div>`).join('');
+  }
+  act.forEach((p, i) => {
+    const el = box.querySelector(`[data-pid="${CSS.escape(p.id)}"]`); if (!el) return;
+    const x = n === 1 ? 50 : 20 + (i / (n - 1)) * 60;
+    el.style.left = x + '%'; el.classList.toggle('lt', x > 62); el.classList.toggle('dim', !!p.off);
+    let txt = '', cls = '';
+    if (rv && v.res) {
+      const r = v.res.find(z => z[0] === p.id);
+      if (r) { if (r[1] < 0) { txt = 'no answer'; cls = 'none'; } else { txt = q.answers[r[1]].name; cls = r[3] ? 'sunk' : TCLS[q.answers[r[1]].tier]; } }
+    } else if (v.ph === 'play' && v.set.mode === 'vs') {
+      if (p.id === ME.id && C.myLock && q.answers[C.myLock.aid]) { txt = q.answers[C.myLock.aid].name; cls = 'mine'; }
+      else if (p.lk) { txt = 'locked in'; cls = 'lk'; }
+      else if (p.ty) { txt = '…'; cls = 'ty'; }
+    }
+    const tag = el.querySelector('.tag');
+    if (tag._t !== txt + cls) { tag._t = txt + cls; tag.hidden = !txt; tag.textContent = txt; tag.className = 'tag ' + cls; }
+  });
+}
+function landHTML(v) {
+  const q = QMAP[v.q]; const res = v.res || []; const mine = res.find(r => r[0] === ME.id); const me = meIn(v);
+  let t1 = '', cls = '', a = '', gain = '', quip = '';
+  if (!mine) { t1 = 'Watching'; quip = 'You’ll dive in the next game.'; }
+  else if (mine[1] < 0) { t1 = 'No dive'; cls = 'none'; quip = 'No answer, so you stayed where you were.'; }
+  else if (mine[3]) {
+    const others = res.filter(r => r[0] !== ME.id && r[1] === mine[1]).map(r => pinfo(r[0], v).nm);
+    t1 = 'Sunk'; cls = 'sunk'; a = q.answers[mine[1]].name; gain = '+0 m'; quip = `${others.join(' & ') || 'Someone'} said it too. Same answer, nobody moves.`;
+  } else {
+    const tr = q.answers[mine[1]].tier; t1 = TIERS[tr].name; cls = TCLS[tr]; a = q.answers[mine[1]].name;
+    gain = `+${M(mine[2])}${mine[2] > TIERS[tr].pts ? ' · doubled' : ''}`; quip = TIERS[tr].line;
+  }
+  const board = res.length > 1 ? `<ol class="lboard">${res.slice().sort((x, y) => (pinfo(y[0], v).pts - pinfo(x[0], v).pts)).map(r => { const pl = pinfo(r[0], v); return `<li class="${r[0] === ME.id ? 'me' : ''}">${avatar(pl.av)}<span class="n">${esc(pl.nm)}<small>${r[1] < 0 ? 'no answer' : esc(q.answers[r[1]].name)}${r[3] ? ' · sunk' : ''}</small></span><b>+${M(r[2])}</b><em>${M(pl.pts)}</em></li>`; }).join('')}</ol>` : '';
+  const X = q.answers.find(z => z.tier === 'x');
+  const said = new Set(res.filter(r => r[1] >= 0).map(r => r[1]));
+  const deep = shuffled(q.answers.filter(z => z.tier === 'f' && !said.has(z.id)), v.q + v.r).slice(0, 4).map(z => z.name);
+  const last = v.r >= v.n - 1; const host = C.role === 'host' || C.role === 'solo';
+  const btn = host ? `<button class="btn desc" type="button" data-act="next">${last ? 'Surface · see results' : 'Descend ▼'}</button>` : `<p class="lwait">Waiting for the host to descend…</p>`;
+  return `<div class="lt-t ${cls}">${esc(t1)}</div>${a ? `<div class="lt-a">“${esc(a)}”</div>` : ''}${gain ? `<div class="lt-p">${esc(gain)}${me && !me.spec ? ` · now ${M(me.pts)} down` : ''}</div>` : ''}<p class="lt-q">${esc(quip)}</p>${board}
+    <div class="lt-k"><span>The kraken’s pick</span><b>${esc(X.name)}</b><small>${esc(q.fact)}</small>${deep.length ? `<em>Other abyss answers: ${deep.map(esc).join(' · ')}</em>` : ''}</div>${btn}`;
+}
+function crewLandHTML(v) {
+  const q = QMAP[v.q]; const cr = v.cr; const clear = cr.out === 'clear';
+  const X = q.answers.find(z => z.tier === 'x');
+  const host = C.role === 'host'; const last = v.r >= v.n - 1 || cr.lives <= 0;
+  const btn = host ? `<button class="btn desc" type="button" data-act="next">${last ? 'Surface · see results' : 'Next order ▼'}</button>` : `<p class="lwait">Waiting for the host…</p>`;
+  return `<div class="lt-t ${clear ? 't2' : 'sunk'}">${clear ? 'Order filled' : 'Lost a plank'}</div><div class="lt-p">${clear ? '★'.repeat(cr.rs) + '☆'.repeat(3 - cr.rs) : `${cr.lives} ${cr.lives === 1 ? 'plank' : 'planks'} left`}</div><p class="lt-q">${clear ? (cr.miss ? `${cr.miss} wrong ${cr.miss > 1 ? 'depths' : 'depth'} on the way.` : 'Not one wrong depth.') : cr.miss >= STRIKES ? 'Three wrong depths.' : 'The crew gave up the order.'}</p>
+    <div class="lt-k"><span>${cr.gem ? 'You found the kraken’s pick' : 'The kraken’s pick'}</span><b>${esc(X.name)}</b><small>${esc(q.fact)}</small></div>${btn}`;
+}
+function showLand(v) {
+  $('land').innerHTML = v.set.mode === 'crew' ? crewLandHTML(v) : landHTML(v);
+  $('land').hidden = false; $('playScr').classList.add('landed');
+  const me = meIn(v); const mine = v.res && v.res.find(r => r[0] === ME.id);
+  if (mine && mine[3]) vib([60, 40, 120]); else if (me) vib(30);
+  const b = $('land').querySelector('.desc'); if (b && !matchMedia('(pointer: coarse)').matches) setTimeout(() => b.focus({ preventScroll: true }), 50);
+}
+function renderDive(v) {
+  const q = QMAP[v.q]; if (!q) return;
+  if (!DV.built) buildWorld();
+  C.myTiers = C.myTiers || {};
+  const sec = $('playScr'); const rv = v.ph === 'reveal'; const crew = v.set.mode === 'crew';
+  sec.classList.toggle('rv', rv); if (!rv) sec.classList.remove('landed');
+  const me = meIn(v); const act = v.pl.filter(p => !p.spec);
+  $('hDots').innerHTML = Array.from({ length: v.n }, (_, i) => { const tr = C.myTiers[i]; return `<i class="${i === v.r && !rv ? 'cur' : ''} ${tr ? 'done ' + (TCLS[tr] || tr) : ''}"></i>`; }).join('');
+  $('hCount').textContent = `${crew ? 'Order' : 'Prompt'} ${v.r + 1} of ${v.n}`;
+  if (crew) { $('hRL').textContent = 'Planks'; $('hR').textContent = String(v.cr.lives); }
+  else if (act.length > 1) { const rank = act.slice().sort((a, b) => b.pts - a.pts).findIndex(p => p.id === ME.id) + 1; $('hRL').textContent = 'Rank'; $('hR').textContent = rank > 0 ? `${rank} of ${act.length}` : 'watching'; }
+  else { $('hRL').textContent = 'Best dive'; $('hR').textContent = M(LS.get('best', 0)); }
+  $('tbX').innerHTML = ART.ui.close;
+  $('qN').textContent = `${crew ? 'Order' : 'Prompt'} ${v.r + 1} of ${v.n} · ${(CATINFO[q.cat] || ['Mix'])[0]}${!crew && act.length > 1 && v.r === v.n - 1 ? ' · double depth' : ''}`;
+  $('qT').textContent = q.prompt;
+  $('qS').textContent = crew ? '▼ fill the captain’s order ▼' : '▼ rarer answers sink deeper ▼';
+  const watching = !me || me.spec;
+  $('watching').hidden = !watching;
+  $('ansF').hidden = watching || (!crew && !!C.myLock);
+  $('ansB').textContent = crew ? 'Send' : 'Dive';
+  const locked = act.filter(p => p.lk).length;
+  const waitFor = act.filter(p => !p.lk && p.id !== ME.id && !p.gone).map(p => p.nm);
+  const sealed = $('sealed');
+  sealed.hidden = !(C.myLock && !crew && !watching) || rv;
+  if (!sealed.hidden) sealed.innerHTML = `<span>Locked in</span><b>${esc((q.answers[C.myLock.aid] || {}).name || '')}</b><span>${waitFor.length ? 'waiting for ' + esc(waitFor.slice(0, 3).join(', ')) + (waitFor.length > 3 ? '…' : '') : 'diving…'}</span>`;
+  $('status').textContent = crew ? `${v.cr.sl.filter(Boolean).length} of ${v.cr.ord.length} slots filled · strikes ${v.cr.miss}/${STRIKES}` : act.length > 1 && !C.myLock ? `${locked} of ${act.length} locked in` : '';
+  const fz = $('force'); const isHost = C.role === 'host';
+  const showF = !rv && isHost && act.length > 1 && (crew || (locked > 0 && locked < act.length));
+  fz.hidden = !showF; if (showF) fz.innerHTML = `<button class="lnk" type="button" data-act="force">${crew ? 'Give up this order' : 'Reveal now'}</button>`;
+  $('crewBox').hidden = !crew || rv;
+  if (crew && !rv) { renderOrders(v, q); renderFeed(v, q); $('hull').innerHTML = `<span class="lbl">Planks</span>` + [...Array(Math.max(3, v.cr.lives)).keys()].map(i => `<i class="${i < v.cr.lives ? '' : 'off'}"></i>`).join(''); }
+  $('dvMp').hidden = C.role !== 'solo';
+  renderDivers(v); renderTierLines(v);
+  if (!rv) $('land').hidden = true;
+  else if (DV.landShown === C.timeKey && !$('land').hidden) {
+    const b = $('land').querySelector('.desc, .lwait'); const host = C.role === 'host' || C.role === 'solo';
+    if (b && (b.classList.contains('desc') !== host)) showLand(v);
+  }
+  renderFb(); live();
+}
+function dvFrame(v, t) {
+  if (!DV.built) buildWorld();
+  const me = meIn(v); const act = v.pl.filter(p => !p.spec && !p.gone);
+  const mine = me && !me.spec;
+  const follow = mine ? me : act.slice().sort((a, b) => b.pts - a.pts)[0];
+  const rv = v.ph === 'reveal';
+  let camD = 0;
+  const box = $('divers');
+  for (const p of act) {
+    const d = dispDepth(p);
+    const el = box.querySelector(`[data-pid="${CSS.escape(p.id)}"]`);
+    if (el) { el.style.top = (yOf(d) + DV_OFF).toFixed(1) + 'px'; el.classList.toggle('sinking', rv && !!DV.sink && pnow() >= DV.sink.t0 && d < DV.sink.to[p.id] - 0.5); }
+    if (follow && p.id === follow.id) camD = d;
+  }
+  const dt = DV.lastT ? Math.min(100, t - DV.lastT) : 16; DV.lastT = t;
+  const want = rv ? 0.22 : v.set.mode === 'crew' ? 0.76 : 0.6;
+  DV.anchor += (want - DV.anchor) * Math.min(1, dt / 1000 * 3.2);
+  const camY = innerHeight * DV.anchor - (yOf(camD) + DV_OFF);
+  $('world').style.transform = `translate3d(0,${camY.toFixed(1)}px,0)`;
+  const dtxt = Math.round(camD).toLocaleString('en-GB') + ' m';
+  if ($('hDepth')._t !== dtxt) { $('hDepth')._t = dtxt; $('hDepth').textContent = dtxt; }
+  const myD = mine ? camD : -1;
+  document.querySelectorAll('#tlines .dv-tl').forEach(l => { const hit = myD >= +l.dataset.m - 0.5; if (l._hit !== hit) { l._hit = hit; l.classList.toggle('hit', hit); } });
+  if (rv && DV.landShown !== C.timeKey) {
+    const done = !DV.sink || !mine || pnow() - DV.sink.t0 >= (DV.sink.dur[ME.id] || 0) + 150;
+    if (done) { DV.landShown = C.timeKey; showLand(v); }
+  }
+}
 function bubbles(n) {
   const box = $('bubbles');
   for (let i = 0; i < n; i++) {
@@ -649,11 +874,10 @@ function render() {
   renderRail();
   const v = C.view;
   if (!C.role || !v) { if (!C.role) { scr('home'); renderHome(); } return; }
-  const map = { lobby: 'lobby', play: 'play', reveal: 'reveal', final: 'final' };
+  const map = { lobby: 'lobby', play: 'play', reveal: 'play', final: 'final' };
   scr(map[v.ph] || 'home');
   if (v.ph === 'lobby') renderLobby(v);
-  if (v.ph === 'play') renderPlay(v);
-  if (v.ph === 'reveal') renderReveal(v);
+  if (v.ph === 'play' || v.ph === 'reveal') renderDive(v);
   if (v.ph === 'final') renderFinal(v);
 }
 
@@ -671,7 +895,6 @@ function renderHome() {
   const rj = SS.get('rj', null) || LS.get('rj', null);
   const rb = $('rejoin');
   if (rj && rj.code && now() - rj.at < 3 * 3600e3) { rb.hidden = false; rb.textContent = 'Rejoin ' + rj.code; } else rb.hidden = true;
-  $('sndt').textContent = 'Sound: ' + (SFX.on() ? 'on' : 'off');
 }
 function ladderHTML() { return TORDER.map(t => `<div class="${TCLS[t]}"><b>${esc(TIERS[t].name)}</b><span>${TIERS[t].pts * 10}m</span></div>`).join(''); }
 
@@ -716,40 +939,6 @@ function renderLobby(v) {
 }
 
 /* play */
-function renderPlay(v) {
-  const q = QMAP[v.q]; if (!q) return;
-  const me = meIn(v); const crew = v.set.mode === 'crew';
-  const [pre, title] = splitPrompt(q.prompt);
-  $('rnd').textContent = v.solo ? `Prompt ${v.r + 1}/${v.n}` : `${crew ? 'Order' : 'Round'} ${v.r + 1}/${v.n}`;
-  $('tbPre').textContent = pre; $('tbTitle').textContent = title; $('tbTitle').classList.toggle('long', title.length > 30);
-  $('tbCat').textContent = (CATINFO[q.cat] || ['Mix'])[0] + (!crew && v.pl.filter(p => !p.spec).length > 1 && v.r === v.n - 1 ? ' · Double points' : '');
-  $('tbSnd').innerHTML = SFX.on() ? ART.ui.sound : ART.ui.mute;
-  $('tbX').innerHTML = ART.ui.close;
-  renderGauge(v);
-  if (!$('ladder').innerHTML) $('ladder').innerHTML = ladderHTML();
-  const act = v.pl.filter(p => !p.spec);
-  $('avrow').innerHTML = act.map(p => `<span class="av ${p.lk ? 'lk' : ''} ${p.off || p.gone ? 'dim' : ''} ${p.id === ME.id ? 'me' : ''}" title="${esc(p.nm)}">${ART.avatar(p.av)}${p.ty && !p.lk ? '<span class="dots"><i></i><i></i><i></i></span>' : ''}</span>`).join('');
-  const watching = !me || me.spec;
-  $('watching').hidden = !watching;
-  $('ansF').hidden = watching || (!crew && !!C.myLock);
-  $('ansB').textContent = crew ? 'Send' : 'Lock in';
-  $('ans').placeholder = crew ? 'Answer for the crew' : 'Type an answer';
-  const sealed = $('sealed');
-  sealed.hidden = !(C.myLock && !crew && !watching);
-  if (!sealed.hidden) sealed.innerHTML = `<div class="label">Locked in · sealed till the reveal</div><b>${esc(q.answers[C.myLock.aid].name)}</b>`;
-  $('orders').hidden = !crew; $('feed').hidden = !crew; $('hull').hidden = !crew;
-  if (crew) { renderOrders(v, q); renderFeed(v, q); $('hull').innerHTML = `<span class="lbl">Planks</span>` + [...Array(Math.max(3, v.cr.lives)).keys()].map(i => `<i class="${i < v.cr.lives ? '' : 'off'}"></i>`).join(''); }
-  const locked = act.filter(p => p.lk).length;
-  const waitFor = act.filter(p => !p.lk && p.id !== ME.id && !p.gone).map(p => p.nm);
-  $('status').textContent = crew ? `${v.cr.sl.filter(Boolean).length} of ${v.cr.ord.length} slots filled · strikes ${v.cr.miss}/${STRIKES}` : act.length < 2 ? '' : C.myLock && waitFor.length ? `Waiting for ${waitFor.slice(0, 3).join(', ')}${waitFor.length > 3 ? '…' : ''}` : `${locked} of ${act.length} locked in`;
-  const fz = $('force'); const isHost = C.role === 'host';
-  const showF = isHost && act.length > 1 && (crew || (locked > 0 && locked < act.length));
-  fz.hidden = !showF; if (showF) fz.innerHTML = `<button class="lnk" type="button" data-act="force">${crew ? 'Give up this order' : 'Reveal now'}</button>`;
-  const whoTxt = watching ? 'Watching' : crew ? 'All hands!' : C.myLock ? 'Locked in' : 'Your move!';
-  $('who').innerHTML = `<span class="hl">${esc(whoTxt)}</span>`;
-  renderFb();
-  live();
-}
 function renderFb() { const f = C.fb; $('fb').innerHTML = f ? f.html : ''; }
 function renderOrders(v, q) {
   const cr = v.cr; const box = $('orders');
@@ -950,21 +1139,16 @@ function live() {
     const panic = timed && !inIntro && left > 0 && left <= 3500;
     $('playScr').classList.toggle('panic', panic);
     document.body.classList.toggle('panic', panic);
-    if (timed && !inIntro && sec <= 5 && sec > 0 && sec !== C.lastTickSec) { C.lastTickSec = sec; SFX.tick(); if (sec <= 3) vib(25); }
+    if (timed && !inIntro && sec <= 5 && sec > 0 && sec !== C.lastTickSec) { C.lastTickSec = sec; if (sec <= 3) vib(25); }
     const me = meIn(v);
     const can = !inIntro && left > 0 && me && !me.spec && (v.set.mode === 'crew' || !C.myLock);
     const inp = $('ans');
     if (inp.disabled === !!can) { inp.disabled = !can; $('ansB').disabled = !can; if (can && !matchMedia('(pointer: coarse)').matches) inp.focus(); }
-    if (inIntro) inp.placeholder = 'Get ready…'; else inp.placeholder = v.set.mode === 'crew' ? 'Answer for the crew' : 'Type an answer';
+    if (inIntro) inp.placeholder = 'descending…'; else inp.placeholder = v.set.mode === 'crew' ? 'answer for the crew…' : 'type one answer…';
   } else {
     document.body.classList.remove('panic');
   }
-  if (v.ph === 'reveal' && $('moment').hidden) {
-    const el = t - C.revealAt;
-    document.querySelectorAll('#revealScr [data-at]').forEach(n => {
-      if (n.classList.contains('out') && el >= +n.dataset.at) { n.classList.remove('out'); if (n.classList.contains('diver')) SFX.plink(+n.dataset.tier); }
-    });
-  }
+  if ((v.ph === 'play' || v.ph === 'reveal') && document.body.dataset.scr === 'play') dvFrame(v, t);
 }
 (function frame() { try { live(); } catch (e) { console.error(e); } requestAnimationFrame(frame); })();
 
@@ -976,8 +1160,8 @@ function setTheme(id) {
   LS.set('theme', th.id);
   document.querySelectorAll('#themes button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.th === th.id)));
 }
-function renderSnd() { $('sndBtn').innerHTML = SFX.on() ? ART.ui.sound : ART.ui.mute; $('sndBtn').setAttribute('aria-label', SFX.on() ? 'Sound on' : 'Sound off'); $('sndt').textContent = 'Sound: ' + (SFX.on() ? 'on' : 'off'); if ($('tbSnd')) $('tbSnd').innerHTML = SFX.on() ? ART.ui.sound : ART.ui.mute; }
-function toggleSnd() { SFX.set(!SFX.on()); renderSnd(); if (SFX.on()) SFX.lock(); }
+function renderSnd() {}
+function toggleSnd() {}
 async function copy(text, ok) { try { await navigator.clipboard.writeText(text); toast(ok, 'ok'); } catch { toast(text); } }
 function inviteLink() { return location.origin + location.pathname + buildQ(C.code); }
 function confirmLeave() {
@@ -991,7 +1175,6 @@ function bind() {
   $('themes').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) setTheme(b.dataset.th); });
   setTheme(LS.get('theme', 'deep'));
   renderSnd();
-  $('sndBtn').addEventListener('click', toggleSnd); $('sndt').addEventListener('click', toggleSnd); $('tbSnd').addEventListener('click', toggleSnd);
   document.addEventListener('pointerdown', () => SFX.unlock(), { once: true });
   $('nm').addEventListener('input', (e) => { ME.name = cleanName(e.target.value); LS.set('name', e.target.value.trim() ? ME.name : ''); });
   $('avs').addEventListener('click', (e) => { const b = e.target.closest('.avb'); if (!b) return; ME.av = b.dataset.av; LS.set('av', ME.av); renderHome(); SFX.bubble(); });
@@ -1011,6 +1194,10 @@ function bind() {
   $('busyX').addEventListener('click', () => { clearRejoin(); teardown(); setUrl(''); render(); });
   $('leaveNo').addEventListener('click', () => ($('leaveM').hidden = true));
   $('leaveYes').addEventListener('click', () => { $('leaveM').hidden = true; leave(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && C.view && C.view.ph === 'reveal' && H && !$('land').hidden && document.activeElement.tagName !== 'BUTTON') { e.preventDefault(); nextRound(); }
+  });
+  window.addEventListener('resize', () => { DV.built = false; });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { $('howM').hidden = true; $('leaveM').hidden = true; $('meM').hidden = true; } });
   ['howM', 'leaveM', 'meM'].forEach(id => $(id).addEventListener('click', (e) => { if (e.target.id === id) $(id).hidden = true; }));
   $('share').addEventListener('click', async () => {
