@@ -38,7 +38,7 @@ const NAMES = ['riptide', 'barnacle', 'undertow', 'saltbeard', 'inkblot', 'fatho
 const randName = () => NAMES[Math.floor(Math.random() * NAMES.length)];
 const randAv = () => ART.AV_IDS[Math.floor(Math.random() * ART.AV_IDS.length)];
 if (!ART.AV_IDS.includes(ME.av)) { ME.av = randAv(); LS.set('av', ME.av); }
-if (!ME.name) { ME.name = randName(); LS.set('name', ME.name); }
+if (!ME.name || /^(diver|player)$/i.test(ME.name)) { ME.name = randName(); LS.set('name', ME.name); }
 SS.set('id', ME.id);
 const SID = rid(8);
 let QSEQ = 0;
@@ -866,8 +866,9 @@ function setMe(nm, av) {
   if (nm !== null) { ME.name = cleanName(nm); LS.set('name', ME.name); $('nm').value = ME.name; }
   if (av) { ME.av = av; LS.set('av', av); }
   const p = H && H.players.find(x => x.id === ME.id);
-  if (p) { p.name = ME.name; p.av = ME.av; H.dirty = true; }
-  renderMe(); renderHome(); renderRail();
+  if (p) { p.name = ME.name; p.av = ME.av; H.dirty = true; broadcast(); }
+  if (C.role === 'guest' && C.joined) send('join', { name: ME.name, av: ME.av });
+  renderMe(); renderHome(); renderRail(); if ($('lbMe')) $('lbMe').textContent = ME.name;
 }
 function openMe() { renderMe(); $('nm2').value = ME.name; $('meM').hidden = false; }
 function render() {
@@ -901,41 +902,27 @@ function ladderHTML() { return TORDER.map(t => `<div class="${TCLS[t]}"><b>${esc
 /* lobby */
 function renderLobby(v) {
   const host = C.role === 'host';
-  $('lcode').textContent = v.code;
+  if ($('lcode')._c !== v.code) { $('lcode')._c = v.code; $('lcode').innerHTML = [...v.code].map(c => `<span>${esc(c)}</span>`).join(''); }
+  $('lbX').innerHTML = ART.ui.close;
   const live = v.pl.filter(p => !p.gone);
-  $('pc').textContent = `${live.length}/${MAXP}`;
-  $('plist').innerHTML = live.map(p => `<li class="${p.off ? 'off' : ''}">${avatar(p.av)}<span class="nm">${esc(p.nm)}</span><span class="tags">${p.tot ? `<span class="pill sm">${M(p.tot)} all-time</span>` : ''}${p.id === v.host ? '<span class="pill k sm">Host</span>' : ''}${p.id === ME.id ? '<span class="you">You</span>' : ''}${host && p.id !== ME.id ? `<button class="kick" type="button" data-kick="${esc(p.id)}" aria-label="Remove ${esc(p.nm)}">${ART.ui.close}</button>` : ''}</span></li>`).join('')
-    + (live.length < 2 ? `<li class="hint">Send friends the code or tap Invite friends.</li>` : '');
-  $('rtot').hidden = !host || !live.some(p => p.tot);
-  $('setup').hidden = !host; $('upnext').hidden = host; $('startbar').hidden = !host; $('waitHost').hidden = host;
+  const slots = Math.max(0, Math.min(MAXP, Math.max(4, live.length + 1)) - live.length);
+  $('plist').innerHTML = live.map(p => `<li class="${p.off ? 'off' : ''} ${p.id === ME.id ? 'me' : ''}">${avatar(p.av)}<b>${esc(p.nm)}</b><small>${p.id === v.host ? 'host' : p.id === ME.id ? 'you' : p.off ? 'reconnecting' : 'ready'}</small>${host && p.id !== ME.id ? `<button class="kick" type="button" data-kick="${esc(p.id)}" aria-label="Remove ${esc(p.nm)}">${ART.ui.close}</button>` : ''}</li>`).join('')
+    + Array.from({ length: slots }, () => `<li class="empty"><span class="ph"></span><b>&nbsp;</b><small>open seat</small></li>`).join('');
   const s = v.set;
-  if (host) {
-    const sig = JSON.stringify(s);
-    if ($('setup')._sig !== sig) {
-      $('setup')._sig = sig;
-      $('setup').innerHTML = `<h2>Game setup</h2>
-        <div class="label">Mode</div>
-        <div class="modes"><button type="button" class="modeb" data-mode="vs" aria-pressed="${s.mode === 'vs'}"><b>Versus</b><span>Everyone answers at once. Go deepest. Same answer sinks you both.</span></button>
-        <button type="button" class="modeb" data-mode="crew" aria-pressed="${s.mode === 'crew'}"><b>Crew</b><span>Work together to fill the captain’s order at exact depths.</span></button></div>
-        <div class="srow"><span class="label">Rounds</span><div class="seg" data-set="rounds">${ROUNDS.map(n => `<button type="button" data-v="${n}" aria-pressed="${s.rounds === n}">${n}</button>`).join('')}</div></div>
-        ${s.mode === 'vs' ? `<div class="srow"><span class="label">Timer</span><div class="seg" data-set="secs">${SECS.map(n => `<button type="button" data-v="${n}" aria-pressed="${s.secs === n}">${secLbl(n)}</button>`).join('')}</div></div>` : `<p class="hint">No timer. Three wrong depths and the kraken takes a plank.</p>`}
-        <div class="srow" style="margin-bottom:0"><span class="label">Topics</span></div>
-        <p class="hint" id="topicHint" style="margin:6px 0 0">Tap topics to include them. Mix uses everything.</p>
-        <div class="topics"><button type="button" class="tcard" data-topic="" aria-pressed="${!s.topics.length}"><i class="tick">${ART.ui.check}</i>${ART.icon('mix')}<b>Mix</b><span>A bit of everything</span></button>
-        ${Object.entries(CATINFO).map(([k, [n, sub]]) => `<button type="button" class="tcard" data-topic="${k}" aria-pressed="${s.topics.includes(k)}"><i class="tick">${ART.ui.check}</i>${ART.icon(k)}<b>${esc(n)}</b><span>${esc(sub)}</span></button>`).join('')}</div>`;
-    }
-    const avail = BANK.filter(q => !s.topics.length || s.topics.includes(q.cat)).length;
-    const hintEl = $('setup').querySelector('#topicHint');
-    if (hintEl) hintEl.textContent = avail < s.rounds ? `These topics have ${avail} prompts, so the game will be ${avail} rounds.` : 'Tap topics to include them. Mix uses everything.';
-    const need = 2;
-    const sb = $('start');
-    sb.disabled = live.length < need;
-    sb.textContent = live.length < need ? 'Waiting for friends' : `Start ${s.mode === 'vs' ? 'Versus' : 'Crew'}`;
-  } else {
-    const topics = s.topics.length ? s.topics.map(k => CATINFO[k][0]).join(' · ') : 'Mix';
-    $('upnext').innerHTML = `<div class="label">Up next</div>${ART.icon(s.topics.length === 1 ? s.topics[0] : 'mix')}<h2>${s.mode === 'vs' ? 'Versus' : 'Crew'}</h2><p class="hint" style="margin:0">${esc(topics)}</p>
-      <div class="pills"><span class="pill sm">${s.rounds} rounds</span>${s.mode === 'vs' ? `<span class="pill sm">${s.secs ? s.secs + 's timer' : 'No timer'}</span>` : ''}<span class="pill sm">${live.length} player${live.length > 1 ? 's' : ''}</span></div>`;
+  const modes = [['vs', 'Versus', 'Go deepest'], ['crew', 'Crew', 'Work together']];
+  const sig = s.mode + host;
+  if ($('setup')._sig !== sig) {
+    $('setup')._sig = sig;
+    $('setup').innerHTML = modes.map(([k, n, sub]) => `<button type="button" class="lb-m" data-mode="${k}" aria-pressed="${s.mode === k}" ${host ? '' : 'disabled'}><b>${n}</b><span>${sub}</span></button>`).join('');
   }
+  $('modeDesc').textContent = s.mode === 'vs'
+    ? 'Everyone answers the same prompt. Rarer answers sink you deeper. Say the same thing as someone else and you both sink nowhere. Deepest diver after 7 prompts wins.'
+    : 'One shared order per prompt: fill each depth with the right answer. Three wrong depths and the kraken takes a plank.';
+  const need = 2; const sb = $('start');
+  sb.hidden = !host; $('waitHost').hidden = host;
+  sb.disabled = live.length < need;
+  sb.textContent = live.length < need ? 'Waiting for friends…' : 'Start the dive ▼';
+  $('lbMe').textContent = ME.name;
 }
 
 /* play */
@@ -1200,12 +1187,12 @@ function bind() {
   window.addEventListener('resize', () => { DV.built = false; });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { $('howM').hidden = true; $('leaveM').hidden = true; $('meM').hidden = true; } });
   ['howM', 'leaveM', 'meM'].forEach(id => $(id).addEventListener('click', (e) => { if (e.target.id === id) $(id).hidden = true; }));
+  $('lcode').addEventListener('click', () => copy(inviteLink(), 'Invite link copied'));
   $('share').addEventListener('click', async () => {
     const url = inviteLink();
     if (navigator.share && matchMedia('(pointer: coarse)').matches) { try { await navigator.share({ title: 'Kraken', text: 'Join my Kraken lobby: ' + C.code, url }); return; } catch {} }
     copy(url, 'Invite link copied');
   });
-  $('rtot').addEventListener('click', () => { if (!H) return; H.tot = {}; LS.set('tot', {}); H.dirty = true; toast('Scores reset', 'ok'); });
   $('plist').addEventListener('click', (e) => { const b = e.target.closest('[data-kick]'); if (!b || !H) return; const id = b.dataset.kick; H.banned.add(id); H.players = H.players.filter(p => p.id !== id); direct(id, { t: 'err', msg: 'The host removed you from this lobby.' }); H.dirty = true; broadcast(); });
   $('setup').addEventListener('click', (e) => {
     if (!H) return;

@@ -673,6 +673,47 @@ body[data-scr="play"] .mprail .btn.black{background:#eaf6ff;color:#0a0a0a;box-sh
   .dv-tl span{right:calc(4% + 34px);font-size:.78rem}
   .dv-ship{width:120px;top:calc(var(--sky) - 84px)}
 }
+
+/* ═════════════ LOBBY (deep-sea, one centred column) ═════════════ */
+body[data-scr="lobby"] .themes,body[data-scr="lobby"] .mprail{display:none}
+.scr.lobby.lb{position:fixed;inset:0;max-width:none;margin:0;padding:max(28px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) 40px max(16px,env(safe-area-inset-left));overflow-y:auto;z-index:10;color:#eaf6ff;
+  --glow:#62e4ff;--glass:rgba(3,14,26,.78);--edge:rgba(120,220,255,.42);
+  background:repeating-linear-gradient(104deg,rgba(255,255,255,.05) 0 34px,transparent 34px 140px) top/100% 60% no-repeat,linear-gradient(to bottom,#1e70a3 0%,#145483 30%,#0b3358 65%,#071f38 100%)}
+body[data-scr="lobby"] .scr.lobby.lb{display:block}
+.lb-col{width:min(560px,100%);margin:0 auto;display:grid;justify-items:center;gap:14px;text-align:center}
+.lb-eye{font:italic 800 .95rem/1 var(--cond);letter-spacing:.24em;text-transform:uppercase;color:rgba(190,232,255,.75);margin-top:18px}
+.lb-code{display:flex;gap:10px;background:none;border:0;padding:0;cursor:pointer}
+.lb-code span{display:grid;place-items:center;width:clamp(64px,17vw,96px);height:clamp(80px,21vw,118px);background:var(--glass);border:2px solid var(--glow);border-radius:16px;font:italic 900 clamp(3.4rem,11vw,5.4rem)/1 var(--cond);color:#fff;text-shadow:0 0 22px rgba(98,228,255,.75);box-shadow:0 0 26px rgba(98,228,255,.22)}
+.lb-invite{background:#ff4040;color:#0a0a0a;border:2px solid #0a0a0a;border-radius:14px;font:italic 900 1.7rem/1 var(--cond);text-transform:uppercase;letter-spacing:.06em;padding:16px 34px;box-shadow:0 0 26px rgba(255,64,64,.5);margin-top:6px}
+.lb-invite:active,.lb-start:active{transform:translateY(2px)}
+.lb-hint{margin:0;font:600 1.05rem/1.4 var(--body);color:rgba(200,235,255,.75)}
+.lb-crew{list-style:none;margin:18px 0 4px;padding:0;display:flex;flex-wrap:wrap;justify-content:center;gap:18px 16px;width:100%}
+.lb-crew li{position:relative;display:grid;justify-items:center;gap:6px;width:96px}
+.lb-crew .av{width:76px;height:76px;background:#fff;border:3px solid #0a0a0a;padding:5px;--k:#0a0a0a;box-shadow:0 0 0 3px rgba(255,255,255,.18),0 8px 20px rgba(0,0,0,.35);animation:bob 2.6s ease-in-out infinite}
+.lb-crew li:nth-child(2) .av{animation-delay:-.6s}.lb-crew li:nth-child(3) .av{animation-delay:-1.2s}.lb-crew li:nth-child(4) .av{animation-delay:-1.8s}
+.lb-crew li.me .av{box-shadow:0 0 0 4px #ff4040,0 0 28px rgba(255,64,64,.5)}
+.lb-crew li.off{opacity:.45}
+.lb-crew b{font:800 1.1rem/1.1 var(--body);color:#fff;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-crew small{font:italic 800 .78rem/1 var(--cond);letter-spacing:.14em;text-transform:uppercase;color:rgba(170,222,255,.7)}
+.lb-crew li.empty .ph{width:76px;height:76px;border-radius:50%;border:2.5px dashed rgba(150,215,255,.4)}
+.lb-crew li.empty small{color:rgba(170,222,255,.4)}
+.lb-crew .kick{position:absolute;top:-4px;right:6px;width:28px;height:28px;border-radius:50%;background:rgba(3,14,26,.9);border:2px solid var(--edge);padding:5px;display:grid;place-items:center;color:#eaf6ff}
+.lb-crew .kick svg *{stroke:#eaf6ff}
+.lb-modes{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;margin-top:14px}
+.lb-m{display:grid;gap:6px;justify-items:center;background:var(--glass);border:2px solid var(--edge);border-radius:16px;padding:18px 12px;color:#eaf6ff;cursor:pointer;transition:border-color .2s,box-shadow .2s,background .2s}
+.lb-m b{font:italic 900 2.2rem/1 var(--cond);text-transform:uppercase;letter-spacing:.04em}
+.lb-m span{font:italic 800 .9rem/1 var(--cond);letter-spacing:.14em;text-transform:uppercase;color:rgba(170,222,255,.7)}
+.lb-m[aria-pressed="true"]{border-color:var(--glow);background:rgba(98,228,255,.12);box-shadow:0 0 26px rgba(98,228,255,.3)}
+.lb-m[aria-pressed="true"] b{color:var(--glow);text-shadow:0 0 16px rgba(98,228,255,.6)}
+.lb-m[disabled]{cursor:default}
+.lb-m[disabled][aria-pressed="false"]{opacity:.4}
+.lb-desc{margin:0;font:600 1.02rem/1.45 var(--body);color:rgba(200,235,255,.8);max-width:480px}
+.lb-start{width:100%;margin-top:10px;background:#ff4040;color:#0a0a0a;border:2px solid #0a0a0a;border-radius:16px;font:italic 900 2.1rem/1 var(--cond);text-transform:uppercase;letter-spacing:.06em;padding:20px;box-shadow:0 0 30px rgba(255,64,64,.5)}
+.lb-start[disabled]{background:var(--glass);color:rgba(190,230,255,.6);border-color:var(--edge);box-shadow:none;cursor:default}
+.lb-wait{margin:10px 0 0;font:italic 900 1.5rem/1.1 var(--cond);letter-spacing:.06em;text-transform:uppercase;color:var(--glow);text-shadow:0 0 14px rgba(98,228,255,.5)}
+.lb-me{background:none;border:0;color:rgba(190,230,255,.75);font:600 1rem/1 var(--body);text-decoration:underline;text-underline-offset:4px;margin-top:4px}
+.lb-me b{color:#fff}
+@media (max-width:520px){.lb-crew{gap:14px 8px}.lb-crew li{width:76px}.lb-crew .av,.lb-crew li.empty .ph{width:64px;height:64px}.lb-m b{font-size:1.8rem}.lb-start{font-size:1.7rem}}
 </style>
 </head>
 <body data-scr="home">
@@ -726,27 +767,19 @@ body[data-scr="play"] .mprail .btn.black{background:#eaf6ff;color:#0a0a0a;box-sh
   </section>
 
   <!-- LOBBY -->
-  <section class="scr lobby" aria-label="Lobby">
-    <div class="lobby-grid">
-      <div class="lcol">
-        <div class="lhead"><button class="btn sm" type="button" data-act="leave">Leave</button><span class="pill k">Lobby</span></div>
-        <div class="card codecard">
-          <div class="label">Lobby code</div>
-          <div class="bigcode" id="lcode">····</div>
-          <button class="btn red mid" id="share" type="button">Invite friends</button>
-        </div>
-        <div class="card">
-          <div class="ph"><h2>Players</h2><span class="pill" id="pc">1/8</span></div>
-          <ul class="plist" id="plist"></ul>
-          <button class="lnk" id="rtot" type="button">Reset all scores</button>
-        </div>
-      </div>
-      <div class="rcol">
-        <div class="card setup" id="setup"></div>
-        <div class="card upnext" id="upnext" hidden></div>
-        <div class="startbar" id="startbar"><button class="btn big red" id="start" type="button">Start</button></div>
-        <p class="wait" id="waitHost" hidden>Waiting for the host to start.</p>
-      </div>
+  <section class="scr lobby lb" aria-label="Lobby">
+    <button class="dv-ib" type="button" data-act="leave" aria-label="Leave lobby" id="lbX"></button>
+    <div class="lb-col">
+      <div class="lb-eye">Lobby code</div>
+      <button class="lb-code" id="lcode" type="button" aria-label="Copy invite link">····</button>
+      <button class="lb-invite" id="share" type="button">Invite friends</button>
+      <p class="lb-hint">Send them the link. They land straight in here.</p>
+      <ul class="lb-crew" id="plist"></ul>
+      <div class="lb-modes" id="setup" role="group" aria-label="Mode"></div>
+      <p class="lb-desc" id="modeDesc"></p>
+      <button class="lb-start" id="start" type="button">Start the dive ▼</button>
+      <p class="lb-wait" id="waitHost" hidden>Waiting for the host to start the dive…</p>
+      <button class="lb-me" type="button" data-act="me">You’re <b id="lbMe"></b> · change</button>
     </div>
   </section>
 
