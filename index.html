@@ -502,7 +502,7 @@ body[data-scr="play"] .themes{display:none}
   --glow:#62e4ff;--ink:#eaf6ff;--glass:rgba(3,14,26,.8);--edge:rgba(120,220,255,.42);--k:#0a0a0a;--card:#fff;--bg:#041322;--m:#9ec3d6}
 .dv .t0{--tc:#e4f7ff}.dv .t1{--tc:#ffd76a}.dv .t2{--tc:#6ff0d6}.dv .t3{--tc:#5fb6ff}.dv .t4{--tc:#b993ff}.dv .t5{--tc:#ff1e3c}
 .dv-world{position:absolute;left:0;right:0;top:0;will-change:transform;
-  background:linear-gradient(to bottom,#a8dcf2 0,#e6f6fb calc(var(--sky) - 2px),#1a8fe6 var(--sky),#0f6fd0 calc(var(--sky) + 120 * var(--S)),#0b4fae calc(var(--sky) + 420 * var(--S)),#08317e calc(var(--sky) + 1000 * var(--S)),#061d55 calc(var(--sky) + 2400 * var(--S)),#03113a calc(var(--sky) + 4000 * var(--S)),#020a14 calc(var(--sky) + 6000 * var(--S)),#14040a calc(var(--sky) + 8200 * var(--S)))}
+  background:linear-gradient(to bottom,#3fa9f5 0,#8fd3f7 calc(var(--sky) - 60vh),#d9f1fb calc(var(--sky) - 12vh),#eef9fd calc(var(--sky) - 2px),#1a8fe6 var(--sky),#0f6fd0 calc(var(--sky) + 120 * var(--S)),#0b4fae calc(var(--sky) + 420 * var(--S)),#08317e calc(var(--sky) + 1000 * var(--S)),#061d55 calc(var(--sky) + 2400 * var(--S)),#03113a calc(var(--sky) + 4000 * var(--S)),#020a14 calc(var(--sky) + 6000 * var(--S)),#14040a calc(var(--sky) + 8200 * var(--S)))}
 .dv-sun{position:absolute;right:15%;top:calc(var(--sky) - 300px);width:96px;height:96px;border-radius:50%;background:#fff1b8;box-shadow:0 0 60px 26px rgba(255,236,170,.55)}
 .dv-cloud{position:absolute;height:30px;border-radius:30px;background:#fff;opacity:.92;animation:cloud 90s linear infinite}
 .dv-cloud::before,.dv-cloud::after{content:"";position:absolute;background:#fff;border-radius:50%}
@@ -1532,6 +1532,22 @@ html body .scr .fn-log .q small,html body .scr .dv-land .lt-k span{color:#000 !i
 .dvr .meflag svg{width:22px;height:22px;filter:drop-shadow(0 0 0 #fff) drop-shadow(1.5px 0 0 #fff) drop-shadow(-1.5px 0 0 #fff) drop-shadow(0 1.5px 0 #fff) drop-shadow(0 -1.5px 0 #fff)}
 html body .scr .dvr .meflag b{background:#fff;color:#000 !important;border:3px solid #000;border-radius:8px;padding:2px 8px 3px;font-size:1rem !important;line-height:1 !important;-webkit-text-stroke:0 !important;text-shadow:none !important;margin-top:-2px}
 @keyframes meBob{50%{transform:translateY(-6px)}}
+
+/* your diver: smaller */
+html body .scr .dvr.me .av{width:68px !important;height:68px !important}
+html body .scr .dvr.me .nm{font-size:1.3rem !important;padding:4px 12px !important}
+html body .scr .dvr.me .tag{font-size:1.55rem !important;padding:7px 14px !important}
+html body .scr .dvr .meflag svg{width:17px;height:17px}
+html body .scr .dvr .meflag b{font-size:.95rem !important;padding:1px 7px 2px}
+@media (max-width:700px){
+  html body .scr .dvr.me .av{width:56px !important;height:56px !important}
+  html body .scr .dvr.me .nm{font-size:1.1rem !important}
+  html body .scr .dvr.me .tag{font-size:1.25rem !important}
+}
+/* extra sky up top */
+.dv-sun{top:calc(var(--sky) - 46vh) !important}
+.dv-cloud.c1{top:calc(var(--sky) - 30vh) !important}.dv-cloud.c2{top:calc(var(--sky) - 22vh) !important}.dv-cloud.c3{top:calc(var(--sky) - 52vh) !important}
+.dv-land{top:auto}
 </style>
 </head>
 <body data-scr="boot">

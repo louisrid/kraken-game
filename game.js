@@ -771,7 +771,7 @@ function lifeHTML() {
 }
 function buildWorld() {
   const vh = innerHeight;
-  DV.S = Math.min(2.2, Math.max(1.1, vh / 520)); DV.SKY = Math.round(vh * 0.64);
+  DV.S = Math.min(2.2, Math.max(1.1, vh / 520)); DV.SKY = Math.round(vh * 1.5);
   const w = $('world');
   w.style.setProperty('--S', DV.S + 'px'); w.style.setProperty('--sky', DV.SKY + 'px');
   w.style.height = Math.round(yOf(DV_MAX) + 500) + 'px';
@@ -795,7 +795,8 @@ function startSink(v) {
   for (const p of v.pl) {
     const r = res.find(x => x[0] === p.id); const gain = r ? r[2] : 0;
     DV.sink.to[p.id] = p.pts * 10; DV.sink.from[p.id] = (p.pts - gain) * 10;
-    DV.sink.dur[p.id] = gain > 0 ? 1600 + 1900 * Math.min(1, gain / 100) : 700;
+    const tr = r && r[1] >= 0 && !r[3] ? QMAP[v.q].answers[r[1]].tier : null;
+    DV.sink.dur[p.id] = tr ? [3800, 4800, 6200, 8000, 10000, 12500][TIERS[tr].i] : 900;
   }
   DV.landShown = '';
   const mine = res.find(r => r[0] === ME.id); const q = QMAP[v.q];
@@ -806,7 +807,7 @@ function dispDepth(p) {
   const s = DV.sink, v = C.view;
   if (!s || !v || v.ph !== 'reveal' || !(p.id in s.to)) return p.pts * 10;
   const k = Math.max(0, Math.min(1, (pnow() - s.t0) / s.dur[p.id]));
-  const e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+  const e = -(Math.cos(Math.PI * k) - 1) / 2;
   return s.from[p.id] + (s.to[p.id] - s.from[p.id]) * e;
 }
 function myBase(v) {
@@ -879,6 +880,7 @@ function showLand(v) {
   $('land').innerHTML = v.set.mode === 'crew' ? crewLandHTML(v) : landHTML(v);
   { const mm = v.res && v.res.find(r => r[0] === ME.id); const q = QMAP[v.q]; $('land').className = 'dv-land ' + (v.set.mode === 'crew' ? (v.cr && v.cr.out === 'clear' ? 't2' : 'sunk') : !mm ? '' : mm[1] < 0 ? 'none' : mm[3] ? 'sunk' : TCLS[q.answers[mm[1]].tier]); }
   $('land').hidden = false; $('playScr').classList.add('landed');
+  { const top = Math.round((DV.landY || innerHeight * 0.25) + (innerWidth < 700 ? 96 : 104)); $('land').style.top = top + 'px'; $('land').style.maxHeight = `calc(100% - ${top + 14}px)`; }
   const me = meIn(v); const mine = v.res && v.res.find(r => r[0] === ME.id);
   if (mine && mine[3]) vib([60, 40, 120]); else if (me) vib(30);
   const b = $('land').querySelector('.desc'); if (b && !matchMedia('(pointer: coarse)').matches) setTimeout(() => b.focus({ preventScroll: true }), 50);
@@ -937,8 +939,11 @@ function dvFrame(v, t) {
   }
   const ps = $('playScr'); if (ps.scrollTop || ps.scrollLeft) { ps.scrollTop = 0; ps.scrollLeft = 0; }
   const dt = DV.lastT ? Math.min(100, t - DV.lastT) : 16; DV.lastT = t;
-  const want = rv ? 0.22 : v.ph === 'lobby' ? 0.56 : v.set.mode === 'crew' ? 0.76 : 0.6;
-  DV.anchor += (want - DV.anchor) * Math.min(1, dt / 1000 * 3.2);
+  const hudB = (document.querySelector('#playScr .dv-hud') || { getBoundingClientRect: () => ({ bottom: 120 }) }).getBoundingClientRect().bottom;
+  DV.landY = Math.min(innerHeight * 0.42, hudB + (innerWidth < 700 ? 96 : 104));
+  const landed = rv && DV.landShown === C.timeKey;
+  const want = rv ? (landed ? DV.landY / innerHeight : 0.56) : v.ph === 'lobby' ? 0.56 : v.set.mode === 'crew' ? 0.76 : 0.6;
+  DV.anchor += (want - DV.anchor) * Math.min(1, dt / 1000 * (landed ? 2.4 : 1.6));
   const camY = innerHeight * DV.anchor - (yOf(camD) + DV_OFF);
   $('world').style.transform = `translate3d(0,${camY.toFixed(1)}px,0)`;
   const dtxt = Math.round(camD).toLocaleString('en-GB') + ' m';
