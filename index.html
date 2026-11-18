@@ -714,6 +714,125 @@ body[data-scr="lobby"] .scr.lobby.lb{display:block}
 .lb-me{background:none;border:0;color:rgba(190,230,255,.75);font:600 1rem/1 var(--body);text-decoration:underline;text-underline-offset:4px;margin-top:4px}
 .lb-me b{color:#fff}
 @media (max-width:520px){.lb-crew{gap:14px 8px}.lb-crew li{width:76px}.lb-crew .av,.lb-crew li.empty .ph{width:64px;height:64px}.lb-m b{font-size:1.8rem}.lb-start{font-size:1.7rem}}
+
+/* ═════════════ shared deep-sea chrome ═════════════ */
+.themes{display:none !important}
+.scr.hm,.scr.final{position:fixed;inset:0;max-width:none;margin:0;padding:max(28px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) 40px max(16px,env(safe-area-inset-left));overflow-y:auto;z-index:10;color:#eaf6ff;
+  --glow:#62e4ff;--glass:rgba(3,14,26,.78);--edge:rgba(120,220,255,.42);
+  background:repeating-linear-gradient(104deg,rgba(255,255,255,.05) 0 34px,transparent 34px 140px) top/100% 60% no-repeat,linear-gradient(to bottom,#1e70a3 0%,#145483 30%,#0b3358 65%,#071f38 100%)}
+body[data-scr="home"] .scr.hm,body[data-scr="final"] .scr.final{display:block}
+.scr.final{background:linear-gradient(to bottom,#0b3358 0%,#071f38 45%,#041325 100%)}
+.bk{position:absolute;top:max(14px,env(safe-area-inset-top));left:max(14px,env(safe-area-inset-left));z-index:9;display:inline-flex;align-items:center;gap:8px;height:52px;padding:0 20px 0 12px;border-radius:999px;background:rgba(3,14,26,.85);border:2px solid rgba(120,220,255,.55);color:#eaf6ff;font:italic 900 1.2rem/1 var(--cond);text-transform:uppercase;letter-spacing:.08em;box-shadow:0 0 20px rgba(98,228,255,.2);cursor:pointer}
+.bk svg{width:28px;height:28px;flex:none}
+.bk:hover{border-color:#62e4ff;box-shadow:0 0 24px rgba(98,228,255,.4)}
+.bk:active{transform:translateX(-3px)}
+.scr.final .bk,.scr.lb .bk{position:fixed}
+@media (max-width:700px){.bk{width:52px;padding:0;justify-content:center}.bk span{display:none}}
+.dv-mp{left:auto;right:max(14px,env(safe-area-inset-right))}
+.dv-hud{padding:0 72px}
+@media (max-width:700px){.dv-hud{padding:0 8px 0 72px}body.solo .dv-hud{padding:66px 8px 0}}
+/* screen slide */
+@keyframes scrInF{from{opacity:0;transform:translateX(36px)}}
+@keyframes scrInB{from{opacity:0;transform:translateX(-36px)}}
+@keyframes scrFade{from{opacity:0}}
+body[data-scr="home"] .scr.hm>*,body[data-scr="lobby"] .scr.lb>.lb-col,body[data-scr="final"] .scr.final>.lb-col{animation:scrInF .28s cubic-bezier(.2,.9,.3,1)}
+body[data-dir="back"][data-scr="home"] .scr.hm>*,body[data-dir="back"][data-scr="lobby"] .scr.lb>.lb-col{animation-name:scrInB}
+body[data-scr="play"] .scr.play{animation:scrFade .3s ease-out}
+/* home */
+.hm-col{gap:14px;padding-top:4px}
+.hm-kraken{width:min(250px,58vw);margin-bottom:-10px;filter:drop-shadow(0 0 34px rgba(255,64,64,.35))}
+.hm-kraken .kraken{animation:bob 3.2s ease-in-out infinite}
+.hm-logo{font:italic 900 clamp(4rem,15vw,6.6rem)/.85 var(--cond);letter-spacing:.06em;color:#fff;text-shadow:0 0 26px rgba(98,228,255,.55),5px 5px 0 #0a0a0a}
+.hm-tag{margin:0 0 8px;font:600 1.12rem/1.4 var(--body);color:rgba(200,235,255,.82)}
+.hm-friends{width:100%;font-size:1.7rem;padding:18px}
+.hm-join{display:flex;gap:10px;width:100%}
+.hm-join .field{flex:1;height:60px;background:rgba(3,14,26,.85);color:#eaf6ff;border:2px solid rgba(120,220,255,.55);border-radius:14px;font:italic 900 1.6rem/1 var(--cond);letter-spacing:.3em;text-transform:uppercase;text-align:center}
+.hm-join .field::placeholder{letter-spacing:.2em;color:rgba(170,222,255,.45)}
+.hm-join .btn{height:60px;padding:0 28px;background:rgba(3,14,26,.85);color:#62e4ff;border:2px solid #62e4ff;border-radius:14px;font-size:1.5rem;box-shadow:0 0 18px rgba(98,228,255,.25)}
+.hm-rejoin{width:100%;background:rgba(98,228,255,.12);color:#62e4ff;border:2px solid #62e4ff;border-radius:14px;font:italic 900 1.4rem/1 var(--cond);text-transform:uppercase;letter-spacing:.06em;padding:14px}
+.hm-me{display:inline-flex;align-items:center;gap:10px;margin-top:6px}
+.hm-me .av{width:40px;height:40px;background:#fff;--k:#0a0a0a;border:2.5px solid #0a0a0a;padding:3px}
+/* final */
+.fn-col{gap:12px;padding-top:18px}
+.fn-big{font:italic 900 clamp(4rem,14vw,6.8rem)/.9 var(--cond);color:#fff;text-shadow:0 0 30px rgba(98,228,255,.6);letter-spacing:.02em}
+.fn-big.sm{font-size:clamp(3rem,11vw,5rem);text-transform:none}
+.fn-sub{font:italic 900 1.5rem/1.1 var(--cond);letter-spacing:.08em;text-transform:uppercase;color:#62e4ff}
+.fn-sub em{font-style:inherit;color:#ff6b6b}
+.fn-cells{display:flex;gap:7px;margin:6px 0}
+.fn-cells i{width:30px;height:30px;border-radius:7px;background:var(--tc);box-shadow:0 0 12px color-mix(in srgb,var(--tc) 50%,transparent)}
+.fn-cells i.none{--tc:#3b5161}
+.scr.final .t0,.dlg .t0{--tc:#e4f7ff}.scr.final .t1,.dlg .t1{--tc:#ffd76a}.scr.final .t2,.dlg .t2{--tc:#6ff0d6}.scr.final .t3,.dlg .t3{--tc:#5fb6ff}.scr.final .t4,.dlg .t4{--tc:#b993ff}.scr.final .t5,.dlg .t5{--tc:#ff4040}
+.fn-log,.fn-board{list-style:none;margin:6px 0;padding:6px;width:100%;display:grid;gap:4px;background:var(--glass);border:2px solid var(--edge);border-radius:16px;text-align:left}
+.fn-log li{display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:10px}
+.fn-log li+li{border-top:1px solid rgba(120,220,255,.14)}
+.fn-log .q{flex:1;min-width:0;font:700 .98rem/1.25 var(--body);color:rgba(220,240,255,.88)}
+.fn-log .q small{display:block;margin-top:3px;font:italic 900 1rem/1.1 var(--cond);letter-spacing:.05em;text-transform:uppercase;color:var(--tc,#9ec3d6)}
+.fn-log b{font:italic 900 1.2rem/1 var(--cond);color:#62e4ff;white-space:nowrap}
+.fn-board li{display:grid;grid-template-columns:28px auto 1fr auto;align-items:center;gap:12px;padding:8px 12px;border-radius:12px}
+.fn-board li.me{background:rgba(255,64,64,.14)}
+.fn-board li:first-child .rk{color:#ffd76a;text-shadow:0 0 12px rgba(255,215,106,.6)}
+.fn-board .rk{font:italic 900 1.6rem/1 var(--cond);color:rgba(190,230,255,.7);text-align:center}
+.fn-board .av{width:46px;height:46px;background:#fff;--k:#0a0a0a;border:2.5px solid #0a0a0a;padding:3px}
+.fn-board .n{font:800 1.15rem/1.15 var(--body);color:#fff;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fn-board .n small{display:block;font:600 .8rem/1.2 var(--body);color:rgba(190,230,255,.6)}
+.fn-board b{font:italic 900 1.7rem/1 var(--cond);color:#62e4ff;text-shadow:0 0 12px rgba(98,228,255,.45)}
+.fn-awards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;width:100%}
+.fn-awards div{display:grid;gap:4px;background:var(--glass);border:2px solid var(--edge);border-radius:14px;padding:12px}
+.fn-awards span{font:italic 800 .75rem/1 var(--cond);letter-spacing:.16em;text-transform:uppercase;color:#ff6b6b}
+.fn-awards b{font:italic 900 1.4rem/1 var(--cond);color:#fff}
+.fn-awards small{font:600 .85rem/1.3 var(--body);color:rgba(200,235,255,.7)}
+.fn-links{display:flex;gap:10px;width:100%}
+.fn-b{flex:1;background:rgba(3,14,26,.85);color:#eaf6ff;border:2px solid var(--edge);border-radius:14px;font:italic 900 1.15rem/1 var(--cond);text-transform:uppercase;letter-spacing:.06em;padding:14px 10px}
+.fn-b:hover{border-color:#62e4ff;color:#62e4ff}
+.fn-col .reacts{display:flex;gap:8px;justify-content:center}
+.fn-col .reacts button{width:52px;height:52px;border-radius:14px;background:var(--glass);border:2px solid var(--edge);font-size:1.5rem}
+/* dialogs, toast, side panel */
+.modal{background:rgba(1,8,16,.72);backdrop-filter:blur(3px)}
+.dlg{background:#06192b;border:2px solid rgba(120,220,255,.45);box-shadow:0 0 44px rgba(98,228,255,.18);color:#eaf6ff;--k:#eaf6ff;--card:rgba(255,255,255,.06);--m:#9ec3d6;--m2:#c9dce6;--bg:#06192b}
+.dlg h2,.dlg h3{color:#fff}
+.dlg .field{background:rgba(3,14,26,.9);color:#eaf6ff;border:2px solid rgba(120,220,255,.55)}
+.dlg .btn{background:rgba(255,255,255,.06);color:#eaf6ff;border:2px solid rgba(120,220,255,.45);box-shadow:none}
+.dlg .btn.red{background:#ff4040;color:#0a0a0a;border-color:#0a0a0a;box-shadow:0 0 20px rgba(255,64,64,.45)}
+.dlg .avb{--k:#0a0a0a;background:#fff;border-color:#0a0a0a;color:#0a0a0a}
+.dlg .avb[aria-pressed="true"]{background:#ff4040;box-shadow:0 0 0 3px #eaf6ff,0 0 18px rgba(255,64,64,.6)}
+.dlg .ladder{border-color:rgba(120,220,255,.45)}
+.dlg .ladder div{background:var(--tc);color:#0a0a0a;border-left-color:#06192b}
+.toast{background:#06192b;color:#eaf6ff;border:2px solid rgba(120,220,255,.55);box-shadow:0 0 22px rgba(98,228,255,.3)}
+.toast.ok{background:#ff4040;color:#0a0a0a;border-color:#0a0a0a;box-shadow:0 0 22px rgba(255,64,64,.45)}
+.mprail{--k:#eaf6ff;--card:rgba(3,14,26,.88);--m:#9ec3d6;color:#eaf6ff}
+@media (min-width:1100px){.mprail{background:rgba(3,14,26,.88);border:2px solid rgba(120,220,255,.45);box-shadow:0 0 26px rgba(98,228,255,.15)}}
+.mprail .mechip .av{--k:#0a0a0a;background:#fff}
+.mprail .field{background:rgba(3,14,26,.9);color:#eaf6ff;border-color:rgba(120,220,255,.55)}
+.mprail .btn.black{background:#eaf6ff;color:#0a0a0a;box-shadow:none}
+body[data-scr="final"] .mprail{z-index:20}
+@media (max-width:1099px){body[data-scr="final"] .mprail{display:none}}
+
+/* public lobby list */
+.rooms{display:grid;gap:10px;width:100%}
+.room{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:12px;width:100%;background:rgba(3,14,26,.82);border:2px solid rgba(120,220,255,.35);border-radius:16px;padding:14px 16px;color:#eaf6ff;text-align:left;cursor:pointer;transition:border-color .2s,box-shadow .2s,transform .1s}
+.room:hover{border-color:#62e4ff;box-shadow:0 0 22px rgba(98,228,255,.3)}
+.room:active{transform:translateY(2px)}
+.room .rt{display:grid;gap:4px;min-width:0}
+.room .rt b{font:italic 900 1.7rem/1 var(--cond);text-transform:uppercase;letter-spacing:.04em}
+.room .rt small{font:600 .9rem/1.2 var(--body);color:rgba(190,230,255,.65);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.room .ravs{display:flex}
+.room .ravs .av{width:34px;height:34px;background:#fff;--k:#0a0a0a;border:2px solid #0a0a0a;padding:2px;margin-left:-8px}
+.room .ra{font:italic 900 1.2rem/1 var(--cond);text-transform:uppercase;letter-spacing:.08em;padding:10px 16px;border-radius:12px;border:2px solid rgba(120,220,255,.45);color:#9ec3d6}
+.room.live{border-color:rgba(98,228,255,.6)}
+.room.live .rt small{color:#62e4ff}
+.room.live .ra{background:#ff4040;border-color:#0a0a0a;color:#0a0a0a;box-shadow:0 0 18px rgba(255,64,64,.45)}
+.room.busy .ra{background:rgba(98,228,255,.14);border-color:#62e4ff;color:#62e4ff;box-shadow:none}
+.room.live::before{content:"";position:absolute}
+.hm-eye{margin-top:14px}
+.rooms.sm{gap:8px}
+.rooms.sm .room{padding:10px 12px;gap:8px;grid-template-columns:1fr auto}
+.rooms.sm .ravs{display:none}
+.rooms.sm .room .rt b{font-size:1.25rem}
+.rooms.sm .room .rt small{font-size:.75rem;white-space:normal}
+.rooms.sm .room .ra{font-size:.95rem;padding:8px 10px}
+@media (max-width:1099px){.mprail{display:none !important}}
+.lb-code{font:italic 900 clamp(3.4rem,12vw,5.8rem)/.9 var(--cond);text-transform:uppercase;letter-spacing:.04em;color:#fff;text-shadow:0 0 26px rgba(98,228,255,.7),4px 4px 0 #0a0a0a}
+@media (max-width:520px){.room{padding:12px}.room .rt b{font-size:1.45rem}.room .ravs .av{width:28px;height:28px}.room .ra{padding:9px 12px;font-size:1.05rem}}
 </style>
 </head>
 <body data-scr="home">
@@ -730,50 +849,35 @@ body[data-scr="lobby"] .scr.lobby.lb{display:block}
 <aside class="mprail" id="mprail" aria-label="Play with friends" hidden>
   <div class="rl"><div class="label">Multiplayer</div><b class="cond">Dive with friends</b><p class="hint">Same prompts. Deepest diver wins. Same answer sinks you both.</p></div>
   <button class="mechip" type="button" data-act="me" aria-label="Change your name and look"><span id="mrAv"></span><b id="mrNm"></b><i>Edit</i></button>
-  <button class="btn red mid" type="button" data-act="friends">Play with friends</button>
-  <button class="btn black jbtn" type="button" data-act="joinopen">Join</button>
-  <form class="mrjoin" id="mrJoin" autocomplete="off"><input class="field" id="mrCode" maxlength="4" placeholder="Code" aria-label="Lobby code" autocapitalize="characters" spellcheck="false"><button class="btn black" type="submit">Join</button></form>
+  <div class="rooms sm" id="mrRooms"></div>
   <button class="lnk rlh" type="button" data-act="howto">How to play</button>
 </aside>
 
 <main>
   <!-- HOME -->
-  <section class="scr home" aria-label="Home">
-    <div class="home-grid">
-      <div class="hero">
-        <div class="mascot" id="homeKraken"></div>
-        <h1 class="logo"><span>Release the</span><span class="hl">Kraken</span></h1>
-        <p class="tagline">Name it. Go deep. Don’t get eaten.</p>
-      </div>
-      <div class="side">
-        <div class="card">
-          <div class="label">Your name</div>
-          <input class="field" id="nm" maxlength="14" autocomplete="nickname" spellcheck="false" aria-label="Your name" placeholder="Your name">
-          <div class="label">Pick your character</div>
-          <div class="avs" id="avs" role="group" aria-label="Character"></div>
-        </div>
-        <div class="card">
-          <div class="label">Join friends</div>
-          <form class="joinrow" id="joinF" autocomplete="off">
-            <input class="field" id="code" maxlength="4" placeholder="Code" aria-label="Lobby code" autocapitalize="characters" spellcheck="false">
-            <button class="btn black" type="submit">Join</button>
-          </form>
-        </div>
-        <button class="btn big red" id="create" type="button">Create a lobby</button>
-        <button class="btn big" id="rejoin" type="button" hidden>Rejoin</button>
-        <div class="links"><button class="lnk" id="practice" type="button">Solo dive</button><button class="lnk" id="how" type="button">How to play</button></div>
-      </div>
+  <section class="scr home hm" aria-label="Home">
+    <div class="lb-col hm-col">
+      <div class="hm-kraken" id="homeKraken"></div>
+      <h1 class="hm-logo">Kraken</h1>
+      <p class="hm-tag">Name something. The rarer your answer, the deeper you dive.</p>
+      <button class="lb-start" id="practice" type="button">Solo dive ▼</button>
+      <div class="lb-eye hm-eye">Dive with friends</div>
+      <div class="rooms" id="hmRooms"></div>
+      <button class="hm-rejoin" id="rejoin" type="button" hidden>Rejoin</button>
+      <button class="lb-me hm-me" type="button" data-act="me"><span id="hmAv"></span>You’re <b id="hmMe"></b> · change</button>
+      <button class="lb-me" id="how" type="button">How to play</button>
+      <div hidden><input id="nm" maxlength="14" aria-label="Your name"><div class="avs" id="avs"></div></div>
     </div>
   </section>
 
   <!-- LOBBY -->
   <section class="scr lobby lb" aria-label="Lobby">
-    <button class="dv-ib" type="button" data-act="leave" aria-label="Leave lobby" id="lbX"></button>
+    <button class="bk" type="button" data-act="back" aria-label="Back" id="lbX"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5 7.5 12l7 7"/><path d="M8 12h11"/></svg><span>Back</span></button>
     <div class="lb-col">
-      <div class="lb-eye">Lobby code</div>
-      <button class="lb-code" id="lcode" type="button" aria-label="Copy invite link">····</button>
+      <div class="lb-eye">You’re in</div>
+      <button class="lb-code" id="lcode" type="button" aria-label="Copy invite link">Lobby</button>
       <button class="lb-invite" id="share" type="button">Invite friends</button>
-      <p class="lb-hint">Send them the link. They land straight in here.</p>
+      <p class="lb-hint">Friends tap this lobby on the home screen, or open your link.</p>
       <ul class="lb-crew" id="plist"></ul>
       <div class="lb-modes" id="setup" role="group" aria-label="Mode"></div>
       <p class="lb-desc" id="modeDesc"></p>
@@ -792,8 +896,8 @@ body[data-scr="lobby"] .scr.lobby.lb{display:block}
       <div class="pmid"><div class="hdots" id="hDots"></div><span id="hCount">Prompt 1 of 7</span></div>
       <div class="pod r"><span class="label" id="hRL">Best dive</span><b id="hR">0 m</b></div>
     </header>
-    <button class="dv-ib" type="button" data-act="leave" aria-label="Leave" id="tbX"></button>
-    <button class="dv-mp" type="button" data-act="friends" id="dvMp" hidden>Play with friends</button>
+    <button class="bk" type="button" data-act="back" aria-label="Back" id="tbX"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5 7.5 12l7 7"/><path d="M8 12h11"/></svg><span>Back</span></button>
+    <button class="dv-mp" type="button" data-act="friends" id="dvMp" hidden>Lobbies</button>
     <div class="dv-q" id="pCard"><span class="qn" id="qN"></span><h2 id="qT"></h2><span class="qs" id="qS"></span></div>
     <div class="dv-crew" id="crewBox" hidden><div class="card orders" id="orders"></div><div class="hull" id="hull"></div><ul class="feed" id="feed"></ul></div>
     <div class="dv-land" id="land" hidden></div>
@@ -820,23 +924,15 @@ body[data-scr="lobby"] .scr.lobby.lb{display:block}
 <div class="modal" id="howM" hidden>
   <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="howT">
     <h2 id="howT">How to play</h2>
-    <p>Every prompt has loads of right answers, like “Name a type of pasta”. Type one. If it’s valid, it sinks to a depth. The rarer it is, the deeper you dive. Deepest diver wins.</p>
+    <p>Every dive is 7 prompts, like “Name a type of pasta”. Type one answer. If it’s valid, you sink. The rarer the answer, the deeper you go.</p>
     <div class="ladder" id="howLadder"></div>
     <p><b>Fool’s gold</b> is the trap: the “obscure” answer every clever person reaches for.</p>
-    <h3>Versus</h3>
+    <h3>With friends</h3>
     <ul>
-      <li>Everyone gets the same prompt and answers at the same time.</li>
-      <li>Wrong or misspelt? You’ll know straight away. Keep trying. No timer: the round ends when everyone’s locked in.</li>
-      <li>Answers stay sealed until the round ends.</li>
-      <li>Say the same thing as someone else and you’re both <b>sunk</b>: +0 m.</li>
-      <li>The last round counts double.</li>
-    </ul>
-    <h3>Crew</h3>
-    <ul>
-      <li>The captain’s order lists the depths you need, like Shallows · Deep water · The abyss.</li>
-      <li>Anyone can answer, any time. An answer fills an open slot at its depth.</li>
-      <li>Right answer, wrong depth? That’s a strike. Three strikes and the order’s lost.</li>
-      <li>Miss an order and the kraken takes a plank. Three planks. Find the kraken’s pick for a spare.</li>
+      <li>Everyone gets the same prompt. No timer: you all dive together once everyone has answered.</li>
+      <li>Say the same thing as someone else and you both <b>sink nowhere</b>.</li>
+      <li>Deepest diver after 7 prompts wins. The last prompt counts double.</li>
+      <li><b>Crew</b> mode: work together to fill the captain’s order at exact depths. Three wrong depths and the kraken takes a plank.</li>
     </ul>
     <div class="row"><button class="btn red" type="button" id="howX">Got it</button></div>
   </div>

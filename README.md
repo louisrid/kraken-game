@@ -3,12 +3,16 @@
 Name something. The rarer your answer, the deeper it sinks and the more it scores.
 Same build model as Pass the Bomb: one static folder, no server of our own.
 
-Open the link and you're straight into a solo dive, answer box ready. It plays as one continuous descent: each answer becomes a glowing tag that sinks you past the depth lines and real ocean landmarks (332 m scuba record, the Titanic at 3,800 m, the hadal zone) down towards the kraken's trench. No timer, no sound. Everyone gets a random lowercase name (riptide, barnacle, saltbeard…) and a random character; tap **Edit** to change them. **Play with friends** and **Join** sit in the side panel.
+Open the link and you're straight into a solo dive, answer box ready. It plays as one continuous descent: each answer becomes a glowing tag that sinks you past the depth lines and real ocean landmarks (332 m scuba record, the Titanic at 3,800 m, the hadal zone) down towards the kraken's trench. No timer, no sound. Everyone gets a random lowercase name (riptide, barnacle, saltbeard…) and a random character; tap **change** to edit them.
+
+**Multiplayer has no codes.** The home screen lists four public lobbies (Lobby 1–4) with live player counts. Tap an empty one to open it (you host), tap a live one to join. If two people open the same empty lobby at once, one hosts and the other joins automatically. Invite links look like `?lobby=2`.
+
+Every screen has a big **Back** arrow; the browser/phone back gesture and Esc do the same.
 
 ## Deploy (1 minute)
 1. Go to https://app.netlify.com/drop
 2. Drag this whole folder (or the unzipped zip) onto the page.
-3. Share the link. Friends join with the 4-letter code or the `?join=CODE` link.
+3. Share the link. Friends tap the same lobby (Lobby 1–4) on the home screen.
 
 Any static host works (GitHub Pages, Vercel, Cloudflare Pages).
 

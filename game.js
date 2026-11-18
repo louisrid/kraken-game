@@ -34,11 +34,12 @@ const THEMES = [{ id: 'light', bg: '#ffffff', n: 'Foam' }, { id: 'grey', bg: '#e
 
 /* ───────── me ───────── */
 const ME = { id: SS.get('id', null) || rid(10), name: LS.get('name', ''), av: LS.get('av', null) };
-const NAMES = ['riptide', 'barnacle', 'undertow', 'saltbeard', 'inkblot', 'fathom', 'bilgerat', 'cutlass', 'harpoon', 'maelstrom', 'sharkbait', 'seadog', 'doubloon', 'urchin', 'nautilus', 'briny', 'marlin', 'shipwreck', 'limpet', 'squall', 'grog', 'kraklet', 'tidepool', 'driftwood', 'plunder', 'anchor', 'swabbie', 'mudskipper', 'angler', 'cuttlefish', 'bluefin', 'stingray', 'coralbite', 'lagoon', 'starboard', 'jellyjam', 'blowhole', 'flotsam', 'jetsam', 'gullet', 'squidge', 'tentacle', 'wreckdiver', 'saltwater', 'deepjaw'];
+const NAMES = ['riptide', 'undertow', 'maelstrom', 'leviathan', 'tempest', 'vortex', 'phantom', 'wraith', 'nightfin', 'razorfin', 'ghostfin', 'stormfin', 'blacktide', 'deadeye', 'ironhook', 'saltblade', 'corsair', 'mako', 'orca', 'barracuda', 'moray', 'hammerhead', 'stingray', 'marlin', 'nautilus', 'triton', 'siren', 'calypso', 'atlas', 'cobalt', 'onyx', 'obsidian', 'eclipse', 'zenith', 'sonar', 'torpedo', 'tsunami', 'monsoon', 'cyclone', 'havoc', 'wavebreaker', 'abyssal', 'trench', 'blackwater', 'squall', 'fathom', 'nova', 'echo'];
 const randName = () => NAMES[Math.floor(Math.random() * NAMES.length)];
 const randAv = () => ART.AV_IDS[Math.floor(Math.random() * ART.AV_IDS.length)];
 if (!ART.AV_IDS.includes(ME.av)) { ME.av = randAv(); LS.set('av', ME.av); }
-if (!ME.name || /^(diver|player)$/i.test(ME.name)) { ME.name = randName(); LS.set('name', ME.name); }
+const OLDNAMES = /^(diver|player|barnacle|saltbeard|inkblot|bilgerat|cutlass|harpoon|sharkbait|seadog|doubloon|urchin|briny|shipwreck|limpet|grog|kraklet|tidepool|driftwood|plunder|anchor|swabbie|mudskipper|angler|cuttlefish|bluefin|coralbite|lagoon|starboard|jellyjam|blowhole|flotsam|jetsam|gullet|squidge|tentacle|wreckdiver|saltwater|deepjaw)$/i;
+if (!ME.name || (OLDNAMES.test(ME.name) && !LS.get('named', false))) { ME.name = randName(); LS.set('name', ME.name); }
 SS.set('id', ME.id);
 const SID = rid(8);
 let QSEQ = 0;
@@ -101,7 +102,8 @@ async function wakeLock(onoff) {
 let toastT = 0;
 function toast(msg, kind = '') { const t = $('toast'); t.textContent = msg; t.className = 'toast ' + kind; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => (t.hidden = true), 3200); }
 function busy(msg) { $('busyM').hidden = !msg; if (msg) $('busyT').textContent = msg; }
-function scr(name) { document.body.dataset.scr = name; }
+const SCR_ORDER = { home: 0, lobby: 1, play: 2, final: 3 };
+function scr(name) { const cur = document.body.dataset.scr; if (cur !== name) document.body.dataset.dir = (SCR_ORDER[name] ?? 0) < (SCR_ORDER[cur] ?? 0) ? 'back' : 'fwd'; document.body.dataset.scr = name; }
 const avatar = (id, cls = '') => `<span class="av ${cls}">${ART.avatar(id)}</span>`;
 const tierPill = (t) => `<span class="tp ${TCLS[t]}">${esc(TIERS[t].name)}</span>`;
 function splitPrompt(p) { const m = p.match(/^Name (an?|the) (.*)$/i); return m ? ['Name ' + m[1].toLowerCase() + '…', m[2]] : ['', p]; }
@@ -276,6 +278,7 @@ function hostTick() {
     } else if (t >= H.endsAt - H.crew.pen) crewResolve(false);
   } else if (H.phase === 'reveal' && t >= H.revealEnds) nextRound();
   if ((H.dirty && t - H.lastCast > 110) || t - H.lastCast > 2000) broadcast();
+  if (!H.solo && H.hub) { const sig = H.players.filter(p => !p.gone).length + H.phase; if (sig !== H.infoSig || t - (H.lastInfo || 0) > 4000) { H.infoSig = sig; publishInfo(); } }
 }
 function view() {
   const t = now(), cr = H.crew;
@@ -306,11 +309,11 @@ function direct(id, msg) {
 function startHostLoop() { clearInterval(H.loop); H.loop = setInterval(hostTick, 200); }
 
 /* ───────── host: create / practice ───────── */
-function createLobby() {
+function createLobby(fixed) {
   if (!needName()) return;
   teardown();
-  const code = makeCode();
-  H = newHost(code, false);
+  const code = typeof fixed === 'string' ? fixed : makeCode();
+  H = newHost(code, false); H.since = Date.now();
   C.role = 'host'; C.code = code;
   busy('Opening lobby…');
   let opened = false;
@@ -318,9 +321,9 @@ function createLobby() {
   H.hub.onUp = () => {
     if (opened || !H) return; opened = true; busy(null);
     hostHandle({ t: 'join', from: ME.id, name: ME.name, av: ME.av });
-    startHostLoop(); broadcast();
+    startHostLoop(); broadcast(); publishInfo();
   };
-  H.hub.connect();
+  H.hub.connect(); pushNav();
   setTimeout(() => { if (!opened && C.role === 'host') { busy(null); toast('Couldn’t reach the game servers. Check your connection and try again.'); teardown(); render(); } }, 15000);
 }
 function practice() {
@@ -330,8 +333,73 @@ function practice() {
   C.role = 'solo'; C.code = 'SOLO';
   hostHandle({ t: 'join', from: ME.id, name: ME.name, av: ME.av });
   H.set = { mode: 'vs', rounds: 7, secs: 0, topics: [] };
-  startHostLoop(); startGame();
+  startHostLoop(); startGame(); pushNav();
 }
+
+
+/* ═════════════════ PUBLIC LOBBIES: Lobby 1–4, no codes ═════════════════ */
+const ROOMS = [['LOBA', 'Lobby 1'], ['LOBB', 'Lobby 2'], ['LOBC', 'Lobby 3'], ['LOBD', 'Lobby 4']];
+const isRoom = (code) => ROOMS.some(r => r[0] === code);
+const roomName = (code) => (ROOMS.find(r => r[0] === code) || [code, 'Lobby ' + code])[1];
+const ROOM_FRESH = 16000;
+let W = null;
+function startWatcher() {
+  if (W || typeof mqtt === 'undefined') return;
+  C.rooms = C.rooms || {};
+  W = new NET.Hub([NET.NS + 'rooms/+'], (topic, m, c, packet) => onRoomInfo(m, packet && packet.retain));
+  W.connect();
+  setInterval(renderRooms, 3000);
+}
+function roomFresh(info) {
+  if (!info || info.closed || !(info.n > 0)) return false;
+  const t = Date.now();
+  return info._ret ? t - info.at < ROOM_FRESH : t - info._rx < ROOM_FRESH && t - info.at < 120000;
+}
+function onRoomInfo(m, retained) {
+  if (!m || m.t !== 'room' || !isRoom(m.code) || typeof m.at !== 'number') return;
+  C.rooms = C.rooms || {};
+  const cur = C.rooms[m.code];
+  if (cur && cur.at > m.at) return;
+  m._rx = Date.now(); m._ret = !!retained;
+  m.n = Math.max(0, Math.min(MAXP, +m.n || 0)); m.host = cleanName(m.host).slice(0, 14);
+  m.avs = Array.isArray(m.avs) ? m.avs.filter(a => ART.AV_IDS.includes(a)).slice(0, 6) : [];
+  C.rooms[m.code] = m;
+  if (C.role === 'host' && H && H.code === m.code && m.hid !== ME.id && !m.closed && !retained
+      && (m.since < H.since || (m.since === H.since && String(m.hid) < ME.id))
+      && H.players.filter(p => !p.gone).length <= 1) { yieldRoom(m.code); return; }
+  renderRooms();
+}
+function roomInfo(closed) {
+  const live = H.players.filter(p => !p.gone);
+  return { t: 'room', code: H.code, hid: ME.id, since: H.since, at: Date.now(), n: closed ? 0 : live.length, ph: H.phase, host: ME.name, avs: live.slice(0, 6).map(p => p.av), closed: closed ? 1 : 0 };
+}
+function publishInfo(closed) {
+  if (!H || H.solo || !isRoom(H.code)) return;
+  const info = roomInfo(closed);
+  for (const hub of [H.hub, W]) if (hub) hub.pub(NET.NS + 'rooms/' + H.code, info, 0, true);
+  H.lastInfo = now();
+  C.rooms = C.rooms || {}; C.rooms[H.code] = Object.assign(info, { _rx: Date.now(), _ret: false });
+}
+function yieldRoom(code) {
+  if (!H) return;
+  const hub = H.hub; H.hub = null; teardown(); if (hub) setTimeout(() => hub.end(), 300);
+  toast('Someone opened ' + roomName(code) + ' first. Joining them…');
+  joinLobby(code, true);
+}
+function enterRoom(code) {
+  if (C.role && C.role !== 'solo' && C.code === code) return;
+  if (roomFresh((C.rooms || {})[code])) joinLobby(code, false); else createLobby(code);
+}
+function roomsHTML() {
+  return ROOMS.map(([code, name]) => {
+    const info = (C.rooms || {})[code]; const live = roomFresh(info);
+    const busyR = live && info.ph !== 'lobby';
+    const status = !live ? 'Empty · tap to open it' : busyR ? `${info.n} mid-dive · you’ll watch, then play` : `${info.n} waiting · ${info.host} is hosting`;
+    const act = !live ? 'Open' : busyR ? 'Watch' : 'Join';
+    return `<button class="room ${live ? 'live' : ''} ${busyR ? 'busy' : ''}" type="button" data-room="${code}"><span class="rt"><b>${esc(name)}</b><small>${esc(status)}</small></span><span class="ravs">${live ? info.avs.map(a => avatar(a)).join('') : ''}</span><span class="ra">${act}</span></button>`;
+  }).join('');
+}
+function renderRooms() { const h = roomsHTML(); for (const id of ['hmRooms', 'mrRooms']) { const el = $(id); if (el && el._h !== h) { el._h = h; el.innerHTML = h; } } }
 
 /* ═════════════════ GUEST ═════════════════ */
 function connectGuest(code) {
@@ -361,9 +429,9 @@ function joinLobby(code, quiet) {
   if (!quiet && !needName()) return;
   teardown();
   C.role = 'guest'; C.code = code; C.joined = false; C.view = null;
-  C.joinDeadline = pnow() + (quiet ? 9000 : 13000);
-  busy((quiet ? 'Rejoining ' : 'Finding lobby ') + code + '…');
-  connectGuest(code);
+  C.joinDeadline = pnow() + (isRoom(code) ? 6500 : quiet ? 9000 : 13000);
+  busy((quiet ? 'Rejoining ' : 'Joining ') + roomName(code) + '…');
+  connectGuest(code); pushNav();
   saveRejoin(code);
   startGuestLoop();
 }
@@ -381,7 +449,11 @@ function startGuestLoop() {
     const t = pnow();
     if (!C.joined) {
       if (t - lastJoin > 2000) { lastJoin = t; send('join', { name: ME.name, av: ME.av }); }
-      if (t > C.joinDeadline) { busy(null); toast('Couldn’t find lobby ' + C.code + '. Check the code.'); clearRejoin(); teardown(); render(); }
+      if (t > C.joinDeadline) {
+        const code = C.code; busy(null); clearRejoin(); teardown();
+        if (isRoom(code)) { if (C.rooms) delete C.rooms[code]; toast(roomName(code) + ' was empty, so it’s yours now.'); createLobby(code); return; }
+        toast('Couldn’t find that lobby.'); render();
+      }
       return;
     }
     if (t - lastPing > PING_MS) { lastPing = t; send('ping'); }
@@ -394,8 +466,19 @@ function hostEnded(msg) { if (C.role !== 'guest') return; toast(msg || 'The host
 function saveRejoin(code) { const rj = { code, id: ME.id, at: now() }; LS.set('rj', rj); SS.set('rj', rj); }
 function clearRejoin() { LS.del('rj'); SS.del('rj'); }
 function relayQ() { try { const r = new URLSearchParams(location.search).get('relay'); return r && /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? r : ''; } catch { return ''; } }
-function buildQ(code) { const p = new URLSearchParams(); if (code) p.set('join', code); const r = relayQ(); if (r) p.set('relay', r); const s = p.toString(); return s ? '?' + s : ''; }
-function setUrl(code) { try { history.replaceState(null, '', location.pathname + buildQ(code)); } catch {} }
+function buildQ(code) { const p = new URLSearchParams(); const ri = ROOMS.findIndex(r => r[0] === code); if (ri >= 0) p.set('lobby', String(ri + 1)); else if (code) p.set('join', code); const r = relayQ(); if (r) p.set('relay', r); const s = p.toString(); return s ? '?' + s : ''; }
+function setUrl(code) { try { history.replaceState(history.state, '', location.pathname + buildQ(code)); } catch {} }
+function pushNav() { try { if (!history.state || !history.state.kr) history.pushState({ kr: 1 }, ''); } catch {} }
+function doBack() {
+  for (const id of ['meM', 'howM', 'leaveM']) if (!$(id).hidden) { $(id).hidden = true; return; }
+  if (!C.role) return;
+  const v = C.view;
+  if (C.role === 'guest' && v && v.ph === 'lobby') { leave(); return; }
+  if (C.role === 'host' && v && v.ph === 'lobby' && v.pl.filter(p => !p.gone).length <= 1) { leave(); return; }
+  confirmLeave();
+}
+window.addEventListener('popstate', () => { if (C.role || ['meM', 'howM', 'leaveM'].some(id => !$(id).hidden)) { doBack(); if (C.role) pushNav(); } });
+const BACK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5 7.5 12l7 7"/><path d="M8 12h11"/></svg>';
 
 /* ───────── leaving ───────── */
 function teardown() {
@@ -407,7 +490,7 @@ function teardown() {
   busy(null); wakeLock(false);
 }
 function leave() {
-  if (C.role === 'host' && H && H.hub) { H.hub.pub(NET.NS + H.code + '/s', { t: 'end', msg: 'The host closed the game.' }, 1); }
+  if (C.role === 'host' && H && H.hub) { publishInfo(true); H.hub.pub(NET.NS + H.code + '/s', { t: 'end', msg: 'The host closed the game.' }, 1); }
   if (C.role === 'guest') send('bye');
   clearRejoin();
   const hub = (H && H.hub) || C.hub;
@@ -415,7 +498,7 @@ function leave() {
   teardown(); setUrl(''); render();
 }
 window.addEventListener('pagehide', () => {
-  if (C.role === 'host' && H && H.hub) H.hub.pub(NET.NS + H.code + '/s', { t: 'end', msg: 'The host closed the game.' }, 0);
+  if (C.role === 'host' && H && H.hub) { publishInfo(true); H.hub.pub(NET.NS + H.code + '/s', { t: 'end', msg: 'The host closed the game.' }, 0); }
 });
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && H) { const t = now(); for (const p of H.players) p.seen = Math.max(p.seen, t - 2000); }
@@ -447,7 +530,7 @@ function onPhase(v, prev) {
   if (v.ph === 'reveal') { C.revealAt = pnow(); startSink(v); }
   if (v.ph === 'final') {
     C.finalSig = ''; bubbles(26);
-    if (v.solo) { const me = meIn(v); if (me && me.pts > LS.get('best', 0)) LS.set('best', me.pts); }
+    if (v.solo) { const me = meIn(v); C.prevBest = LS.get('best', 0); if (me && me.pts > C.prevBest) LS.set('best', me.pts); }
   }
   if (v.ph === 'lobby') { wakeLock(false); C.finalSig = ''; }
 }
@@ -785,7 +868,6 @@ function renderDive(v) {
   if (crew) { $('hRL').textContent = 'Planks'; $('hR').textContent = String(v.cr.lives); }
   else if (act.length > 1) { const rank = act.slice().sort((a, b) => b.pts - a.pts).findIndex(p => p.id === ME.id) + 1; $('hRL').textContent = 'Rank'; $('hR').textContent = rank > 0 ? `${rank} of ${act.length}` : 'watching'; }
   else { $('hRL').textContent = 'Best dive'; $('hR').textContent = M(LS.get('best', 0)); }
-  $('tbX').innerHTML = ART.ui.close;
   $('qN').textContent = `${crew ? 'Order' : 'Prompt'} ${v.r + 1} of ${v.n} · ${(CATINFO[q.cat] || ['Mix'])[0]}${!crew && act.length > 1 && v.r === v.n - 1 ? ' · double depth' : ''}`;
   $('qT').textContent = q.prompt;
   $('qS').textContent = crew ? '▼ fill the captain’s order ▼' : '▼ rarer answers sink deeper ▼';
@@ -863,7 +945,7 @@ function renderMe() {
   document.querySelectorAll('#avs2 .avb').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.av === ME.av)));
 }
 function setMe(nm, av) {
-  if (nm !== null) { ME.name = cleanName(nm); LS.set('name', ME.name); $('nm').value = ME.name; }
+  if (nm !== null) { ME.name = cleanName(nm); LS.set('name', ME.name); LS.set('named', true); $('nm').value = ME.name; }
   if (av) { ME.av = av; LS.set('av', av); }
   const p = H && H.players.find(x => x.id === ME.id);
   if (p) { p.name = ME.name; p.av = ME.av; H.dirty = true; broadcast(); }
@@ -893,17 +975,18 @@ function renderHome() {
     $('howLadder').innerHTML = ladderHTML();
   }
   document.querySelectorAll('#avs .avb').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.av === ME.av)));
+  $('hmMe').textContent = ME.name; if ($('hmAv')._av !== ME.av) { $('hmAv')._av = ME.av; $('hmAv').innerHTML = avatar(ME.av); }
   const rj = SS.get('rj', null) || LS.get('rj', null);
   const rb = $('rejoin');
-  if (rj && rj.code && now() - rj.at < 3 * 3600e3) { rb.hidden = false; rb.textContent = 'Rejoin ' + rj.code; } else rb.hidden = true;
+  if (rj && rj.code && now() - rj.at < 3 * 3600e3) { rb.hidden = false; rb.textContent = 'Rejoin ' + roomName(rj.code); } else rb.hidden = true;
+  renderRooms();
 }
 function ladderHTML() { return TORDER.map(t => `<div class="${TCLS[t]}"><b>${esc(TIERS[t].name)}</b><span>${TIERS[t].pts * 10}m</span></div>`).join(''); }
 
 /* lobby */
 function renderLobby(v) {
   const host = C.role === 'host';
-  if ($('lcode')._c !== v.code) { $('lcode')._c = v.code; $('lcode').innerHTML = [...v.code].map(c => `<span>${esc(c)}</span>`).join(''); }
-  $('lbX').innerHTML = ART.ui.close;
+  if ($('lcode')._c !== v.code) { $('lcode')._c = v.code; $('lcode').textContent = roomName(v.code); }
   const live = v.pl.filter(p => !p.gone);
   const slots = Math.max(0, Math.min(MAXP, Math.max(4, live.length + 1)) - live.length);
   $('plist').innerHTML = live.map(p => `<li class="${p.off ? 'off' : ''} ${p.id === ME.id ? 'me' : ''}">${avatar(p.av)}<b>${esc(p.nm)}</b><small>${p.id === v.host ? 'host' : p.id === ME.id ? 'you' : p.off ? 'reconnecting' : 'ready'}</small>${host && p.id !== ME.id ? `<button class="kick" type="button" data-kick="${esc(p.id)}" aria-label="Remove ${esc(p.nm)}">${ART.ui.close}</button>` : ''}</li>`).join('')
@@ -1052,24 +1135,21 @@ function renderFinal(v) {
   const sig = JSON.stringify([v.ph, v.code, v.n, host, v.pl.map(p => p.id + p.pts)]);
   if (C.finalSig === sig) return; C.finalSig = sig;
   const box = $('finalScr');
-  let body = '';
-  if (v.solo) body = soloFinal(v);
-  else if (v.set.mode === 'crew') body = crewFinal(v);
-  else body = vsFinal(v);
+  const body = v.solo ? soloFinal(v) : v.set.mode === 'crew' ? crewFinal(v) : vsFinal(v);
   const acts = v.solo
-    ? `<button class="btn big red" type="button" data-act="again">Dive again</button><div class="links"><button class="lnk" type="button" data-act="share">Copy result</button><button class="lnk" type="button" data-act="leave">Home</button></div>`
+    ? `<button class="lb-start" type="button" data-act="again">Dive again ▼</button><div class="fn-links"><button class="fn-b" type="button" data-act="friends">Play with friends</button><button class="fn-b" type="button" data-act="share">Copy result</button></div>`
     : host
-      ? `<button class="btn big red" type="button" data-act="rematch">Play again</button><div class="links"><button class="lnk" type="button" data-act="lobby">Back to lobby</button><button class="lnk" type="button" data-act="share">Copy results</button><button class="lnk" type="button" data-act="leave">Leave</button></div>`
-      : `<p class="wait">Waiting for the host…</p><div class="links"><button class="lnk" type="button" data-act="share">Copy results</button><button class="lnk" type="button" data-act="leave">Leave</button></div>`;
-  box.innerHTML = `<div class="fin"><div class="mascot" id="finKraken">${ART.kraken()}</div>${body}<div class="nextbox">${acts}</div>${v.solo ? '' : `<div class="reacts">${EMOS.map(e => `<button type="button" data-emo="${e}" aria-label="React ${e}">${e}</button>`).join('')}</div>`}</div>`;
-  ART.suckers(box.querySelector('.kraken'));
-  box.querySelectorAll('.out').forEach(n => n.classList.remove('out'));
+      ? `<button class="lb-start" type="button" data-act="rematch">Dive again ▼</button><div class="fn-links"><button class="fn-b" type="button" data-act="lobby">Back to lobby</button><button class="fn-b" type="button" data-act="share">Copy results</button></div>`
+      : `<p class="lb-wait">Waiting for the host…</p><div class="fn-links"><button class="fn-b" type="button" data-act="share">Copy results</button></div>`;
+  box.innerHTML = `<button class="bk" type="button" data-act="back" aria-label="Back">${BACK}<span>Back</span></button><div class="lb-col fn-col">${body}${acts}${v.solo ? '' : `<div class="reacts">${EMOS.map(e => `<button type="button" data-emo="${e}" aria-label="React ${e}">${e}</button>`).join('')}</div>`}</div>`;
 }
+const fnHead = (eye, big, sub, sm) => `<div class="lb-eye">${esc(eye)}</div><div class="fn-big${sm ? ' sm' : ''}">${esc(big)}</div><div class="fn-sub">${sub}</div>`;
 function vsFinal(v) {
   const rows = v.pl.filter(p => !p.spec).slice().sort((a, b) => b.pts - a.pts);
   const tie = rows[1] && rows[1].pts === rows[0].pts;
-  const head = tie ? `<span>It’s a</span><span class="hl">tie</span>` : `<span>${esc(rows[0].nm)}</span><span class="hl">rules the deep</span>`;
-  return `<h1 class="rtitle">${head}</h1><ol class="scores">${scoresHTML(v, false)}</ol>${awardsHTML(v)}`;
+  const head = tie ? fnHead('Dive complete', 'It’s a tie', 'Same depth at the top', true) : fnHead('Dive complete', rows[0].nm, `went deepest · ${esc(M(rows[0].pts))}`, true);
+  const board = `<ol class="fn-board">${rows.map((p, i) => `<li class="${p.id === ME.id ? 'me' : ''}"><span class="rk">${i + 1}</span>${avatar(p.av)}<span class="n">${esc(p.nm)}${p.tot ? `<small>${esc(M(p.tot))} all-time</small>` : ''}</span><b>${esc(M(p.pts))}</b></li>`).join('')}</ol>`;
+  return head + board + awardsHTML(v);
 }
 function awardsHTML(v) {
   const all = [];
@@ -1077,29 +1157,30 @@ function awardsHTML(v) {
   if (!all.length) return '';
   const cards = [];
   const best = all.filter(x => !x.sunk).sort((a, b) => TIERS[b.a.tier].i - TIERS[a.a.tier].i)[0];
-  if (best) cards.push(['Deepest dive', `${pinfo(best.pid, v).nm}: ${best.a.name}`, `${TIERS[best.a.tier].name} · ${best.q.prompt}`]);
+  if (best) cards.push(['Deepest answer', `${pinfo(best.pid, v).nm}`, `${best.a.name} · ${TIERS[best.a.tier].name}`]);
   const sc = {}; all.filter(x => x.sunk).forEach(x => (sc[x.pid] = (sc[x.pid] || 0) + 1));
   const st = Object.entries(sc).sort((a, b) => b[1] - a[1])[0];
-  if (st) cards.push(['Most sunk', pinfo(st[0], v).nm, `${st[1]} answer${st[1] > 1 ? 's' : ''} matched someone else’s.`]);
+  if (st) cards.push(['Most sunk', pinfo(st[0], v).nm, `${st[1]} answer${st[1] > 1 ? 's' : ''} matched someone else’s`]);
   const sh = {}; all.filter(x => x.a.tier === 'c' || x.a.tier === 'h').forEach(x => (sh[x.pid] = (sh[x.pid] || 0) + 1));
   const s2 = Object.entries(sh).sort((a, b) => b[1] - a[1])[0];
-  if (s2 && s2[1] >= 2) cards.push(['Stayed in the shallows', pinfo(s2[0], v).nm, `${s2[1]} Shallows or Fool’s gold answers.`]);
+  if (s2 && s2[1] >= 2) cards.push(['Stayed shallow', pinfo(s2[0], v).nm, `${s2[1]} Shallows or Fool’s gold answers`]);
   const kr = all.filter(x => x.a.tier === 'x' && !x.sunk);
-  if (kr.length && cards.length < 3) cards.push(['Kraken spotter', pinfo(kr[0].pid, v).nm, `Found ${kr[0].a.name}.`]);
-  return `<div class="awards">${cards.slice(0, 3).map(c => `<div class="award"><span class="label">${esc(c[0])}</span><b>${esc(c[1])}</b><p>${esc(c[2])}</p></div>`).join('')}</div>`;
+  if (kr.length && cards.length < 3) cards.push(['Kraken spotter', pinfo(kr[0].pid, v).nm, `Found ${kr[0].a.name}`]);
+  return `<div class="fn-awards">${cards.slice(0, 3).map(c => `<div><span>${esc(c[0])}</span><b>${esc(c[1])}</b><small>${esc(c[2])}</small></div>`).join('')}</div>`;
 }
 function crewFinal(v) {
   const cr = v.cr || { cl: 0, stars: 0, lives: 0, misses: 0 };
   const title = cr.cl === v.n ? 'Legendary crew' : cr.cl >= v.n - 2 ? 'Seasoned crew' : cr.cl >= Math.ceil(v.n / 2) ? 'Decent haul' : 'Walk the plank';
-  const log = (v.hist || []).map(h => `<li><span>${esc(QMAP[h.q].prompt)}</span><b>${h.out === 'clear' ? '★'.repeat(h.rs) + '☆'.repeat(3 - h.rs) : 'Missed'}${h.gem ? ' · Kraken' : ''}</b></li>`).join('');
-  return `<h1 class="rtitle"><span>${cr.cl} of ${v.n}</span><span class="hl">orders filled</span></h1><p class="label rsub">${esc(title)} · ${cr.stars}★ · ${cr.lives} ${cr.lives === 1 ? 'plank' : 'planks'} left</p><ul class="runlog">${log}</ul>`;
+  const log = (v.hist || []).map(h => `<li><span class="q">${esc(QMAP[h.q].prompt)}</span><b>${h.out === 'clear' ? '★'.repeat(h.rs) + '☆'.repeat(3 - h.rs) : 'missed'}${h.gem ? ' · kraken' : ''}</b></li>`).join('');
+  return fnHead('Dive complete', `${cr.cl} of ${v.n}`, `orders filled · ${esc(title)} · ${cr.stars}★`, true) + `<ol class="fn-log">${log}</ol>`;
 }
 function soloFinal(v) {
   const me = meIn(v); const pts = me ? me.pts : 0; const max = v.n * 100;
-  const title = pts >= max * 0.74 ? 'Kraken whisperer' : pts >= max * 0.57 ? 'Abyss diver' : pts >= max * 0.4 ? 'Open-water swimmer' : pts >= max * 0.23 ? 'Paddling' : 'Stuck in the shallows';
-  const cells = (v.hist || []).map(h => { const r = h.res && h.res[0]; return r && r[1] >= 0 ? `<i class="${TCLS[QMAP[h.q].answers[r[1]].tier]}"></i>` : '<i style="background:transparent"></i>'; }).join('');
-  const log = (v.hist || []).map(h => { const q = QMAP[h.q]; const r = h.res && h.res[0]; return `<li><span>${esc(q.prompt)}</span><b>${r && r[1] >= 0 ? esc(q.answers[r[1]].name) + ' · ' + M(r[2]) : 'Eaten · 0 m'}</b></li>`; }).join('');
-  return `<h1 class="rtitle"><span>${M(pts)}</span><span class="hl">${esc(title)}</span></h1><p class="label rsub">Out of a possible ${M(max)}</p><div class="cells">${cells}</div><ul class="runlog">${log}</ul>`;
+  const title = pts >= max * 0.74 ? 'Kraken whisperer' : pts >= max * 0.57 ? 'Abyss diver' : pts >= max * 0.4 ? 'Midnight diver' : pts >= max * 0.23 ? 'Twilight diver' : 'Stuck in the shallows';
+  const isBest = C.prevBest !== undefined && pts > C.prevBest && C.prevBest > 0;
+  const cells = (v.hist || []).map(h => { const r = h.res && h.res[0]; return `<i class="${r && r[1] >= 0 ? TCLS[QMAP[h.q].answers[r[1]].tier] : 'none'}"></i>`; }).join('');
+  const log = (v.hist || []).map(h => { const q = QMAP[h.q]; const r = h.res && h.res[0]; const a = r && r[1] >= 0 ? q.answers[r[1]] : null; return `<li><span class="q">${esc(q.prompt)}<small class="${a ? TCLS[a.tier] : ''}">${a ? esc(a.name) + ' · ' + esc(TIERS[a.tier].name) : 'no answer'}</small></span><b>+${esc(M(r ? r[2] : 0))}</b></li>`; }).join('');
+  return fnHead('Dive complete', M(pts), `${esc(title)}${isBest ? ' · <em>new best</em>' : ''}`) + `<div class="fn-cells">${cells}</div><ol class="fn-log">${log}</ol>`;
 }
 function shareText() {
   const v = C.view; if (!v) return '';
@@ -1154,7 +1235,7 @@ function inviteLink() { return location.origin + location.pathname + buildQ(C.co
 function confirmLeave() {
   const v = C.view;
   if (C.role === 'solo' || !v || v.ph === 'final') { leave(); return; }
-  $('leaveP').textContent = C.role === 'host' ? 'You’re the host. Leaving closes the lobby for everyone.' : 'You’ll leave this lobby. You can rejoin with the code.';
+  $('leaveP').textContent = C.role === 'host' ? 'You’re the host. Leaving closes the lobby for everyone.' : 'You’ll leave this lobby. You can jump back in from the lobby list.';
   $('leaveM').hidden = false; $('leaveYes').focus();
 }
 function bind() {
@@ -1165,14 +1246,9 @@ function bind() {
   document.addEventListener('pointerdown', () => SFX.unlock(), { once: true });
   $('nm').addEventListener('input', (e) => { ME.name = cleanName(e.target.value); LS.set('name', e.target.value.trim() ? ME.name : ''); });
   $('avs').addEventListener('click', (e) => { const b = e.target.closest('.avb'); if (!b) return; ME.av = b.dataset.av; LS.set('av', ME.av); renderHome(); SFX.bubble(); });
-  $('create').addEventListener('click', createLobby);
   $('practice').addEventListener('click', practice);
-  $('joinF').addEventListener('submit', (e) => { e.preventDefault(); joinLobby($('code').value, false); });
-  $('code').addEventListener('input', (e) => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4); });
   $('rejoin').addEventListener('click', () => { const rj = SS.get('rj', null) || LS.get('rj', null); if (!rj) return; if (rj.id) { ME.id = rj.id; SS.set('id', ME.id); } if (!$('nm').value.trim()) $('nm').value = ME.name || 'Player'; joinLobby(rj.code, true); });
   $('how').addEventListener('click', () => { $('howM').hidden = false; $('howX').focus(); });
-  $('mrJoin').addEventListener('submit', (e) => { e.preventDefault(); joinLobby($('mrCode').value, false); });
-  $('mrCode').addEventListener('input', (e) => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4); });
   $('nm2').addEventListener('input', (e) => { if (e.target.value.trim()) setMe(e.target.value, null); });
   $('avs2').addEventListener('click', (e) => { const b = e.target.closest('.avb'); if (!b) return; setMe(null, b.dataset.av); SFX.bubble(); });
   $('meRnd').addEventListener('click', () => { const n = randName(); $('nm2').value = n; setMe(n, randAv()); SFX.bubble(); });
@@ -1185,12 +1261,12 @@ function bind() {
     if (e.key === 'Enter' && C.view && C.view.ph === 'reveal' && H && !$('land').hidden && document.activeElement.tagName !== 'BUTTON') { e.preventDefault(); nextRound(); }
   });
   window.addEventListener('resize', () => { DV.built = false; });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { $('howM').hidden = true; $('leaveM').hidden = true; $('meM').hidden = true; } });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { doBack(); } });
   ['howM', 'leaveM', 'meM'].forEach(id => $(id).addEventListener('click', (e) => { if (e.target.id === id) $(id).hidden = true; }));
   $('lcode').addEventListener('click', () => copy(inviteLink(), 'Invite link copied'));
   $('share').addEventListener('click', async () => {
     const url = inviteLink();
-    if (navigator.share && matchMedia('(pointer: coarse)').matches) { try { await navigator.share({ title: 'Kraken', text: 'Join my Kraken lobby: ' + C.code, url }); return; } catch {} }
+    if (navigator.share && matchMedia('(pointer: coarse)').matches) { try { await navigator.share({ title: 'Kraken', text: 'Dive with me in Kraken · ' + roomName(C.code), url }); return; } catch {} }
     copy(url, 'Invite link copied');
   });
   $('plist').addEventListener('click', (e) => { const b = e.target.closest('[data-kick]'); if (!b || !H) return; const id = b.dataset.kick; H.banned.add(id); H.players = H.players.filter(p => p.id !== id); direct(id, { t: 'err', msg: 'The host removed you from this lobby.' }); H.dirty = true; broadcast(); });
@@ -1211,17 +1287,18 @@ function bind() {
   $('ans').addEventListener('input', () => { if (C.fb && C.fb.kind === 'no') { C.fb = null; renderFb(); } onTyping(); });
   $('orders').addEventListener('click', (e) => { const b = e.target.closest('button.slot'); if (!b) return; const i = +b.dataset.slot; const v = C.view; const cur = v && v.cr && v.cr.calls ? v.cr.calls[ME.id] : null; send('call', { slot: cur === i ? null : i }); });
   document.addEventListener('click', (e) => {
+    const rb = e.target.closest('[data-room]'); if (rb) { enterRoom(rb.dataset.room); return; }
     const em = e.target.closest('[data-emo]'); if (em) { if (C.role && C.role !== 'solo') { send('emo', { e: em.dataset.emo }); } return; }
     const sb = e.target.closest('#nextBox .seg button'); if (sb && H) { H.set.secs = +sb.dataset.v; H.dirty = true; broadcast(); $('nextBox')._sig = ''; renderReveal(C.view); return; }
     const a = e.target.closest('[data-act]'); if (!a) return;
     const act = a.dataset.act;
     if (act === 'leave') confirmLeave();
+    if (act === 'back') doBack();
     if (act === 'next' && H) nextRound();
     if (act === 'force' && H) forceReveal();
-    if (act === 'friends') createLobby();
+    if (act === 'friends') { if (C.role === 'solo') leave(); else if (!C.role) render(); }
     if (act === 'me') openMe();
     if (act === 'howto') { $('howM').hidden = false; $('howX').focus(); }
-    if (act === 'joinopen') { $('mprail').classList.toggle('jo'); if ($('mprail').classList.contains('jo')) $('mrCode').focus(); }
     if (act === 'rematch' && H) { startGame(); }
     if (act === 'lobby' && H) backToLobby();
     if (act === 'again') practice();
@@ -1233,16 +1310,14 @@ function bind() {
 /* ═════════════════ BOOT ═════════════════ */
 function boot() {
   try { const fav = 'data:image/svg+xml,' + encodeURIComponent(ART.mark); $('favicon').setAttribute('href', fav); } catch {}
-  bind(); renderHome(); buildOcean(); render();
+  startWatcher(); bind(); renderHome(); buildOcean(); render();
   const params = new URLSearchParams(location.search);
   const j = (params.get('join') || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
   const srj = SS.get('rj', null);
   if (srj && srj.code && (!j || j === srj.code) && now() - srj.at < 3 * 3600e3) { if (srj.id) { ME.id = srj.id; SS.set('id', ME.id); } joinLobby(srj.code, true); return; }
-  if (j.length === 4) {
-    $('code').value = j;
-    joinLobby(j, false);
-    return;
-  }
+  const ln = parseInt(params.get('lobby') || '0', 10);
+  if (ln >= 1 && ln <= ROOMS.length) { busy('Finding ' + ROOMS[ln - 1][1] + '…'); setTimeout(() => { busy(null); enterRoom(ROOMS[ln - 1][0]); }, 1800); return; }
+  if (j.length === 4) { joinLobby(j, false); return; }
   practice();
 }
 function buildOcean() {

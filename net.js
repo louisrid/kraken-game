@@ -31,14 +31,14 @@ const NET = (() => {
         } catch { continue; }
         c._relay = r.url;
         c.on('connect', () => { if (this.dead) return; c.subscribe(this.subs, { qos: 1 }, () => { this.onUp && this.onUp(c); }); });
-        c.on('message', (topic, buf) => { if (this.dead) return; let m; try { m = JSON.parse(buf.toString()); } catch { return; } if (m && typeof m === 'object') this.onMsg(topic, m, c); });
+        c.on('message', (topic, buf, packet) => { if (this.dead) return; let m; try { m = JSON.parse(buf.toString()); } catch { return; } if (m && typeof m === 'object') this.onMsg(topic, m, c, packet); });
         c.on('error', () => {});
         this.clients.push(c);
       }
     }
-    pub(topic, obj, qos = 0) {
+    pub(topic, obj, qos = 0, retain = false) {
       const s = JSON.stringify(obj);
-      for (const c of this.clients) { if (c.connected) { try { c.publish(topic, s, { qos }); } catch {} } }
+      for (const c of this.clients) { if (c.connected) { try { c.publish(topic, s, { qos, retain }); } catch {} } }
     }
     up() { return this.clients.filter(c => c.connected).length; }
     keepOnly(keep) { for (const c of this.clients) if (c !== keep) { try { c.end(true); } catch {} } this.clients = [keep]; }
