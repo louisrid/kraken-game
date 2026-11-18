@@ -3,6 +3,8 @@
 Name something. The rarer your answer, the deeper it sinks and the more it scores.
 Same build model as Pass the Bomb: one static folder, no server of our own.
 
+Open the link and you're straight into a solo dive in the ocean, answer box ready. Everyone gets a random lowercase name (riptide, barnacle, saltbeard…) and a random character; tap **Edit** to change them. **Play with friends** and **Join** sit in the side panel.
+
 ## Deploy (1 minute)
 1. Go to https://app.netlify.com/drop
 2. Drag this whole folder (or the unzipped zip) onto the page.

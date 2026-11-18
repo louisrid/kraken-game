@@ -34,7 +34,11 @@ const THEMES = [{ id: 'light', bg: '#ffffff', n: 'Foam' }, { id: 'grey', bg: '#e
 
 /* ───────── me ───────── */
 const ME = { id: SS.get('id', null) || rid(10), name: LS.get('name', ''), av: LS.get('av', null) };
-if (!ART.AV_IDS.includes(ME.av)) ME.av = ART.AV_IDS[Math.floor(Math.random() * ART.AV_IDS.length)];
+const NAMES = ['riptide', 'barnacle', 'undertow', 'saltbeard', 'inkblot', 'fathom', 'bilgerat', 'cutlass', 'harpoon', 'maelstrom', 'sharkbait', 'seadog', 'doubloon', 'urchin', 'nautilus', 'briny', 'marlin', 'shipwreck', 'limpet', 'squall', 'grog', 'kraklet', 'tidepool', 'driftwood', 'plunder', 'anchor', 'swabbie', 'mudskipper', 'angler', 'cuttlefish', 'bluefin', 'stingray', 'coralbite', 'lagoon', 'starboard', 'jellyjam', 'blowhole', 'flotsam', 'jetsam', 'gullet', 'squidge', 'tentacle', 'wreckdiver', 'saltwater', 'deepjaw'];
+const randName = () => NAMES[Math.floor(Math.random() * NAMES.length)];
+const randAv = () => ART.AV_IDS[Math.floor(Math.random() * ART.AV_IDS.length)];
+if (!ART.AV_IDS.includes(ME.av)) { ME.av = randAv(); LS.set('av', ME.av); }
+if (!ME.name) { ME.name = randName(); LS.set('name', ME.name); }
 SS.set('id', ME.id);
 const SID = rid(8);
 let QSEQ = 0;
@@ -79,7 +83,7 @@ const SFX = (() => {
     roar, on: () => on, set: (v) => { on = v; LS.set('snd', v); },
   };
 })();
-const vib = (p) => { try { navigator.vibrate && navigator.vibrate(p); } catch {} };
+const vib = (p) => { try { if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return; navigator.vibrate && navigator.vibrate(p); } catch {} };
 let wake = null;
 async function wakeLock(onoff) {
   try {
@@ -99,8 +103,8 @@ function splitPrompt(p) { const m = p.match(/^Name (an?|the) (.*)$/i); return m 
 function makeCode() { let s = ''; for (let i = 0; i < 4; i++) s += ALPHA[Math.floor(Math.random() * ALPHA.length)]; return s; }
 function shuffled(a, seed) { const R = rng(seed); a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function needName() {
-  const v = $('nm').value.trim();
-  if (!v) { toast('Pick a name first'); $('nm').focus(); $('nm').classList.remove('shk'); void $('nm').offsetWidth; $('nm').classList.add('shk'); return false; }
+  let v = $('nm').value.trim();
+  if (!v) { v = ME.name && ME.name !== 'Player' ? ME.name : randName(); $('nm').value = v; }
   ME.name = cleanName(v); LS.set('name', ME.name); return true;
 }
 function meIn(v = C.view) { return v ? v.pl.find(p => p.id === ME.id) : null; }
@@ -315,7 +319,6 @@ function createLobby() {
   setTimeout(() => { if (!opened && C.role === 'host') { busy(null); toast('Couldn’t reach the game servers. Check your connection and try again.'); teardown(); render(); } }, 15000);
 }
 function practice() {
-  if (!$('nm').value.trim()) { $('nm').value = 'Diver'; }
   if (!needName()) return;
   teardown();
   H = newHost('SOLO', true);
@@ -623,7 +626,27 @@ function bubbles(n) {
 }
 
 /* ═════════════════ RENDER ═════════════════ */
+function renderRail() {
+  const on = C.role === 'solo';
+  document.body.classList.toggle('solo', on);
+  $('mprail').hidden = !on; if (!on) return;
+  if ($('mrAv')._av !== ME.av) { $('mrAv')._av = ME.av; $('mrAv').innerHTML = avatar(ME.av); }
+  $('mrNm').textContent = ME.name;
+}
+function renderMe() {
+  if (!$('avs2').firstChild) $('avs2').innerHTML = ART.AV_IDS.map(id => `<button type="button" class="avb" data-av="${id}" aria-label="${id}">${ART.avatar(id)}</button>`).join('');
+  document.querySelectorAll('#avs2 .avb').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.av === ME.av)));
+}
+function setMe(nm, av) {
+  if (nm !== null) { ME.name = cleanName(nm); LS.set('name', ME.name); $('nm').value = ME.name; }
+  if (av) { ME.av = av; LS.set('av', av); }
+  const p = H && H.players.find(x => x.id === ME.id);
+  if (p) { p.name = ME.name; p.av = ME.av; H.dirty = true; }
+  renderMe(); renderHome(); renderRail();
+}
+function openMe() { renderMe(); $('nm2').value = ME.name; $('meM').hidden = false; }
 function render() {
+  renderRail();
   const v = C.view;
   if (!C.role || !v) { if (!C.role) { scr('home'); renderHome(); } return; }
   const map = { lobby: 'lobby', play: 'play', reveal: 'reveal', final: 'final' };
@@ -966,7 +989,7 @@ function confirmLeave() {
 function bind() {
   $('themes').innerHTML = THEMES.map(t => `<button type="button" data-th="${t.id}" style="--sw:${t.bg}" aria-label="${t.n} theme"></button>`).join('');
   $('themes').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) setTheme(b.dataset.th); });
-  setTheme(LS.get('theme', 'light'));
+  setTheme(LS.get('theme', 'deep'));
   renderSnd();
   $('sndBtn').addEventListener('click', toggleSnd); $('sndt').addEventListener('click', toggleSnd); $('tbSnd').addEventListener('click', toggleSnd);
   document.addEventListener('pointerdown', () => SFX.unlock(), { once: true });
@@ -978,12 +1001,18 @@ function bind() {
   $('code').addEventListener('input', (e) => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4); });
   $('rejoin').addEventListener('click', () => { const rj = SS.get('rj', null) || LS.get('rj', null); if (!rj) return; if (rj.id) { ME.id = rj.id; SS.set('id', ME.id); } if (!$('nm').value.trim()) $('nm').value = ME.name || 'Player'; joinLobby(rj.code, true); });
   $('how').addEventListener('click', () => { $('howM').hidden = false; $('howX').focus(); });
+  $('mrJoin').addEventListener('submit', (e) => { e.preventDefault(); joinLobby($('mrCode').value, false); });
+  $('mrCode').addEventListener('input', (e) => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4); });
+  $('nm2').addEventListener('input', (e) => { if (e.target.value.trim()) setMe(e.target.value, null); });
+  $('avs2').addEventListener('click', (e) => { const b = e.target.closest('.avb'); if (!b) return; setMe(null, b.dataset.av); SFX.bubble(); });
+  $('meRnd').addEventListener('click', () => { const n = randName(); $('nm2').value = n; setMe(n, randAv()); SFX.bubble(); });
+  $('meX').addEventListener('click', () => ($('meM').hidden = true));
   $('howX').addEventListener('click', () => ($('howM').hidden = true));
   $('busyX').addEventListener('click', () => { clearRejoin(); teardown(); setUrl(''); render(); });
   $('leaveNo').addEventListener('click', () => ($('leaveM').hidden = true));
   $('leaveYes').addEventListener('click', () => { $('leaveM').hidden = true; leave(); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { $('howM').hidden = true; $('leaveM').hidden = true; } });
-  ['howM', 'leaveM'].forEach(id => $(id).addEventListener('click', (e) => { if (e.target.id === id) $(id).hidden = true; }));
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { $('howM').hidden = true; $('leaveM').hidden = true; $('meM').hidden = true; } });
+  ['howM', 'leaveM', 'meM'].forEach(id => $(id).addEventListener('click', (e) => { if (e.target.id === id) $(id).hidden = true; }));
   $('share').addEventListener('click', async () => {
     const url = inviteLink();
     if (navigator.share && matchMedia('(pointer: coarse)').matches) { try { await navigator.share({ title: 'Kraken', text: 'Join my Kraken lobby: ' + C.code, url }); return; } catch {} }
@@ -1015,6 +1044,10 @@ function bind() {
     if (act === 'leave') confirmLeave();
     if (act === 'next' && H) nextRound();
     if (act === 'force' && H) forceReveal();
+    if (act === 'friends') createLobby();
+    if (act === 'me') openMe();
+    if (act === 'howto') { $('howM').hidden = false; $('howX').focus(); }
+    if (act === 'joinopen') { $('mprail').classList.toggle('jo'); if ($('mprail').classList.contains('jo')) $('mrCode').focus(); }
     if (act === 'rematch' && H) { startGame(); }
     if (act === 'lobby' && H) backToLobby();
     if (act === 'again') practice();
@@ -1026,16 +1059,28 @@ function bind() {
 /* ═════════════════ BOOT ═════════════════ */
 function boot() {
   try { const fav = 'data:image/svg+xml,' + encodeURIComponent(ART.mark); $('favicon').setAttribute('href', fav); } catch {}
-  bind(); renderHome(); render();
+  bind(); renderHome(); buildOcean(); render();
   const params = new URLSearchParams(location.search);
   const j = (params.get('join') || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
   const srj = SS.get('rj', null);
   if (srj && srj.code && (!j || j === srj.code) && now() - srj.at < 3 * 3600e3) { if (srj.id) { ME.id = srj.id; SS.set('id', ME.id); } joinLobby(srj.code, true); return; }
   if (j.length === 4) {
     $('code').value = j;
-    if (ME.name) joinLobby(j, false);
-    else { toast('Pick a name and a character, then press Join'); $('nm').focus(); }
+    joinLobby(j, false);
+    return;
   }
+  practice();
+}
+function buildOcean() {
+  const b = $('oBub'); if (!b || b.firstChild) return;
+  for (let i = 0; i < 16; i++) {
+    const e = document.createElement('i'); const sz = 6 + Math.random() * 22;
+    e.style.cssText = `left:${Math.random() * 100}%;width:${sz}px;height:${sz}px;--dx:${Math.round((Math.random() - 0.5) * 90)}px;animation-duration:${9 + Math.random() * 12}s;animation-delay:-${(Math.random() * 20).toFixed(1)}s`;
+    b.appendChild(e);
+  }
+  const k = (d) => `<path class="kb" d="${d}"/><path class="kf" d="${d}"/>`;
+  const strands = ['M34 440 C 14 370 62 330 40 262 C 22 204 64 160 44 92 C 40 70 50 50 44 30', 'M84 440 C 104 382 64 340 88 280 C 108 230 74 190 94 140 C 100 124 96 112 92 100', 'M122 440 C 112 400 138 368 120 326 C 110 300 126 284 120 262'];
+  document.querySelectorAll('.o-kelp').forEach((svg, n) => { svg.innerHTML = `<g>${strands.map(k).join('')}</g>`; svg.querySelector('g').style.animationDelay = `-${n * 2.3}s`; });
 }
 boot();
 })();

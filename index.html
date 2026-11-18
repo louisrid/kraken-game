@@ -422,12 +422,100 @@ html[data-theme="deep"] .kraken .k-ink path,html[data-theme="deep"] .kraken .k-i
 @keyframes dbub{0%{transform:translateY(0);opacity:0}10%{opacity:1}100%{transform:translateY(-62vh);opacity:0}}
 .landed .dfx i{animation-play-state:paused;opacity:0}
 .dskip{position:absolute;right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));z-index:5;background:var(--card);color:var(--k);border:3px solid #0a0a0a;border-radius:10px;font:italic 900 1.05rem/1 var(--cond);text-transform:uppercase;padding:10px 16px;cursor:pointer;box-shadow:3px 3px 0 #0a0a0a}
+
+/* ═════ the ocean behind everything ═════ */
+:root{--s0:#e8fafd;--s1:#ade4ed;--s2:#5ebdcf;--ray:.4;--wv:.55;--kelp:#2f9a6f;--snow:.6;--m:#3a565d}
+html[data-theme="grey"]{--s0:#f0f3f4;--s1:#cfd9dc;--s2:#9bb0b7;--ray:.32;--wv:.5;--kelp:#5e8a79;--m:#4a5a5e}
+html[data-theme="deep"]{--s0:#22627f;--s1:#12344b;--s2:#06131c;--ray:.13;--wv:.18;--kelp:#1f6a52;--snow:.35;--m:#9db3c1}
+html[data-theme="abyss"]{--s0:#102030;--s1:#070b10;--s2:#020304;--ray:.06;--wv:.08;--kelp:#173a30;--snow:.25;--m:#8b919b}
+html{background:var(--s1)}
+body,body[data-scr="play"]{background:transparent;background-image:none}
+.ocean{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none;background:linear-gradient(to bottom,var(--s0) 0%,var(--s1) 48%,var(--s2) 100%)}
+.o-waves i{position:absolute;left:0;right:0;top:0;height:64px;background-repeat:repeat-x;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 260 64' preserveAspectRatio='none'%3E%3Cpath d='M0 0H260V28Q227.5 46 195 28T130 28T65 28T0 28Z' fill='white'/%3E%3C/svg%3E")}
+.o-waves .w1{background-size:260px 64px;opacity:var(--wv);animation:ow1 10s linear infinite}
+.o-waves .w2{top:12px;background-size:390px 64px;opacity:calc(var(--wv) * .55);animation:ow2 16s linear infinite reverse}
+.o-waves .w3{top:26px;background-size:200px 44px;opacity:calc(var(--wv) * .3);animation:ow3 7s linear infinite}
+@keyframes ow1{to{background-position-x:260px}} @keyframes ow2{to{background-position-x:390px}} @keyframes ow3{to{background-position-x:200px}}
+.o-rays i{position:absolute;top:-20vh;height:115vh;width:9vw;min-width:56px;background:linear-gradient(to bottom,rgba(255,255,255,var(--ray)),transparent 78%);transform-origin:top center;filter:blur(5px);animation:oray 9s ease-in-out infinite alternate}
+.o-rays i:nth-child(1){left:6%}
+.o-rays i:nth-child(2){left:31%;width:5vw;animation-delay:-3s;animation-duration:11s}
+.o-rays i:nth-child(3){left:56%;width:12vw;animation-delay:-6s}
+.o-rays i:nth-child(4){left:80%;width:6vw;animation-delay:-2s;animation-duration:13s}
+@keyframes oray{0%{transform:rotate(9deg);opacity:.45}100%{transform:rotate(19deg);opacity:1}}
+.o-snow{position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,var(--snow)) 1px,transparent 1.7px),radial-gradient(rgba(255,255,255,calc(var(--snow) * .7)) 1.5px,transparent 2.2px);background-size:90px 90px,140px 140px;background-position:0 0,40px 60px;animation:osnow 60s linear infinite}
+@keyframes osnow{to{background-position:0 900px,40px 1460px}}
+.o-bub i{position:absolute;bottom:-40px;border:2px solid rgba(255,255,255,.65);border-radius:50%;animation:obub linear infinite}
+@keyframes obub{0%{transform:translate(0,0)}50%{transform:translate(var(--dx),-58vh)}100%{transform:translate(0,-118vh)}}
+.o-kelp{position:absolute;bottom:-6px;width:150px;height:min(48vh,400px);overflow:visible}
+.o-kelp.l{left:-14px}.o-kelp.r{right:-14px;transform:scaleX(-1)}
+.o-kelp g{transform-box:fill-box;transform-origin:50% 100%;animation:osway 6.5s ease-in-out infinite}
+.o-kelp path{fill:none;stroke-linecap:round}
+.o-kelp .kb{stroke:#0a0a0a;stroke-width:19}
+.o-kelp .kf{stroke:var(--kelp);stroke-width:11}
+@keyframes osway{50%{transform:rotate(5deg) skewX(-3deg)}}
+@media (max-width:760px){.o-kelp{width:90px;height:26vh;opacity:.85}}
+@media (prefers-reduced-motion: reduce){.ocean *{animation:none !important}}
+.lobby .hint,.home .tagline{text-shadow:none}
+/* multiplayer rail (solo play) */
+.mprail{display:flex;flex-wrap:wrap;align-items:center;gap:10px;max-width:1060px;margin:14px auto 0;padding:0 max(16px, env(safe-area-inset-right)) 0 max(56px, calc(env(safe-area-inset-left) + 48px))}
+.mprail .rl{display:none}
+.mprail>*{min-width:0}
+#mrAv{display:inline-flex}
+.mprail .rl b{display:block;font-size:1.9rem;margin:4px 0 6px}
+.mprail .rl .hint{margin:0;font-size:.92rem}
+.mechip{display:inline-flex;align-items:center;gap:8px;background:var(--card);color:var(--k);border:3px solid var(--k);border-radius:999px;padding:3px 14px 3px 3px;box-shadow:3px 3px 0 var(--k);min-width:0}
+.mechip .av{width:36px;height:36px;flex:none}
+.mechip b{font:800 1.05rem/1 var(--body);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px}
+.mechip i{font:italic 900 .8rem/1 var(--cond);text-transform:uppercase;letter-spacing:.06em;color:var(--m)}
+.mprail .btn.red.mid{font-size:1.2rem;padding:10px 16px}
+.mrjoin{display:flex;gap:8px}
+.mrjoin .field{width:104px;height:46px;font-size:1.05rem;text-transform:uppercase}
+.mrjoin .btn{height:46px}
+.mprail .jbtn{display:none}
+@media (min-width:1100px){
+  body.solo{padding-right:290px}
+  .mprail{position:fixed;right:24px;top:50%;transform:translateY(-50%);width:262px;margin:0;padding:18px;flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:12px;background:var(--card);border:3px solid var(--k);border-radius:18px;box-shadow:var(--sh);z-index:20}
+  .mprail .rl{display:block}
+  .mprail .btn.red.mid{width:100%;font-size:1.4rem;padding:14px 16px}
+  .mechip{align-self:flex-start}
+  .mrjoin .field{flex:1;width:auto;min-width:0}
+}
+@media (max-width:860px){
+  body.solo .themes,body.solo .sndbtn{display:none}
+  body.solo .scr{padding-top:12px}
+  .mprail{padding:0 max(14px, env(safe-area-inset-right)) 0 max(14px, env(safe-area-inset-left));margin-top:12px;gap:8px}
+}
+@media (max-width:600px){
+  .mrjoin,.mprail .rlh{display:none}
+  .mprail.jo .mrjoin{display:flex;width:100%}
+  .mprail .jbtn{display:inline-flex;height:46px}
+  .mechip b{max-width:84px}
+  .mechip i{display:none}
+  .mprail .btn.red.mid{font-size:1.05rem;padding:10px 12px}
+}
 </style>
 </head>
 <body data-scr="home">
 <noscript>Kraken needs JavaScript turned on.</noscript>
 <div class="themes" id="themes" role="group" aria-label="Theme"></div>
 <button class="sndbtn" id="sndBtn" type="button" aria-label="Sound"></button>
+<div class="ocean" aria-hidden="true">
+  <div class="o-rays"><i></i><i></i><i></i><i></i></div>
+  <div class="o-snow"></div>
+  <div class="o-waves"><i class="w1"></i><i class="w2"></i><i class="w3"></i></div>
+  <div class="o-bub" id="oBub"></div>
+  <svg class="o-kelp l" viewBox="0 0 160 440" preserveAspectRatio="xMidYMax meet"></svg>
+  <svg class="o-kelp r" viewBox="0 0 160 440" preserveAspectRatio="xMidYMax meet"></svg>
+</div>
+<aside class="mprail" id="mprail" aria-label="Play with friends" hidden>
+  <div class="rl"><div class="label">Multiplayer</div><b class="cond">Dive with friends</b><p class="hint">Same prompts. Deepest diver wins. Same answer sinks you both.</p></div>
+  <button class="mechip" type="button" data-act="me" aria-label="Change your name and look"><span id="mrAv"></span><b id="mrNm"></b><i>Edit</i></button>
+  <button class="btn red mid" type="button" data-act="friends">Play with friends</button>
+  <button class="btn black jbtn" type="button" data-act="joinopen">Join</button>
+  <form class="mrjoin" id="mrJoin" autocomplete="off"><input class="field" id="mrCode" maxlength="4" placeholder="Code" aria-label="Lobby code" autocapitalize="characters" spellcheck="false"><button class="btn black" type="submit">Join</button></form>
+  <button class="lnk rlh" type="button" data-act="howto">How to play</button>
+</aside>
 
 <main>
   <!-- HOME -->
@@ -454,7 +542,7 @@ html[data-theme="deep"] .kraken .k-ink path,html[data-theme="deep"] .kraken .k-i
         </div>
         <button class="btn big red" id="create" type="button">Create a lobby</button>
         <button class="btn big" id="rejoin" type="button" hidden>Rejoin</button>
-        <div class="links"><button class="lnk" id="practice" type="button">Practice solo</button><button class="lnk" id="how" type="button">How to play</button><button class="lnk" id="sndt" type="button">Sound: on</button></div>
+        <div class="links"><button class="lnk" id="practice" type="button">Solo dive</button><button class="lnk" id="how" type="button">How to play</button><button class="lnk" id="sndt" type="button">Sound: on</button></div>
       </div>
     </div>
   </section>
@@ -546,6 +634,16 @@ html[data-theme="deep"] .kraken .k-ink path,html[data-theme="deep"] .kraken .k-i
       <li>Miss an order and the kraken takes a plank. Three planks. Find the kraken’s pick for a spare.</li>
     </ul>
     <div class="row"><button class="btn red" type="button" id="howX">Got it</button></div>
+  </div>
+</div>
+<div class="modal" id="meM" hidden>
+  <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="meT">
+    <h2 id="meT">Your diver</h2>
+    <div class="label" style="margin-top:12px">Name</div>
+    <input class="field" id="nm2" maxlength="14" autocomplete="nickname" spellcheck="false" aria-label="Your name">
+    <div class="label" style="margin-top:12px">Look</div>
+    <div class="avs" id="avs2" role="group" aria-label="Character"></div>
+    <div class="row"><button class="btn" type="button" id="meRnd">Shuffle</button><button class="btn red" type="button" id="meX">Done</button></div>
   </div>
 </div>
 <div class="modal" id="leaveM" hidden>
