@@ -34,12 +34,13 @@ const THEMES = [{ id: 'light', bg: '#ffffff', n: 'Foam' }, { id: 'grey', bg: '#e
 
 /* ───────── me ───────── */
 const ME = { id: SS.get('id', null) || rid(10), name: LS.get('name', ''), av: LS.get('av', null) };
-const NAMES = ['riptide', 'undertow', 'maelstrom', 'leviathan', 'tempest', 'vortex', 'phantom', 'wraith', 'nightfin', 'razorfin', 'ghostfin', 'stormfin', 'blacktide', 'deadeye', 'ironhook', 'saltblade', 'corsair', 'mako', 'orca', 'barracuda', 'moray', 'hammerhead', 'stingray', 'marlin', 'nautilus', 'triton', 'siren', 'calypso', 'atlas', 'cobalt', 'onyx', 'obsidian', 'eclipse', 'zenith', 'sonar', 'torpedo', 'tsunami', 'monsoon', 'cyclone', 'havoc', 'wavebreaker', 'abyssal', 'trench', 'blackwater', 'squall', 'fathom', 'nova', 'echo'];
+const NAMES = ['sushi', 'racecar', 'umbrella', 'shadow', 'raven', 'monster', 'buddy', 'villain', 'pickle', 'rocket', 'goblin', 'cactus', 'banshee', 'cobra', 'falcon', 'gremlin', 'jackal', 'mango', 'ninja', 'outlaw', 'panda', 'phantom', 'rascal', 'rebel', 'sphinx', 'tiger', 'tornado', 'turbo', 'vandal', 'viper', 'waffle', 'wizard', 'yeti', 'zombie', 'bandit', 'biscuit', 'cyborg', 'dagger', 'dynamo', 'ember', 'ghost', 'hornet', 'jester', 'lobster', 'meteor', 'noodle', 'oracle', 'pretzel', 'reaper', 'samurai', 'thunder', 'toaster', 'walrus', 'crimson', 'gorilla', 'pirate', 'scarab', 'tsunami'];
 const randName = () => NAMES[Math.floor(Math.random() * NAMES.length)];
 const randAv = () => ART.AV_IDS[Math.floor(Math.random() * ART.AV_IDS.length)];
 if (!ART.AV_IDS.includes(ME.av)) { ME.av = randAv(); LS.set('av', ME.av); }
+const NAMES_V = 3;
 const OLDNAMES = /^(diver|player|barnacle|saltbeard|inkblot|bilgerat|cutlass|harpoon|sharkbait|seadog|doubloon|urchin|briny|shipwreck|limpet|grog|kraklet|tidepool|driftwood|plunder|anchor|swabbie|mudskipper|angler|cuttlefish|bluefin|coralbite|lagoon|starboard|jellyjam|blowhole|flotsam|jetsam|gullet|squidge|tentacle|wreckdiver|saltwater|deepjaw)$/i;
-if (!ME.name || (OLDNAMES.test(ME.name) && !LS.get('named', false))) { ME.name = randName(); LS.set('name', ME.name); }
+if (!ME.name || LS.get('nv', 0) < NAMES_V) { ME.name = randName(); LS.set('name', ME.name); LS.set('nv', NAMES_V); LS.set('named', false); }
 SS.set('id', ME.id);
 const SID = rid(8);
 let QSEQ = 0;
@@ -490,8 +491,13 @@ function doBack() {
   confirmLeave();
 }
 window.addEventListener('popstate', () => { if (C.peek) return; if (C.role || ['meM', 'howM', 'leaveM'].some(id => !$(id).hidden)) { doBack(); if (C.role && !C.peek) pushNav(); } });
-const NAV_R = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 5l7 7-7 7"/><path d="M16 12H5"/></svg>';
-const NAV_L = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5l-7 7 7 7"/><path d="M8 12h11"/></svg>';
+const ICON = {
+  down: '<svg class="ico" viewBox="0 0 32 32" aria-hidden="true"><path d="M11 3.5h10v11.5h6.5L16 28.5 4.5 15H11z" fill="#fff" stroke="#000" stroke-width="3.2" stroke-linejoin="round"/></svg>',
+  check: '<svg class="ico" viewBox="0 0 32 32" aria-hidden="true"><path d="M3.5 17.5 8.2 12.8l5.3 5.3L23.8 7.8l4.7 4.7-15 15z" fill="#fff" stroke="#000" stroke-width="3.2" stroke-linejoin="round"/></svg>',
+  up: '<svg class="ico" viewBox="0 0 32 32" aria-hidden="true"><path d="M11 28.5h10V17h6.5L16 3.5 4.5 17H11z" fill="#fff" stroke="#000" stroke-width="3.2" stroke-linejoin="round"/></svg>',
+};
+const NAV_R = '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3.5 11.5h13V4.5L29 16 16.5 27.5v-7h-13z" fill="#000" stroke="#000" stroke-width="2.5" stroke-linejoin="round"/></svg>';
+const NAV_L = '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M28.5 11.5h-13V4.5L3 16l12.5 11.5v-7h13z" fill="#000" stroke="#000" stroke-width="2.5" stroke-linejoin="round"/></svg>';
 function navAct() {
   for (const id of ['meM', 'howM', 'leaveM']) if (!$(id).hidden) { $(id).hidden = true; return; }
   if (document.body.dataset.scr === 'home') {
@@ -554,7 +560,7 @@ function onPhase(v, prev) {
     vib(40); wakeLock(true);
     if (v.r === 0 || !C.myTiers) C.myTiers = {};
     DV.sink = null; $('land').hidden = true; $('playScr').classList.remove('landed');
-    setTimeout(() => { const i = $('ans'); if (i && !i.disabled && !matchMedia('(pointer: coarse)').matches) i.focus(); }, Math.max(0, C.introUntil - pnow()) + 40);
+    setTimeout(() => { const i = $('ans'); if (i && !i.disabled && !matchMedia('(pointer: coarse)').matches) i.focus({ preventScroll: true }); }, Math.max(0, C.introUntil - pnow()) + 40);
   }
   if (v.ph === 'reveal') { C.revealAt = pnow(); startSink(v); }
   if (v.ph === 'final') {
@@ -778,7 +784,7 @@ function buildWorld() {
     <div class="dv-ship">${SHIP}</div><div class="dv-surf"></div><div class="dv-rays"></div>
     <div class="dv-ruler">${ruler}</div>${marks}${lifeHTML()}
     <div class="dv-kraken" style="top:${yOf(7600).toFixed(0)}px">${ART.kraken()}</div>
-    <div id="tlines"></div><div id="divers"></div>`;
+    <div class="dv-dye" id="dye"><canvas id="dyeTv" width="128" height="80"></canvas></div><div id="tlines"></div><div id="divers"></div>`;
   try { ART.suckers(w.querySelector('.dv-kraken svg')); } catch {}
   DV.built = true; DV.tlKey = '';
   if (C.view && (C.view.ph === 'play' || C.view.ph === 'reveal')) { renderDivers(C.view); renderTierLines(C.view); }
@@ -857,7 +863,7 @@ function landHTML(v) {
   const said = new Set(res.filter(r => r[1] >= 0).map(r => r[1]));
   const deep = shuffled(q.answers.filter(z => z.tier === 'f' && !said.has(z.id)), v.q + v.r).slice(0, 4).map(z => z.name);
   const last = v.r >= v.n - 1; const host = C.role === 'host' || C.role === 'solo';
-  const btn = host ? `<button class="btn desc" type="button" data-act="next">${last ? 'Surface · see results' : 'Descend ▼'}</button>` : `<p class="lwait">Waiting for the host to descend…</p>`;
+  const btn = host ? `<button class="btn desc" type="button" data-act="next">${last ? `Results ${ICON.up}` : `Descend ${ICON.down}`}</button>` : `<p class="lwait">Waiting for the host to descend…</p>`;
   return `<div class="lt-t ${cls}">${esc(t1)}</div>${a ? `<div class="lt-a">“${esc(a)}”</div>` : ''}${gain ? `<div class="lt-p">${esc(gain)}</div>` : ''}${quip ? `<p class="lt-q">${esc(quip)}</p>` : ''}${board}
     <div class="lt-k"><span>Kraken’s pick</span><b>${esc(X.name)}</b></div>${btn}`;
 }
@@ -865,12 +871,13 @@ function crewLandHTML(v) {
   const q = QMAP[v.q]; const cr = v.cr; const clear = cr.out === 'clear';
   const X = q.answers.find(z => z.tier === 'x');
   const host = C.role === 'host'; const last = v.r >= v.n - 1 || cr.lives <= 0;
-  const btn = host ? `<button class="btn desc" type="button" data-act="next">${last ? 'Surface · see results' : 'Next order ▼'}</button>` : `<p class="lwait">Waiting for the host…</p>`;
+  const btn = host ? `<button class="btn desc" type="button" data-act="next">${last ? `Results ${ICON.up}` : `Next ${ICON.down}`}</button>` : `<p class="lwait">Waiting for the host…</p>`;
   return `<div class="lt-t ${clear ? 't2' : 'sunk'}">${clear ? 'Order filled' : 'Lost a plank'}</div><div class="lt-p">${clear ? '★'.repeat(cr.rs) + '☆'.repeat(3 - cr.rs) : `${cr.lives} ${cr.lives === 1 ? 'plank' : 'planks'} left`}</div>
     <div class="lt-k"><span>Kraken’s pick</span><b>${esc(X.name)}</b></div>${btn}`;
 }
 function showLand(v) {
   $('land').innerHTML = v.set.mode === 'crew' ? crewLandHTML(v) : landHTML(v);
+  { const mm = v.res && v.res.find(r => r[0] === ME.id); const q = QMAP[v.q]; $('land').className = 'dv-land ' + (v.set.mode === 'crew' ? (v.cr && v.cr.out === 'clear' ? 't2' : 'sunk') : !mm ? '' : mm[1] < 0 ? 'none' : mm[3] ? 'sunk' : TCLS[q.answers[mm[1]].tier]); }
   $('land').hidden = false; $('playScr').classList.add('landed');
   const me = meIn(v); const mine = v.res && v.res.find(r => r[0] === ME.id);
   if (mine && mine[3]) vib([60, 40, 120]); else if (me) vib(30);
@@ -928,6 +935,7 @@ function dvFrame(v, t) {
     if (el) { el.style.top = (yOf(d) + DV_OFF).toFixed(1) + 'px'; el.classList.toggle('sinking', rv && !!DV.sink && pnow() >= DV.sink.t0 && d < DV.sink.to[p.id] - 0.5); }
     if (follow && p.id === follow.id) camD = d;
   }
+  const ps = $('playScr'); if (ps.scrollTop || ps.scrollLeft) { ps.scrollTop = 0; ps.scrollLeft = 0; }
   const dt = DV.lastT ? Math.min(100, t - DV.lastT) : 16; DV.lastT = t;
   const want = rv ? 0.22 : v.ph === 'lobby' ? 0.56 : v.set.mode === 'crew' ? 0.76 : 0.6;
   DV.anchor += (want - DV.anchor) * Math.min(1, dt / 1000 * 3.2);
@@ -936,7 +944,23 @@ function dvFrame(v, t) {
   const dtxt = Math.round(camD).toLocaleString('en-GB') + ' m';
   if ($('hDepth')._t !== dtxt) { $('hDepth')._t = dtxt; $('hDepth').textContent = dtxt; }
   const myD = mine ? camD : -1;
-  document.querySelectorAll('#tlines .dv-tl').forEach(l => { const hit = myD >= +l.dataset.m - 0.5; if (l._hit !== hit) { l._hit = hit; l.classList.toggle('hit', hit); } });
+  let zone = -1;
+  document.querySelectorAll('#tlines .dv-tl').forEach((l, i) => { const hit = myD >= +l.dataset.m - 0.5; if (hit) zone = i; if (l._hit !== hit) { l._hit = hit; l.classList.toggle('hit', hit); } });
+  const dye = $('dye');
+  if (dye) {
+    dye.style.transform = `translate3d(0,${(-camY).toFixed(1)}px,0)`;
+    const dz = rv && v.set.mode !== 'crew' ? zone : -1;
+    if (dye._z !== dz) {
+      dye._z = dz; dye.className = 'dv-dye' + (dz >= 0 ? ' on t' + dz : '');
+      if (dz >= 0) { dye.classList.remove('flash'); void dye.offsetWidth; dye.classList.add('flash'); vib(dz >= 4 ? [40, 30, 80] : 25); }
+      const mt = box.querySelector('.dvr.me .tag'); if (mt) mt.dataset.z = dz >= 0 ? String(dz) : '';
+    }
+    if (dz === 5 && (DV.tvT = (DV.tvT || 0) + 1) % 2 === 0) {
+      const cv = $('dyeTv'), cx = cv.getContext('2d'); const img = cx.createImageData(cv.width, cv.height); const d = img.data;
+      for (let i = 0; i < d.length; i += 4) { const r = Math.random(); if (r < 0.33) { d[i] = 255; d[i + 1] = 30; d[i + 2] = 60; } else if (r < 0.55) { d[i] = 30; d[i + 1] = 255; d[i + 2] = 90; } else if (r < 0.75) { d[i] = 40; d[i + 1] = 90; d[i + 2] = 255; } else { const g = Math.random() * 255; d[i] = d[i + 1] = d[i + 2] = g; } d[i + 3] = 255; }
+      cx.putImageData(img, 0, 0);
+    }
+  }
   if (rv && DV.landShown !== C.timeKey) {
     const done = !DV.sink || !mine || pnow() - DV.sink.t0 >= (DV.sink.dur[ME.id] || 0) + 150;
     if (done) { DV.landShown = C.timeKey; showLand(v); }
@@ -1012,11 +1036,12 @@ function renderLobby(v) {
   const nR = live.filter(p => p.rdy).length; const cd = v.cd >= 0;
   $('lobState').textContent = cd ? 'Diving in' : live.length < 2 ? 'Waiting for divers' : `${nR} of ${live.length} ready`;
   const mine = !!(me && me.rdy);
-  $('start').textContent = mine ? 'Ready ✓' : 'Ready';
+  $('start').innerHTML = mine ? `Ready ${ICON.check}` : 'Ready';
   $('start').classList.toggle('on', mine);
   $('start').hidden = !me || !!me.spec;
+  $('setup').hidden = true; if (H && H.set.mode !== 'vs') { H.set.mode = 'vs'; H.dirty = true; }
   const s = v.set; const sig = s.mode + host;
-  if ($('setup')._sig !== sig) {
+  if (false) {
     $('setup')._sig = sig;
     $('setup').innerHTML = [['vs', 'Versus'], ['crew', 'Crew']].map(([k, n]) => `<button type="button" data-mode="${k}" aria-pressed="${s.mode === k}" ${host ? '' : 'disabled'}>${n}</button>`).join('');
   }
@@ -1154,11 +1179,11 @@ function renderFinal(v) {
   const box = $('finalScr');
   const body = v.solo ? soloFinal(v) : v.set.mode === 'crew' ? crewFinal(v) : vsFinal(v);
   const acts = v.solo
-    ? `<button class="lb-start" type="button" data-act="again">Dive again ▼</button><div class="fn-links"><button class="fn-b" type="button" data-act="friends">Play with friends</button><button class="fn-b" type="button" data-act="share">Copy result</button></div>`
+    ? `<button class="lb-start" type="button" data-act="again">Dive again ${ICON.down}</button><div class="fn-links"><button class="fn-b" type="button" data-act="friends">Play with friends</button><button class="fn-b" type="button" data-act="share">Copy result</button></div>`
     : host
-      ? `<button class="lb-start" type="button" data-act="rematch">Dive again ▼</button><div class="fn-links"><button class="fn-b" type="button" data-act="lobby">Back to lobby</button><button class="fn-b" type="button" data-act="share">Copy results</button></div>`
+      ? `<button class="lb-start" type="button" data-act="rematch">Dive again ${ICON.down}</button><div class="fn-links"><button class="fn-b" type="button" data-act="lobby">Back to lobby</button><button class="fn-b" type="button" data-act="share">Copy results</button></div>`
       : `<p class="lb-wait">Waiting for the host…</p><div class="fn-links"><button class="fn-b" type="button" data-act="share">Copy results</button></div>`;
-  box.innerHTML = `<div class="lb-col fn-col">${body}${acts}${v.solo ? '' : `<div class="reacts">${EMOS.map(e => `<button type="button" data-emo="${e}" aria-label="React ${e}">${e}</button>`).join('')}</div>`}</div>`;
+  box.innerHTML = `<div class="lb-col fn-col">${body}${acts}</div>`;
 }
 const fnHead = (eye, big, sub, sm) => `<div class="fn-big${sm ? ' sm' : ''}">${esc(big)}</div><div class="fn-sub">${sub}</div>`;
 function vsFinal(v) {
@@ -1166,7 +1191,7 @@ function vsFinal(v) {
   const tie = rows[1] && rows[1].pts === rows[0].pts;
   const head = tie ? fnHead('Dive complete', 'It’s a tie', 'Same depth at the top', true) : fnHead('Dive complete', rows[0].nm, `went deepest · ${esc(M(rows[0].pts))}`, true);
   const board = `<ol class="fn-board">${rows.map((p, i) => `<li class="${p.id === ME.id ? 'me' : ''}"><span class="rk">${i + 1}</span>${avatar(p.av)}<span class="n">${esc(p.nm)}${p.tot ? `<small>${esc(M(p.tot))} all-time</small>` : ''}</span><b>${esc(M(p.pts))}</b></li>`).join('')}</ol>`;
-  return head + board + awardsHTML(v);
+  return head + board;
 }
 function awardsHTML(v) {
   const all = [];
@@ -1228,7 +1253,7 @@ function live() {
     const me = meIn(v);
     const can = !inIntro && left > 0 && me && !me.spec && (v.set.mode === 'crew' || !C.myLock);
     const inp = $('ans');
-    if (inp.disabled === !!can) { inp.disabled = !can; $('ansB').disabled = !can; if (can && !matchMedia('(pointer: coarse)').matches) inp.focus(); }
+    if (inp.disabled === !!can) { inp.disabled = !can; $('ansB').disabled = !can; if (can && !matchMedia('(pointer: coarse)').matches) inp.focus({ preventScroll: true }); }
     if (inIntro) inp.placeholder = 'Get ready'; else inp.placeholder = v.set.mode === 'crew' ? 'Crew answer' : 'Your answer';
   } else {
     document.body.classList.remove('panic');

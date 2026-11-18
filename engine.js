@@ -40,10 +40,12 @@ function parseQuestion(src) {
   for (const line of src.a.split('\n')) {
     const m = line.match(/^([CHORFX]):\s*(.*)$/);
     if (!m) continue;
-    const t = m[1].toLowerCase();
+    const t0 = m[1].toLowerCase(); let pos = 0;
     for (const raw of m[2].split(',')) {
       const item = raw.trim();
       if (!item) continue;
+      /* only the six most obvious answers count as common; the rest of that list is "decent" */
+      const t = t0 === 'c' && pos++ >= 6 ? 'o' : t0;
       const names = item.split('/').map(s => s.trim()).filter(Boolean);
       const id = q.answers.length;
       q.answers.push({ id, name: names[0], tier: t });
