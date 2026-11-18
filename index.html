@@ -1548,6 +1548,27 @@ html body .scr .dvr .meflag b{font-size:.95rem !important;padding:1px 7px 2px}
 .dv-sun{top:calc(var(--sky) - 46vh) !important}
 .dv-cloud.c1{top:calc(var(--sky) - 30vh) !important}.dv-cloud.c2{top:calc(var(--sky) - 22vh) !important}.dv-cloud.c3{top:calc(var(--sky) - 52vh) !important}
 .dv-land{top:auto}
+
+/* answer box: letters pop in, flickering underscore cursor */
+.dv-in .ansWrap{position:relative;flex:1;min-width:0}
+.dv-in .ansWrap .field{width:100%}
+html body .scr .dv-in .ansWrap .field{color:transparent !important;caret-color:transparent !important;-webkit-text-stroke:0 !important;text-shadow:none !important}
+html body .scr .dv-in .ansWrap .field::placeholder{color:transparent !important}
+html body .scr .dv-in .ansWrap .field::selection{background:#ffd400;color:transparent}
+.ansFx{position:absolute;inset:4px 22px;display:flex;align-items:center;overflow:hidden;white-space:nowrap;pointer-events:none}
+.ansFx.end{justify-content:flex-end}
+html body .scr .ansFx,html body .scr .ansFx *{font:italic 900 2.1rem/1 'Barlow Condensed','Arial Narrow',sans-serif !important;color:#000 !important;-webkit-text-stroke:0 !important;text-shadow:none !important;letter-spacing:.02em !important;text-transform:uppercase}
+.ansFx .ch{display:inline-block}
+.ansFx .ch.pop{animation:chPop .22s cubic-bezier(.2,1.8,.4,1)}
+@keyframes chPop{0%{transform:translateY(55%) scale(.4) rotate(-8deg);opacity:0}100%{transform:none;opacity:1}}
+html body .scr .ansFx .ph{opacity:.38 !important;margin-right:.08em}
+html body .scr .ansFx .cur{font-style:normal !important;color:#ff1e3c !important;margin-left:.04em;animation:curFlick 1s steps(1) infinite}
+@keyframes curFlick{0%{opacity:1}45%{opacity:1}50%{opacity:0}62%{opacity:.6}66%{opacity:0}100%{opacity:0}}
+.dv-in .ansWrap:not(:focus-within) .ansFx .cur{animation-duration:1.6s}
+.ansWrap.shk{animation:shk .4s}
+@media (max-width:700px){.ansFx{inset:4px 14px}html body .scr .ansFx,html body .scr .ansFx *{font-size:1.75rem !important}}
+
+html body .scr .ansFx .ph{opacity:1 !important;color:#000 !important}
 </style>
 </head>
 <body data-scr="boot">
@@ -1612,7 +1633,7 @@ html body .scr .dvr .meflag b{font-size:.95rem !important;padding:1px 7px 2px}
       <div class="dv-watch" id="watching" hidden>You’re watching this dive. You’ll be in the next game.</div>
       <form class="dv-in" id="ansF" autocomplete="off">
         <div class="num" id="num" hidden><span></span></div>
-        <input class="field" id="ans" maxlength="80" placeholder="Your answer" aria-label="Your answer" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go">
+        <div class="ansWrap" id="ansWrap"><input class="field" id="ans" maxlength="80" placeholder="Your answer" aria-label="Your answer" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go"><div class="ansFx" id="ansFx" aria-hidden="true"></div></div>
         <button class="btn" id="ansB" type="submit">Dive</button>
       </form>
       <div class="fuse" id="fuseW" hidden><i id="fill"></i></div>

@@ -587,7 +587,18 @@ function onDirect(m) {
   C.fb = { kind: 'no', html: m.kind === 'decoy' ? `<span class="tag no">${esc(m.text)}</span> ${esc(m.msg)}` : esc(m.msg) };
   renderFb(); shake(); SFX.bad();
 }
-function shake() { const i = $('ans'); i.classList.remove('shk'); void i.offsetWidth; i.classList.add('shk'); }
+function shake() { const i = $('ansWrap') || $('ans'); i.classList.remove('shk'); void i.offsetWidth; i.classList.add('shk'); }
+let ansFxLast = null;
+function renderAnsFx() {
+  const inp = $('ans'), fx = $('ansFx'); if (!inp || !fx) return;
+  const val = inp.value.toUpperCase();
+  if (val === ansFxLast) return;
+  const prev = ansFxLast || ''; ansFxLast = val;
+  if (!val) { fx.innerHTML = `<span class="ph">${esc(inp.placeholder || 'Your answer')}</span><i class="cur">_</i>`; fx.classList.remove('end'); return; }
+  const keep = prev && val.startsWith(prev) ? prev.length : 0;
+  fx.innerHTML = [...val].map((c, i) => `<span class="ch${i >= keep ? ' pop' : ''}">${c === ' ' ? '&nbsp;' : esc(c)}</span>`).join('') + '<i class="cur">_</i>';
+  fx.classList.toggle('end', fx.scrollWidth > fx.clientWidth + 2);
+}
 function submit() {
   const v = C.view; const inp = $('ans'); const text = inp.value.trim();
   if (!text || !v || v.ph !== 'play') return;
@@ -796,7 +807,7 @@ function startSink(v) {
     const r = res.find(x => x[0] === p.id); const gain = r ? r[2] : 0;
     DV.sink.to[p.id] = p.pts * 10; DV.sink.from[p.id] = (p.pts - gain) * 10;
     const tr = r && r[1] >= 0 && !r[3] ? QMAP[v.q].answers[r[1]].tier : null;
-    DV.sink.dur[p.id] = tr ? [3800, 4800, 6200, 8000, 10000, 12500][TIERS[tr].i] : 900;
+    DV.sink.dur[p.id] = tr ? [2100, 2600, 3300, 4200, 5300, 6800][TIERS[tr].i] : 700;
   }
   DV.landShown = '';
   const mine = res.find(r => r[0] === ME.id); const q = QMAP[v.q];
@@ -1263,6 +1274,7 @@ function live() {
   } else {
     document.body.classList.remove('panic');
   }
+  renderAnsFx();
   if (document.body.dataset.scr === 'play' && (v.ph === 'play' || v.ph === 'reveal' || v.ph === 'lobby')) dvFrame(v, t);
   if (v.ph === 'lobby') {
     const left = v.cd >= 0 ? Math.max(0, C.cdUntil - t) : -1;
