@@ -787,8 +787,8 @@ function buildWorld() {
   w.style.setProperty('--S', DV.S + 'px'); w.style.setProperty('--sky', DV.SKY + 'px');
   w.style.height = Math.round(yOf(DV_MAX) + 500) + 'px';
   let ruler = '';
-  for (let m = 100; m <= 8000; m += 100) ruler += `<i style="top:${(m * DV.S).toFixed(1)}px"${m % 500 ? '' : ' class="big"'}>${m % 500 ? '' : `<b>${m.toLocaleString('en-GB')} m</b>`}</i>`;
-  const marks = DV_MARKS.map(([m, side, a, b]) => side === 'z'
+  for (let m = 100; m <= 8000; m += 100) ruler += `<i style="top:${(m * DV.S).toFixed(1)}px"${m % 500 ? '' : ' class="big"'}></i>`;
+  const marks = '' && DV_MARKS.map(([m, side, a, b]) => side === 'z'
     ? `<div class="dv-mk z" style="top:${yOf(m).toFixed(0)}px"><b>${esc(a)}</b></div>`
     : `<div class="dv-mk ${side}" style="top:${yOf(m).toFixed(0)}px">${esc(a)}</div>`).join('');
   w.innerHTML = `<div class="dv-sun"></div><i class="dv-cloud c1"></i><i class="dv-cloud c2"></i><i class="dv-cloud c3"></i>
@@ -838,7 +838,7 @@ function renderDivers(v) {
   const key = act.map(p => p.id + p.av + p.nm).join('|');
   if (box._key !== key) {
     box._key = key;
-    box.innerHTML = act.map(p => `<div class="dvr ${p.id === ME.id ? 'me' : ''}" data-pid="${esc(p.id)}"><span class="bb"><i></i><i></i><i></i><i></i><i></i><i></i></span>${avatar(p.av)}<span class="nm">${esc(p.id === ME.id && n > 1 ? 'you' : p.nm)}</span>${p.id === ME.id ? '<span class="meflag" aria-hidden="true"><svg viewBox="-3 -3 30 30"><path d="M12 20.5V4.5M4.5 11.5 12 4l7.5 7.5" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 20.5V4.5M4.5 11.5 12 4l7.5 7.5" fill="none" stroke="#000" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg><b>ME</b></span>' : ''}<span class="tag" hidden></span></div>`).join('');
+    box.innerHTML = act.map(p => `<div class="dvr ${p.id === ME.id ? 'me' : ''}" data-pid="${esc(p.id)}"><span class="bb"><i></i><i></i><i></i><i></i><i></i><i></i></span>${avatar(p.av)}<span class="nm">${esc(p.nm)}</span>${p.id === ME.id ? '<span class="meflag" aria-hidden="true"><svg viewBox="-3 -3 30 30"><path d="M12 20.5V4.5M4.5 11.5 12 4l7.5 7.5" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 20.5V4.5M4.5 11.5 12 4l7.5 7.5" fill="none" stroke="#000" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg><b>ME</b></span>' : ''}<span class="tag" hidden></span></div>`).join('');
   }
   act.forEach((p, i) => {
     const el = box.querySelector(`[data-pid="${CSS.escape(p.id)}"]`); if (!el) return;
@@ -870,7 +870,7 @@ function landHTML(v) {
     const tr = q.answers[mine[1]].tier; t1 = TIERS[tr].name; cls = TCLS[tr]; a = q.answers[mine[1]].name;
     gain = `+${M(mine[2])}${mine[2] > TIERS[tr].pts ? ' · doubled' : ''}`; quip = '';
   }
-  const board = res.length > 1 ? `<ol class="lboard">${res.slice().sort((x, y) => (pinfo(y[0], v).pts - pinfo(x[0], v).pts)).map(r => { const pl = pinfo(r[0], v); return `<li class="${r[0] === ME.id ? 'me' : ''}">${avatar(pl.av)}<span class="n">${esc(pl.nm)}<small>${r[1] < 0 ? 'no answer' : esc(q.answers[r[1]].name)}${r[3] ? ' · sunk' : ''}</small></span><b>+${M(r[2])}</b><em>${M(pl.pts)}</em></li>`; }).join('')}</ol>` : '';
+  const board = res.length > 1 ? `<ol class="lboard">${res.slice().sort((x, y) => (pinfo(y[0], v).pts - pinfo(x[0], v).pts)).map(r => { const pl = pinfo(r[0], v); return `<li class="${r[0] === ME.id ? 'me' : ''}">${avatar(pl.av)}<span class="n">${esc(pl.nm)}<small>${r[1] < 0 ? 'no answer' : esc(q.answers[r[1]].name)} · ${r[3] ? 'sunk' : '+' + M(r[2])}</small></span><em>${M(pl.pts)}</em></li>`; }).join('')}</ol>` : '';
   const X = q.answers.find(z => z.tier === 'x');
   const said = new Set(res.filter(r => r[1] >= 0).map(r => r[1]));
   const deep = shuffled(q.answers.filter(z => z.tier === 'f' && !said.has(z.id)), v.q + v.r).slice(0, 4).map(z => z.name);
@@ -891,7 +891,10 @@ function showLand(v) {
   $('land').innerHTML = v.set.mode === 'crew' ? crewLandHTML(v) : landHTML(v);
   { const mm = v.res && v.res.find(r => r[0] === ME.id); const q = QMAP[v.q]; $('land').className = 'dv-land ' + (v.set.mode === 'crew' ? (v.cr && v.cr.out === 'clear' ? 't2' : 'sunk') : !mm ? '' : mm[1] < 0 ? 'none' : mm[3] ? 'sunk' : TCLS[q.answers[mm[1]].tier]); }
   $('land').hidden = false; $('playScr').classList.add('landed');
-  { const top = Math.round((DV.landY || innerHeight * 0.25) + (innerWidth < 700 ? 96 : 104)); $('land').style.top = top + 'px'; $('land').style.maxHeight = `calc(100% - ${top + 14}px)`; }
+  { const top = Math.round((DV.landY || innerHeight * 0.25) + (innerWidth < 700 ? 96 : 104)); $('land').style.top = top + 'px'; $('land').style.maxHeight = `calc(100% - ${top + 14}px)`;
+    DV.landMax = null; const L = $('land'); L.style.maxHeight = 'none'; const h = L.offsetHeight; const hudB = (document.querySelector('#playScr .dv-hud') || { getBoundingClientRect: () => ({ bottom: 120 }) }).getBoundingClientRect().bottom;
+    if (top + h > innerHeight - 12) { const nt = Math.max(hudB + 84, innerHeight - 12 - h); L.style.top = nt + 'px'; DV.landMax = nt - (top - (DV.landY || innerHeight * 0.25)); }
+    L.style.maxHeight = `calc(100% - ${parseFloat(L.style.top) + 12}px)`; }
   const me = meIn(v); const mine = v.res && v.res.find(r => r[0] === ME.id);
   if (mine && mine[3]) vib([60, 40, 120]); else if (me) vib(30);
   const b = $('land').querySelector('.desc'); if (b && !matchMedia('(pointer: coarse)').matches) setTimeout(() => b.focus({ preventScroll: true }), 50);
@@ -933,6 +936,7 @@ function renderDive(v) {
     if (b && (b.classList.contains('desc') !== host)) showLand(v);
   }
   renderFb(); live();
+  requestAnimationFrame(() => { const pc = $('pCard'); if (pc && !pc.closest('[hidden]')) DV.qB = pc.getBoundingClientRect().bottom; });
 }
 function dvFrame(v, t) {
   if (!DV.built) buildWorld();
@@ -940,20 +944,21 @@ function dvFrame(v, t) {
   const mine = me && !me.spec;
   const follow = mine ? me : act.slice().sort((a, b) => b.pts - a.pts)[0];
   const rv = v.ph === 'reveal';
-  let camD = 0;
+  let camD = 0; const ys = [];
   const box = $('divers');
   for (const p of act) {
-    const d = dispDepth(p);
+    const d = dispDepth(p); ys.push(yOf(d) + DV_OFF);
     const el = box.querySelector(`[data-pid="${CSS.escape(p.id)}"]`);
     if (el) { el.style.top = (yOf(d) + DV_OFF).toFixed(1) + 'px'; el.classList.toggle('sinking', rv && !!DV.sink && pnow() >= DV.sink.t0 && d < DV.sink.to[p.id] - 0.5); }
     if (follow && p.id === follow.id) camD = d;
   }
+  { const narrow = innerWidth < 700; for (const tl of $('tlines').children) { const y = parseFloat(tl.style.top); tl.classList.toggle('near', narrow && ys.some(d => Math.abs(d - y) < 70)); } }
   const ps = $('playScr'); if (ps.scrollTop || ps.scrollLeft) { ps.scrollTop = 0; ps.scrollLeft = 0; }
   const dt = DV.lastT ? Math.min(100, t - DV.lastT) : 16; DV.lastT = t;
   const hudB = (document.querySelector('#playScr .dv-hud') || { getBoundingClientRect: () => ({ bottom: 120 }) }).getBoundingClientRect().bottom;
-  DV.landY = Math.min(innerHeight * 0.42, hudB + (innerWidth < 700 ? 96 : 104));
+  DV.landY = Math.min(innerHeight * 0.42, hudB + (innerWidth < 700 ? 96 : 104)); if (DV.landMax != null && v.ph === 'reveal') DV.landY = Math.max(hudB + 44, Math.min(DV.landY, DV.landMax)); else if (v.ph !== 'reveal') DV.landMax = null;
   const landed = rv && DV.landShown === C.timeKey;
-  const want = rv ? (landed ? DV.landY / innerHeight : 0.56) : v.ph === 'lobby' ? 0.56 : v.set.mode === 'crew' ? 0.76 : 0.6;
+  const want = rv ? (landed ? DV.landY / innerHeight : 0.56) : v.ph === 'lobby' ? 0.56 : v.set.mode === 'crew' ? 0.76 : Math.max(0.6, Math.min(0.72, ((DV.qB || 0) + 72) / innerHeight));
   DV.anchor += (want - DV.anchor) * Math.min(1, dt / 1000 * (landed ? 2.4 : 1.6));
   const camY = innerHeight * DV.anchor - (yOf(camD) + DV_OFF);
   $('world').style.transform = `translate3d(0,${camY.toFixed(1)}px,0)`;
@@ -1055,11 +1060,11 @@ function renderLobby(v) {
   $('start').innerHTML = mine ? `Ready ${ICON.check}` : 'Ready';
   $('start').classList.toggle('on', mine);
   $('start').hidden = !me || !!me.spec;
-  $('setup').hidden = true; if (H && H.set.mode !== 'vs') { H.set.mode = 'vs'; H.dirty = true; }
-  const s = v.set; const sig = s.mode + host;
-  if (false) {
+  $('setup').hidden = !!cd;
+  const s = v.set; const sig = s.mode + s.rounds + host;
+  if ($('setup')._sig !== sig) {
     $('setup')._sig = sig;
-    $('setup').innerHTML = [['vs', 'Versus'], ['crew', 'Crew']].map(([k, n]) => `<button type="button" data-mode="${k}" aria-pressed="${s.mode === k}" ${host ? '' : 'disabled'}>${n}</button>`).join('');
+    $('setup').innerHTML = [['vs', 7, 'Versus'], ['crew', 7, 'Co-op'], ['vs', 3, 'Blitz']].map(([k, r, n]) => `<button type="button" data-mode="${k}" data-r="${r}" aria-pressed="${s.mode === k && (k === 'crew' || s.rounds === r)}" ${host ? '' : 'disabled'}>${n}</button>`).join('');
   }
   $('dvMp').hidden = true;
   renderDivers(v);
@@ -1329,7 +1334,7 @@ function bind() {
   ['howM', 'leaveM', 'meM'].forEach(id => $(id).addEventListener('click', (e) => { if (e.target.id === id) $(id).hidden = true; }));
   $('setup').addEventListener('click', (e) => {
     if (!H) return;
-    const mb = e.target.closest('[data-mode]'); if (mb) { H.set.mode = mb.dataset.mode; H.dirty = true; broadcast(); return; }
+    const mb = e.target.closest('[data-mode]'); if (mb) { if (!H || mb.disabled) return; H.set.mode = mb.dataset.mode; H.set.rounds = +mb.dataset.r || 7; for (const p of H.players) p.rdy = 0; H.cdAt = 0; H.dirty = true; broadcast(); return; }
     const sb = e.target.closest('.seg button'); if (sb) { const k = sb.parentElement.dataset.set; H.set[k] = +sb.dataset.v; H.dirty = true; broadcast(); return; }
     const tb = e.target.closest('[data-topic]');
     if (tb) {

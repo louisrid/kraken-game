@@ -1605,6 +1605,65 @@ html body .scr .dv-land .btn.desc .ico path:first-child,html body .scr .lob-read
 html body .scr .dv-land .lt-k span,html body .scr .dv-land .lt-k span *{-webkit-text-stroke:.8px #000 !important}
 
 html body .scr .dv-land .btn.desc .ico path:last-child,html body .scr .lob-ready.on .ico path:last-child{stroke-width:8.6 !important}
+
+/* black text on white: clean, no extra stroke (the font is heavy enough) */
+html body .scr .dv-hud .pod:first-child,html body .scr .dv-hud .pod:first-child *,html body .mprail .dv-hud .pod:first-child,html body .mprail .dv-hud .pod:first-child *,html body .scr .dv-q,html body .scr .dv-q *,html body .mprail .dv-q,html body .mprail .dv-q *,html body .scr .dvr:not(.me) .nm,html body .scr .dvr:not(.me) .nm *,html body .mprail .dvr:not(.me) .nm,html body .mprail .dvr:not(.me) .nm *,html body .scr .dvr .tag.lk,html body .scr .dvr .tag.lk *,html body .mprail .dvr .tag.lk,html body .mprail .dvr .tag.lk *,html body .scr .dvr .tag.ty,html body .scr .dvr .tag.ty *,html body .mprail .dvr .tag.ty,html body .mprail .dvr .tag.ty *,html body .scr .dvr .tag.none,html body .scr .dvr .tag.none *,html body .mprail .dvr .tag.none,html body .mprail .dvr .tag.none *,html body .scr .room:not(.live),html body .scr .room:not(.live) *,html body .mprail .room:not(.live),html body .mprail .room:not(.live) *,html body .scr .mechip,html body .scr .mechip *,html body .mprail .mechip,html body .mprail .mechip *,html body .scr .fn-log,html body .scr .fn-log *,html body .mprail .fn-log,html body .mprail .fn-log *,html body .scr .fn-board,html body .scr .fn-board *,html body .mprail .fn-board,html body .mprail .fn-board *,html body .scr .toast:not(.ok),html body .scr .toast:not(.ok) *,html body .mprail .toast:not(.ok),html body .mprail .toast:not(.ok) *,html body .scr .dv-sealed,html body .scr .dv-sealed *,html body .mprail .dv-sealed,html body .mprail .dv-sealed *,html body .scr .dv-watch,html body .scr .dv-watch *,html body .mprail .dv-watch,html body .mprail .dv-watch *,html body .scr .dv-land .lt-k,html body .scr .dv-land .lt-k *,html body .mprail .dv-land .lt-k,html body .mprail .dv-land .lt-k *,html body .scr .dv-land .lboard,html body .scr .dv-land .lboard *,html body .mprail .dv-land .lboard,html body .mprail .dv-land .lboard *,html body .scr .dv-land.sunk,html body .scr .dv-land.sunk *,html body .mprail .dv-land.sunk,html body .mprail .dv-land.sunk *,html body .scr .dv-land.none,html body .scr .dv-land.none *,html body .mprail .dv-land.none,html body .mprail .dv-land.none *,html body .scr .hm-rejoin,html body .scr .hm-rejoin *,html body .mprail .hm-rejoin,html body .mprail .hm-rejoin *,html body .scr .fn-b,html body .scr .fn-b *,html body .mprail .fn-b,html body .mprail .fn-b *,html body .scr .lwait,html body .scr .lwait *,html body .mprail .lwait,html body .mprail .lwait *,html body .scr .dv-land .btn.desc,html body .scr .dv-land .btn.desc *,html body .mprail .dv-land .btn.desc,html body .mprail .dv-land .btn.desc *,html body .scr .lob-ready.on,html body .scr .lob-ready.on *,html body .mprail .lob-ready.on,html body .mprail .lob-ready.on *{-webkit-text-stroke:0 !important}
+html body .scr .dv-land .btn.desc,html body .scr .dv-land .btn.desc *,html body .scr .lob-ready.on,html body .scr .lob-ready.on *{-webkit-text-stroke:.6px #000 !important}
+html body .scr .room:not(.live) .ra,html body .mprail .room:not(.live) .ra{-webkit-text-stroke:7px #000 !important}
+
+/* ===== final readability pass ===== */
+.dv-tl span{transition:opacity .2s}
+.dv-tl.near span{opacity:0 !important}
+html body .scr .dv-hud .pod .label{display:block !important;font-size:1rem !important;opacity:1 !important;letter-spacing:.04em !important}
+@media (max-width:700px){
+  html body .scr .dv-hud{justify-content:center !important;gap:8px !important}
+  html body .scr .dv-hud .pod .label{font-size:.82rem !important;margin-bottom:2px}
+}
+html body .scr .dv-sealed span{font-size:1.15rem !important}
+html body .scr .dv-sealed b{font-size:1.8rem !important}
+html body .scr .dv-land .lwait,html body .scr .dv-land .lwait *{color:#fff !important;-webkit-text-stroke:6px #000 !important;paint-order:stroke fill !important;text-shadow:3px 3px 0 #000 !important;background:transparent !important;border:0 !important;box-shadow:none !important}
+html body .scr .lboard li{grid-template-columns:auto minmax(0,1fr) auto !important}
+html body .scr .lboard em{min-width:0 !important}
+html body #playScr .dv-tl,html body #playScr .dv-tl:not(.hit){opacity:1 !important}
+html body #playScr.landed .dv-tl:not(.hit){opacity:.18 !important}
+html body #playScr.landed .dv-tl:not(.hit) span{visibility:hidden}
+html body #playScr .dv-land .lt-k span,html body #playScr .dv-land .lt-k span *,html body #playScr .dv-land .btn.desc,html body #playScr .dv-land .btn.desc *,html body #playScr .lob-ready.on,html body #playScr .lob-ready.on *{-webkit-text-stroke:0 !important}
+html body #hmRooms .room:not(.live) .ra,html body #mrRooms .room:not(.live) .ra{-webkit-text-stroke:5px #000 !important;paint-order:stroke fill !important}
+html body #playScr .dvr .tag:not(.lk):not(.ty):not(.none){-webkit-text-stroke:5px #000 !important;paint-order:stroke fill !important}
+html body #playScr .dv-hud .pod .label{font-size:1rem !important;-webkit-text-stroke:3.5px #000 !important;paint-order:stroke fill !important}
+html body #playScr .dv-hud .pod:first-child .label{-webkit-text-stroke:0 !important}
+@media (max-width:700px){html body #playScr .dv-hud .pod .label{font-size:.875rem !important}}
+html body #playScr .dvr:not(.me) .tag.rdy{-webkit-text-stroke:0 !important}
+@media (max-width:700px){
+  html body #playScr .dv-q{top:calc(max(12px,env(safe-area-inset-top)) + 100px) !important}
+  html body.solo #playScr .dv-q{top:calc(max(12px,env(safe-area-inset-top)) + 162px) !important}
+}
+@media (min-width:1100px){
+  html body.solo #playScr .dv-hud{padding-left:0 !important;padding-right:290px !important}
+  html body.solo #playScr .dv-q{left:calc(50% - 145px) !important;width:min(660px,calc(100% - 330px)) !important}
+  html body.solo #playScr .dv-bar{padding-right:306px !important}
+  html body.solo #playScr .dv-bar form{max-width:100% !important}
+  html body .mprail{top:calc(50% + 40px) !important;max-height:calc(100vh - 104px);overflow:auto}
+}
+@media (min-width:1100px) and (max-height:820px){
+  html body .mprail{gap:8px !important;padding:14px !important}
+  html body .mprail .room{padding-top:6px !important;padding-bottom:6px !important}
+  html body .mprail .rl b{font-size:1.6rem !important}
+}
+#divers{position:absolute;left:0;right:0;top:0;height:0}
+@media (min-width:1100px){
+  html body.solo #divers{right:290px}
+  html body.solo #playScr .dv-land{left:calc(50% - 145px) !important}
+}
+@media (min-width:701px) and (max-width:1099px){html body.solo #playScr .dv-hud{padding-left:170px !important;padding-right:90px !important;justify-content:center !important}}
+html body #playScr .dvr:not(.me) .tag.rdy.rdy.rdy{-webkit-text-stroke:0 !important}
+html body #playScr .lboard .n,html body #playScr .lboard .n small{white-space:normal !important;overflow:visible !important;text-overflow:clip !important}
+html body #playScr .dv-tl.t5 span{color:#fff !important}
+html body #playScr .lob-modes{display:flex !important;gap:10px;justify-content:center;margin-bottom:12px}
+html body #playScr .lob-modes[hidden]{display:none !important}
+html body #playScr .lob-modes button{font:italic 900 1.5rem/1 'Barlow Condensed',sans-serif !important;text-transform:uppercase;padding:12px 18px;border:4px solid #000 !important;border-radius:14px;background:#fff !important;color:#000 !important;-webkit-text-stroke:0 !important;box-shadow:4px 4px 0 #000;cursor:pointer}
+html body #playScr .lob-modes button[aria-pressed=true]{background:#ffd400 !important}
+html body #playScr .lob-modes button:disabled{cursor:default}
 </style>
 </head>
 <body data-scr="boot">
@@ -1693,7 +1752,7 @@ html body .scr .dv-land .btn.desc .ico path:last-child,html body .scr .lob-ready
       <li>Everyone gets the same prompt.</li>
       <li>Same answer as someone else? You both sink nowhere.</li>
       <li>Deepest diver wins. The last prompt counts double.</li>
-      <li>Crew: fill the captain’s order together. Three wrong depths costs a plank.</li>
+      <li><b>Versus</b>: 7 prompts, deepest diver wins. <b>Blitz</b>: 3 quick prompts. <b>Co-op</b>: fill the Kraken’s order together, 3 lives.</li>
     </ul>
     <div class="row"><button class="btn red" type="button" id="howX">Got it</button></div>
   </div>
