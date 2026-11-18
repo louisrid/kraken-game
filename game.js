@@ -826,7 +826,7 @@ function renderDivers(v) {
   const key = act.map(p => p.id + p.av + p.nm).join('|');
   if (box._key !== key) {
     box._key = key;
-    box.innerHTML = act.map(p => `<div class="dvr ${p.id === ME.id ? 'me' : ''}" data-pid="${esc(p.id)}"><span class="bb"><i></i><i></i><i></i><i></i><i></i><i></i></span>${avatar(p.av)}<span class="nm">${esc(p.id === ME.id && n > 1 ? 'you' : p.nm)}</span><span class="tag" hidden></span></div>`).join('');
+    box.innerHTML = act.map(p => `<div class="dvr ${p.id === ME.id ? 'me' : ''}" data-pid="${esc(p.id)}"><span class="bb"><i></i><i></i><i></i><i></i><i></i><i></i></span>${avatar(p.av)}<span class="nm">${esc(p.id === ME.id && n > 1 ? 'you' : p.nm)}</span>${p.id === ME.id ? '<span class="meflag" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 3.5 13h5.5v8h6v-8h5.5z" fill="#000" stroke="#000" stroke-width="1.5" stroke-linejoin="round"/></svg><b>ME</b></span>' : ''}<span class="tag" hidden></span></div>`).join('');
   }
   act.forEach((p, i) => {
     const el = box.querySelector(`[data-pid="${CSS.escape(p.id)}"]`); if (!el) return;
