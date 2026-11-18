@@ -1669,6 +1669,41 @@ html body #playScr #num{width:64px !important;height:64px !important;border-radi
 html body #playScr #num[hidden],html body #playScr #fuseW[hidden]{display:none !important}
 html body #playScr #fuseW{height:14px !important;background:#fff !important;border:3px solid #000 !important;border-radius:99px !important;overflow:hidden}
 html body #playScr #fuseW *{background:#ffd400 !important;height:100% !important;box-shadow:none !important}
+html body .scr .fn-board li .n.n,html body .scr .fn-board li .n.n *,html body .scr .fn-board li .rk.rk,html body .scr .fn-board li b.b,html body .scr .fn-board li b{-webkit-text-stroke:0 !important;text-shadow:none !important;color:#000 !important}
+html body .scr .fn-big{text-transform:uppercase}
+@media (max-width:700px){
+  html body #playScr .dv-hud .pod{min-width:0 !important;padding:6px 10px !important}
+  html body:not(.solo) #playScr .dv-hud{justify-content:flex-start !important;padding:0 82px 0 10px !important;gap:6px !important}
+  html body #playScr .dv-hud .pod b{font-size:1.5rem !important}
+}
+@media (max-height:780px){
+  html body #playScr .dv-land:has(.lboard) .lt-a,html body #playScr .dv-land:has(.lboard) .lt-p{display:none !important}
+  html body #playScr .dv-land{padding:14px 16px 16px !important;gap:8px !important}
+  html body #playScr .dv-land .lt-t{font-size:2.4rem !important}
+  html body #playScr .dv-land .lboard li{padding:5px 10px !important}
+  html body #playScr .dv-land .lt-k{padding:6px 10px !important}
+  html body #playScr .dv-land .lt-k b{font-size:1.4rem !important}
+  html body #playScr .dv-land .btn.desc{font-size:1.6rem !important;padding:10px 22px !important}
+}
+/* 4+ divers: compact one-line board so the card always fits */
+html body #playScr .dv-land:has(.lboard li:nth-child(4)) .lt-a,html body #playScr .dv-land:has(.lboard li:nth-child(4)) .lt-p{display:none !important}
+html body #playScr .dv-land:has(.lboard li:nth-child(4)){padding:14px 16px 16px !important;gap:8px !important}
+html body #playScr .dv-land:has(.lboard li:nth-child(4)) .lt-t{font-size:2.4rem !important}
+html body #playScr .lboard:has(li:nth-child(4)){gap:2px !important;padding:6px !important}
+html body #playScr .lboard:has(li:nth-child(4)) li{padding:4px 10px !important;gap:8px !important}
+html body #playScr .lboard:has(li:nth-child(4)) .av{width:26px !important;height:26px !important}
+html body #playScr .lboard:has(li:nth-child(4)) .n{font-size:1.1rem !important;line-height:1.1 !important}
+html body #playScr .lboard:has(li:nth-child(4)) .n small{font-size:.9rem !important;margin-top:1px !important}
+html body #playScr .lboard:has(li:nth-child(4)) em{font-size:1.15rem !important}
+html body #playScr .dv-land:has(.lboard li:nth-child(4)) .lt-k{padding:6px 10px !important}
+html body #playScr .dv-land:has(.lboard li:nth-child(4)) .lt-k span{font-size:1rem !important}
+html body #playScr .dv-land:has(.lboard li:nth-child(4)) .lt-k b{font-size:1.35rem !important}
+html body #playScr .dv-land:has(.lboard li:nth-child(4)) .btn.desc{font-size:1.6rem !important;padding:10px 22px !important}
+@media (max-height:720px){
+  html body #playScr .dv-land:has(.lboard li:nth-child(4)) .lt-k{display:none !important}
+  html body #playScr .dv-land:has(.lboard li:nth-child(4)) .lt-t{font-size:2rem !important}
+  html body #playScr .lboard:has(li:nth-child(4)) li{padding:2px 8px !important}
+}
 </style>
 </head>
 <body data-scr="boot">
@@ -1757,9 +1792,9 @@ html body #playScr #fuseW *{background:#ffd400 !important;height:100% !important
       <li>Everyone gets the same prompt.</li>
       <li>Same answer as someone else? You both sink nowhere.</li>
       <li>Deepest diver wins. The last prompt counts double.</li>
-      <li><b>Versus</b>: 7 prompts. Deepest diver wins.</li>
+      <li><b>Versus</b>: 10 prompts. Deepest diver wins.</li>
       <li><b>Team</b>: everyone’s depth adds up. Don’t say the same thing as a teammate.</li>
-      <li><b>Blitz</b>: 10 prompts, 20 seconds each.</li>
+      <li><b>Blitz</b>: 12 prompts, 20 seconds each.</li>
     </ul>
     <div class="row"><button class="btn red" type="button" id="howX">Got it</button></div>
   </div>

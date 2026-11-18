@@ -120,7 +120,7 @@ function pinfo(id, v = C.view) { return (v && v.pl.find(p => p.id === id)) || { 
 
 /* ═════════════════ HOST ═════════════════ */
 function newHost(code, solo) {
-  return { code, solo, hub: null, loop: 0, players: [], set: { mode: 'vs', rounds: 7, secs: 0, topics: [] }, phase: 'lobby', round: 0, qs: [], seed: '',
+  return { code, solo, hub: null, loop: 0, players: [], set: { mode: 'vs', rounds: 10, secs: 0, topics: [] }, phase: 'lobby', round: 0, qs: [], seed: '',
     endsAt: 0, introEnd: 0, revealEnds: 0, answers: {}, res: null, hist: [], crew: null, lastQ: {}, banned: new Set(),
     tot: LS.get('tot', {}), recent: LS.get('recent', []), dirty: true, lastCast: 0, lastSeenCheck: 0 };
 }
@@ -344,7 +344,7 @@ function practice() {
   H = newHost('SOLO', true);
   C.role = 'solo'; C.code = 'SOLO';
   hostHandle({ t: 'join', from: ME.id, name: ME.name, av: ME.av });
-  H.set = { mode: 'vs', rounds: 7, secs: 0, topics: [] };
+  H.set = { mode: 'vs', rounds: 10, secs: 0, topics: [] };
   startHostLoop(); startGame(); pushNav();
 }
 
@@ -1065,7 +1065,7 @@ function renderLobby(v) {
   const s = v.set; const sig = s.mode + s.rounds + (s.team ? 't' : '') + host;
   if ($('setup')._sig !== sig) {
     $('setup')._sig = sig;
-    $('setup').innerHTML = [['vs', 7, 0, 0, 'Versus'], ['vs', 7, 0, 1, 'Team'], ['vs', 10, 20, 0, 'Blitz']].map(([k, r, sc, tm, n]) => `<button type="button" data-mode="${k}" data-r="${r}" data-s="${sc}" data-t="${tm}" aria-pressed="${s.rounds === r && !!s.team === !!tm}" ${host ? '' : 'disabled'}>${n}</button>`).join('');
+    $('setup').innerHTML = [['vs', 10, 0, 0, 'Versus'], ['vs', 10, 0, 1, 'Team'], ['vs', 12, 20, 0, 'Blitz']].map(([k, r, sc, tm, n]) => `<button type="button" data-mode="${k}" data-r="${r}" data-s="${sc}" data-t="${tm}" aria-pressed="${s.rounds === r && !!s.team === !!tm}" ${host ? '' : 'disabled'}>${n}</button>`).join('');
   }
   $('dvMp').hidden = true;
   renderDivers(v);
@@ -1213,7 +1213,7 @@ function vsFinal(v) {
   const tie = rows[1] && rows[1].pts === rows[0].pts;
   if (v.set.team) { const tot = rows.reduce((a, p) => a + p.pts, 0); const bt = Math.max(LS.get('teamBest', 0), tot); LS.set('teamBest', bt); return fnHead('Team dive', M(tot), tot >= bt ? 'new team best' : `team best ${esc(M(bt))}`, true) + `<ol class="fn-board">${rows.map((p, i) => `<li class="${p.id === ME.id ? 'me' : ''}"><span class="rk">${i + 1}</span>${avatar(p.av)}<span class="n">${esc(p.nm)}</span><b>${esc(M(p.pts))}</b></li>`).join('')}</ol>`; }
   const head = tie ? fnHead('Dive complete', 'It’s a tie', 'Same depth at the top', true) : fnHead('Dive complete', rows[0].nm, `went deepest · ${esc(M(rows[0].pts))}`, true);
-  const board = `<ol class="fn-board">${rows.map((p, i) => `<li class="${p.id === ME.id ? 'me' : ''}"><span class="rk">${i + 1}</span>${avatar(p.av)}<span class="n">${esc(p.nm)}${p.tot ? `<small>${esc(M(p.tot))} all-time</small>` : ''}</span><b>${esc(M(p.pts))}</b></li>`).join('')}</ol>`;
+  const board = `<ol class="fn-board">${rows.map((p, i) => `<li class="${p.id === ME.id ? 'me' : ''}"><span class="rk">${i + 1}</span>${avatar(p.av)}<span class="n">${esc(p.nm)}</span><b>${esc(M(p.pts))}</b></li>`).join('')}</ol>`;
   return head + board;
 }
 function awardsHTML(v) {
