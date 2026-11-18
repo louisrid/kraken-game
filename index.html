@@ -1478,6 +1478,48 @@ body .scr .hm-logo,body .scr .lob-name,body .scr .lob-cd,body .scr .lt-t,body .s
 .dv-hud .pod:first-child,.dv-hud .pod.mid,.dv-hud .pod.r{border:4px solid #000 !important}
 .scr button:focus,.scr button:focus-visible,.dlg button:focus-visible,.mprail button:focus-visible,.nav:focus-visible{outline:none !important}
 .scr button:focus-visible{filter:brightness(1.12)}
+
+/* ═════════════ WHITE BOXES, BLACK TEXT ═════════════ */
+html body .dv-hud .pod:first-child,html body .dv-q,html body .dvr:not(.me) .nm,html body .dvr .tag.lk,html body .dvr .tag.ty,html body .dvr .tag.none,html body .room:not(.live),html body .mechip,html body .fn-log,html body .fn-board,html body .dlg,html body .toast:not(.ok),html body .dv-in .field,html body .dv-sealed,html body .dv-watch,html body .dv-land .lt-k,html body .dv-land .lboard,html body .dv-land.sunk,html body .dv-land.none,html body .hm-rejoin,html body .fn-b,html body #busyM .btn,html body .dlg .btn:not(.red),html body .lwait{background:#fff !important;color:#000 !important;border:4px solid #000 !important}
+html body .dv-hud .pod:first-child,html body .dv-hud .pod:first-child *,html body .dv-q,html body .dv-q *,html body .dvr:not(.me) .nm,html body .dvr:not(.me) .nm *,html body .dvr .tag.lk,html body .dvr .tag.lk *,html body .dvr .tag.ty,html body .dvr .tag.ty *,html body .dvr .tag.none,html body .dvr .tag.none *,html body .room:not(.live),html body .room:not(.live) *,html body .mechip,html body .mechip *,html body .fn-log,html body .fn-log *,html body .fn-board,html body .fn-board *,html body .dlg,html body .dlg *,html body .toast:not(.ok),html body .toast:not(.ok) *,html body .dv-in .field,html body .dv-in .field *,html body .dv-sealed,html body .dv-sealed *,html body .dv-watch,html body .dv-watch *,html body .dv-land .lt-k,html body .dv-land .lt-k *,html body .dv-land .lboard,html body .dv-land .lboard *,html body .dv-land.sunk,html body .dv-land.sunk *,html body .dv-land.none,html body .dv-land.none *,html body .hm-rejoin,html body .hm-rejoin *,html body .fn-b,html body .fn-b *,html body #busyM .btn,html body #busyM .btn *,html body .dlg .btn:not(.red),html body .dlg .btn:not(.red) *,html body .lwait,html body .lwait *{color:#000 !important;-webkit-text-stroke:0 !important;text-shadow:none !important}
+html body .dv-in .field::placeholder,html body .dlg .field::placeholder{color:#000 !important;opacity:.55 !important;-webkit-text-stroke:0 !important;text-shadow:none !important}
+html body .dlg .field{background:#fff !important;color:#000 !important;border:4px solid #000 !important;-webkit-text-stroke:0 !important;text-shadow:none !important}
+html body .dv-in .field:focus,html body .dlg .field:focus{border-color:#ff1e3c !important}
+/* things inside white boxes that keep their own colour */
+html body .dv-q .qn{background:#ffd400 !important;color:#000 !important}
+html body .room:not(.live) .ra{background:#ff1e3c !important;color:#fff !important;-webkit-text-stroke:7px #000 !important;paint-order:stroke fill;text-shadow:3px 3px 0 #000 !important}
+html body .fn-log .q small{color:#ff1e3c !important}
+html body .fn-log b,html body .fn-board b{color:#000 !important}
+html body .fn-board li.me,html body .lboard li.me{background:#ffd400 !important}
+html body .dlg .ladder div,html body .dlg .ladder div *{color:#fff !important;-webkit-text-stroke:5px #000 !important;paint-order:stroke fill}
+html body .dlg .btn.red,html body .dlg .btn.red *{color:#fff !important;-webkit-text-stroke:7px #000 !important;paint-order:stroke fill;text-shadow:3px 3px 0 #000 !important}
+html body .dlg .avb{background:#fff !important}
+html body .dlg .avb[aria-pressed="true"]{background:#ff1e3c !important}
+/* result card: descend is a white button on the coloured cards, red on the white ones */
+html body .dv-land .btn.desc{background:#fff !important;color:#000 !important;border:4px solid #000 !important}
+html body .dv-land .btn.desc,html body .dv-land .btn.desc *{-webkit-text-stroke:0 !important;text-shadow:none !important;color:#000 !important}
+html body .dv-land .btn.desc .ico path{fill:#000 !important}
+html body .dv-land.sunk .btn.desc,html body .dv-land.none .btn.desc{background:#ff1e3c !important}
+html body .dv-land.sunk .btn.desc,html body .dv-land.sunk .btn.desc *,html body .dv-land.none .btn.desc,html body .dv-land.none .btn.desc *{color:#fff !important;-webkit-text-stroke:7px #000 !important;paint-order:stroke fill;text-shadow:3px 3px 0 #000 !important}
+html body .dv-land.sunk .lt-t,html body .dv-land.sunk .lt-a,html body .dv-land.sunk .lt-p,html body .dv-land.sunk .lt-q,html body .dv-land.none .lt-t{color:#000 !important;-webkit-text-stroke:0 !important;text-shadow:none !important}
+html body .dv-land.sunk .lt-t{color:#ff1e3c !important}
+html body .dv-land .lt-k span{color:#ff1e3c !important}
+/* secondary buttons are white too */
+html body .fn-b .ico path,html body .hm-rejoin .ico path{fill:#000 !important}
+/* the depth pod digits */
+html body .dv-hud .pod:first-child b{color:#000 !important}
+/* sealed answer reads black; tags on the dive that carry a tier keep their colour + white text */
+html body .dv-sealed b{color:#000 !important}
+
+/* white boxes: black text wins over every outline rule */
+html body .scr .dv-hud .pod:first-child,html body .scr .dv-hud .pod:first-child *,html body .mprail .dv-hud .pod:first-child,html body .mprail .dv-hud .pod:first-child *,html body .scr .dv-q,html body .scr .dv-q *,html body .mprail .dv-q,html body .mprail .dv-q *,html body .scr .dvr:not(.me) .nm,html body .scr .dvr:not(.me) .nm *,html body .mprail .dvr:not(.me) .nm,html body .mprail .dvr:not(.me) .nm *,html body .scr .dvr .tag.lk,html body .scr .dvr .tag.lk *,html body .mprail .dvr .tag.lk,html body .mprail .dvr .tag.lk *,html body .scr .dvr .tag.ty,html body .scr .dvr .tag.ty *,html body .mprail .dvr .tag.ty,html body .mprail .dvr .tag.ty *,html body .scr .dvr .tag.none,html body .scr .dvr .tag.none *,html body .mprail .dvr .tag.none,html body .mprail .dvr .tag.none *,html body .scr .room:not(.live),html body .scr .room:not(.live) *,html body .mprail .room:not(.live),html body .mprail .room:not(.live) *,html body .scr .mechip,html body .scr .mechip *,html body .mprail .mechip,html body .mprail .mechip *,html body .scr .fn-log,html body .scr .fn-log *,html body .mprail .fn-log,html body .mprail .fn-log *,html body .scr .fn-board,html body .scr .fn-board *,html body .mprail .fn-board,html body .mprail .fn-board *,html body .scr .toast:not(.ok),html body .scr .toast:not(.ok) *,html body .mprail .toast:not(.ok),html body .mprail .toast:not(.ok) *,html body .scr .dv-in .field,html body .scr .dv-in .field *,html body .mprail .dv-in .field,html body .mprail .dv-in .field *,html body .scr .dv-sealed,html body .scr .dv-sealed *,html body .mprail .dv-sealed,html body .mprail .dv-sealed *,html body .scr .dv-watch,html body .scr .dv-watch *,html body .mprail .dv-watch,html body .mprail .dv-watch *,html body .scr .dv-land .lt-k,html body .scr .dv-land .lt-k *,html body .mprail .dv-land .lt-k,html body .mprail .dv-land .lt-k *,html body .scr .dv-land .lboard,html body .scr .dv-land .lboard *,html body .mprail .dv-land .lboard,html body .mprail .dv-land .lboard *,html body .scr .dv-land.sunk,html body .scr .dv-land.sunk *,html body .mprail .dv-land.sunk,html body .mprail .dv-land.sunk *,html body .scr .dv-land.none,html body .scr .dv-land.none *,html body .mprail .dv-land.none,html body .mprail .dv-land.none *,html body .scr .hm-rejoin,html body .scr .hm-rejoin *,html body .mprail .hm-rejoin,html body .mprail .hm-rejoin *,html body .scr .fn-b,html body .scr .fn-b *,html body .mprail .fn-b,html body .mprail .fn-b *,html body .scr .lwait,html body .scr .lwait *,html body .mprail .lwait,html body .mprail .lwait *,html body .dlg h2,html body .dlg h3,html body .dlg .label,html body .dlg p,html body .dlg li,html body .dlg .field,html body .dlg .btn:not(.red),html body .dlg .btn:not(.red) *,html body #busyM .btn,html body .toast:not(.ok){color:#000 !important;-webkit-text-stroke:0 !important;text-shadow:none !important}
+html body .scr .dv-in .field::placeholder,html body .dlg .field::placeholder{color:#000 !important;opacity:.5 !important;-webkit-text-stroke:0 !important;text-shadow:none !important}
+html body .scr .fn-log .q small,html body .scr .dv-land .lt-k span{color:#ff1e3c !important}
+html body .scr .room:not(.live) .ra,html body .mprail .room:not(.live) .ra{color:#fff !important;-webkit-text-stroke:7px #000 !important;paint-order:stroke fill;text-shadow:3px 3px 0 #000 !important}
+html body .scr .dv-land.sunk .lt-t{color:#ff1e3c !important}
+html body .scr .dv-land.sunk .btn.desc,html body .scr .dv-land.sunk .btn.desc *,html body .scr .dv-land.none .btn.desc,html body .scr .dv-land.none .btn.desc *{color:#fff !important;-webkit-text-stroke:7px #000 !important;paint-order:stroke fill;text-shadow:3px 3px 0 #000 !important}
+
+html body .scr .dv-in .field::placeholder,html body .dlg .field::placeholder{color:#ff1e3c !important;opacity:1 !important}
 </style>
 </head>
 <body data-scr="boot">
