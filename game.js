@@ -884,7 +884,7 @@ function renderDive(v) {
   sec.classList.remove('lob'); sec.classList.toggle('rv', rv); if (!rv) sec.classList.remove('landed');
   const me = meIn(v); const act = v.pl.filter(p => !p.spec);
   $('hDots').innerHTML = Array.from({ length: v.n }, (_, i) => { const tr = C.myTiers[i]; return `<i class="${i === v.r && !rv ? 'cur' : ''} ${tr ? 'done ' + (TCLS[tr] || tr) : ''}"></i>`; }).join('');
-  $('hCount').textContent = `${crew ? 'Order' : 'Prompt'} ${v.r + 1} of ${v.n}`;
+  $('hCount').textContent = `${v.r + 1}/${v.n}`; $('hCL').textContent = crew ? 'Order' : 'Prompt';
   if (crew) { $('hRL').textContent = 'Planks'; $('hR').textContent = String(v.cr.lives); }
   else if (act.length > 1) { const rank = act.slice().sort((a, b) => b.pts - a.pts).findIndex(p => p.id === ME.id) + 1; $('hRL').textContent = 'Rank'; $('hR').textContent = rank > 0 ? `${rank} of ${act.length}` : 'watching'; }
   else { $('hRL').textContent = 'Best dive'; $('hR').textContent = M(LS.get('best', 0)); }
@@ -1035,7 +1035,7 @@ function renderOrders(v, q) {
     const s = cr.sl[i];
     if (s) { const a = q.answers[s[0]]; const p = pinfo(s[1], v); return `<div class="slot ${TCLS[t]}${prev[i] === '0' ? ' pop' : ''}"><span class="sn">${esc(TIERS[t].name)}</span><span class="sv">${esc(a.name)}</span><span class="by">${avatar(p.av)}<span>${esc(p.id === ME.id ? 'You' : p.nm)}</span></span></div>`; }
     const callers = v.pl.filter(p => cr.calls && cr.calls[p.id] === i);
-    return `<button type="button" class="slot empty" data-slot="${i}">${tierPill(t)}<span class="q">?</span><span class="callers">${callers.map(p => avatar(p.av)).join('') || '<span class="hint" style="font-size:.74rem">Tap to call it</span>'}</span></button>`;
+    return `<button type="button" class="slot empty" data-slot="${i}">${tierPill(t)}<span class="q">?</span><span class="callers">${callers.map(p => avatar(p.av)).join('') || '<span class="hint">Tap to call</span>'}</span></button>`;
   }).join('')}</div>`;
   box._sig = sig;
 }
@@ -1044,7 +1044,7 @@ function renderFeed(v, q) {
   const drafts = v.pl.filter(p => p.id !== ME.id && cr.drafts && cr.drafts[p.id]).map(p => `<li class="draft">${avatar(p.av)}<span class="a">${esc(p.nm)}: “${esc(cr.drafts[p.id])}”</span><span class="r">typing</span></li>`);
   const kinds = { fill: 'Filled', miss: 'Wrong depth · strike', dup: 'Already in', gem: 'Kraken! +1 plank' };
   const log = (cr.log || []).slice().reverse().map(([pid, aid, k]) => { const p = pinfo(pid, v); const a = q.answers[aid]; return `<li class="${k}">${avatar(p.av)}<span class="a">${esc(a.name)}</span>${tierPill(a.tier)}<span class="r">${kinds[k]}</span></li>`; });
-  $('feed').innerHTML = drafts.concat(log).join('') || '<li class="draft"><span class="a">Your crew’s answers show up here with their depth.</span></li>';
+  $('feed').innerHTML = drafts.concat(log).join('') || '';
 }
 
 /* reveal */
@@ -1257,7 +1257,7 @@ function inviteLink() { return location.origin + location.pathname + buildQ(C.co
 function confirmLeave() {
   const v = C.view;
   if (C.role === 'solo' || !v || v.ph === 'final') { leave(); return; }
-  $('leaveP').textContent = C.role === 'host' ? 'You’re the host. Leaving closes the lobby for everyone.' : 'You’ll leave this lobby. You can jump back in from the lobby list.';
+  $('leaveP').textContent = C.role === 'host' ? 'You’re the host. Leaving ends it for everyone.' : 'You can jump back in from the lobby list.';
   $('leaveM').hidden = false; $('leaveYes').focus();
 }
 function bind() {

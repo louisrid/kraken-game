@@ -1063,6 +1063,124 @@ body[data-scr="boot"] .nav{display:none}
 .rooms.sm .room .rt b{font-size:1.55rem !important;white-space:nowrap}
 .rooms.sm .room .rt small{font-size:1rem !important}
 .rooms.sm .room .ra{font-size:1.2rem !important;padding:8px 12px !important}
+
+/* ═════════════ CONSISTENCY PASS: one font, nothing small or thin ═════════════ */
+.scr,.scr *,.dlg,.dlg *,.mprail,.mprail *,.toast,.nav{font-family:var(--disp) !important;font-weight:400 !important;font-style:normal !important;letter-spacing:.01em !important}
+.scr input::placeholder{font-family:var(--disp) !important}
+/* readable body copy only where there are sentences */
+.dlg p,.dlg li{font-family:'Barlow',system-ui,sans-serif !important;font-weight:800 !important;font-size:1.2rem !important;line-height:1.35 !important;text-transform:none !important;letter-spacing:0 !important}
+/* HUD: three matching dark pods, always readable */
+.dv-hud{align-items:stretch}
+.pod{display:grid;align-content:center;justify-items:center;text-align:center;min-width:136px}
+.pod.r{text-align:center}
+.pod .label{font-size:1.1rem !important;text-transform:uppercase;opacity:.8 !important;line-height:1}
+.pod b{font-size:2.4rem !important;line-height:1 !important;margin-top:4px}
+.pod.mid{gap:6px}
+.pod.mid .hdots{margin-top:2px}
+.hdots i{width:16px;height:16px;border-width:2.5px}
+@media (max-width:700px){
+  .pod{min-width:0 !important}
+  .pod.mid .hdots{display:none}
+  .pod b{font-size:1.9rem !important}
+}
+/* bigger small stuff */
+.dv-ruler i.big b{font-size:1.15rem !important}
+.dv-bar .status,.dv-bar .force .lnk{font-size:1.4rem !important}
+.dv-bar .fb{font-size:1.5rem !important}
+.lt-k span{font-size:1.25rem !important;opacity:.85}
+.lboard .n{font-size:1.5rem !important}.lboard .n small{font-size:1.2rem !important}
+.lboard b,.lboard em{font-size:1.5rem !important}
+.lwait{font-size:1.5rem !important}
+.fn-log .q{font-size:1.3rem !important;line-height:1.05 !important}.fn-log .q small{font-size:1.2rem !important}
+.fn-log b{font-size:1.6rem !important}
+.fn-board .n{font-size:1.7rem !important}.fn-board .n small{font-size:1.15rem !important}
+.fn-awards span{font-size:1.15rem !important}.fn-awards small{font-size:1.2rem !important}
+.room .rt small{font-size:1.35rem !important;opacity:.85}
+.lb-eye{font-size:1.5rem !important}
+.lb-me,.hm-me{font-size:1.5rem !important}
+.lb-me b{font-size:1.5rem !important}
+.hm-me .av{width:48px !important;height:48px !important}
+.mprail .rl b{font-size:2.2rem !important}
+.mprail .rlh,.mprail .lnk{font-size:1.3rem !important;color:#fff !important}
+.mechip b{font-size:1.4rem !important;max-width:170px}
+.mechip .av{width:44px !important;height:44px !important}
+.dvr .nm{font-size:1.35rem !important}
+.dv-tl span{font-size:1.45rem !important}
+.dv-mk{font-size:1.4rem !important}
+.dv-q .qn{font-size:1.25rem !important;padding:5px 14px !important}
+.dlg .label{font-size:1.25rem !important}
+.dlg .field{font-family:var(--disp) !important;font-size:1.9rem !important;height:64px !important;text-transform:uppercase}
+.dlg h2{font-size:3.4rem !important;line-height:.95 !important}
+#busyM h2{font-size:2.4rem !important}
+#busyM .btn{min-width:180px}
+.dlg .ladder{grid-template-columns:repeat(3,minmax(0,1fr)) !important}
+.dlg .ladder div{padding:10px 4px !important;border-top:2px solid #000}
+.dlg .ladder b{font-size:1.1rem !important;white-space:normal !important}
+.dlg .ladder span{font-size:1.4rem !important}
+.dlg h3{font-size:1.8rem !important}
+.toast{font-size:1.5rem !important;padding:12px 18px !important}
+/* huge logo */
+.hm-kraken{width:min(300px,64vw) !important;margin-bottom:-24px !important}
+.hm-logo{font-size:clamp(7rem,30vw,13rem) !important;line-height:.82 !important;text-shadow:8px 8px 0 #000 !important}
+.scr .hm-logo{text-shadow:8px 8px 0 #000 !important}
+/* buttons: big type everywhere */
+.lb-start{font-size:3rem !important}
+.lob-ready{font-size:3.4rem !important}
+.dv-in .btn{font-size:2.8rem !important}
+.btn.desc{font-size:2.5rem !important}
+.fn-b{font-size:1.9rem !important}
+.room .ra{font-size:1.9rem !important}
+.dlg .btn{font-size:2rem !important}
+.dv-mp{font-size:1.6rem !important}
+.lob-modes button{font-size:2rem !important}
+@media (max-width:700px){
+  .lb-start{font-size:2.5rem !important}.lob-ready{font-size:2.8rem !important}.dv-in .btn{font-size:2.3rem !important}
+  .btn.desc{font-size:2.2rem !important}.room .ra{font-size:1.6rem !important}.fn-b{font-size:1.6rem !important}
+  .room .rt b{font-size:2.1rem !important}
+  .lob-modes button{font-size:1.7rem !important}
+}
+/* crew panels match */
+.dv-crew .card.orders{background:#0c2638 !important;border:3px solid #000 !important;box-shadow:4px 4px 0 rgba(0,0,0,.6) !important}
+.dv-crew .card.orders h3{font-size:2rem !important}
+.dv-crew .slot{background:#0c2638 !important;border:3px dashed rgba(255,255,255,.45) !important}
+.dv-crew .slot .tp{background:#fff !important;color:#000 !important;font-size:1.15rem !important;border:0 !important}
+.dv-crew .slot .q{font-size:2rem !important}
+.dv-crew .slot .hint,.dv-crew .slot .callers{font-size:1.1rem !important}
+.dv-crew .slot:not(.empty){background:#fff !important;border-style:solid !important;border-color:#000 !important}
+.dv-crew .slot:not(.empty) *{color:#000 !important}
+.dv-crew .feed li{font-size:1.25rem !important}
+.dv-crew .feed .tp{background:#fff;color:#000 !important}
+.dv-crew .hull .lbl{font-size:1.3rem !important}
+.tp{font-family:var(--disp) !important}
+
+/* prompt card clears the taller HUD */
+.dv-q{top:calc(max(12px,env(safe-area-inset-top)) + 118px) !important}
+body.solo .dv-q{top:calc(max(12px,env(safe-area-inset-top)) + 118px) !important}
+.dv-crew{top:calc(max(12px,env(safe-area-inset-top)) + 300px) !important}
+@media (max-width:700px){
+  .dv-q{top:calc(max(12px,env(safe-area-inset-top)) + 80px) !important}
+  body.solo .dv-q{top:calc(max(12px,env(safe-area-inset-top)) + 140px) !important}
+  .dv-crew{top:calc(max(12px,env(safe-area-inset-top)) + 280px) !important}
+}
+/* landing sits on one solid card so nothing in the sea shows through */
+.dv-land{background:#0c2638;border:3px solid #000;border-radius:20px;box-shadow:6px 6px 0 rgba(0,0,0,.6);padding:18px 18px 22px !important;gap:8px !important}
+.dv-land .lboard,.dv-land .lt-k{background:rgba(255,255,255,.07) !important;border:0 !important;box-shadow:none !important}
+.dv-land .lwait{background:transparent !important;border:0 !important;box-shadow:none !important}
+/* dialog sentences: upright, bigger */
+.dlg p,.dlg li{font-style:normal !important;font-size:1.3rem !important}
+.dlg li+li{margin-top:6px}
+/* crew feed */
+.dv-crew .feed li{background:transparent !important;border:0 !important;color:#fff !important}
+.dv-crew .feed:empty{display:none}
+.dv-crew .hull{display:flex;align-items:center;gap:8px}
+
+.dlg{max-height:calc(100dvh - 32px) !important;overflow:auto}
+.dv-crew .hull{display:none !important}
+
+.dlg .ladder{border:3px solid #000 !important;gap:0}
+.dlg .ladder div{background:#fff !important;border-left:2px solid #000 !important}
+.dlg .ladder div,.dlg .ladder div *{color:#000 !important}
+.dlg .ladder div.t5{background:#ff3b3b !important}.dlg .ladder div.t5 *{color:#fff !important}
 </style>
 </head>
 <body data-scr="boot">
@@ -1079,7 +1197,7 @@ body[data-scr="boot"] .nav{display:none}
 </div>
 <aside class="mprail" id="mprail" aria-label="Play with friends" hidden>
   <div class="rl"><b class="cond">Play with friends</b></div>
-  <button class="mechip" type="button" data-act="me" aria-label="Change your name and look"><span id="mrAv"></span><b id="mrNm"></b><i>Edit</i></button>
+  <button class="mechip" type="button" data-act="me" aria-label="Change your name and look"><span id="mrAv"></span><b id="mrNm"></b></button>
   <div class="rooms sm" id="mrRooms"></div>
   <button class="lnk rlh" type="button" data-act="howto">How to play</button>
 </aside>
@@ -1108,7 +1226,7 @@ body[data-scr="boot"] .nav{display:none}
     <div class="dv-fore" aria-hidden="true"><div class="o-snow"></div><svg class="o-kelp l" viewBox="0 0 160 440" preserveAspectRatio="xMidYMax meet"></svg><svg class="o-kelp r" viewBox="0 0 160 440" preserveAspectRatio="xMidYMax meet"></svg></div>
     <header class="dv-hud">
       <div class="pod"><span class="label">Depth</span><b id="hDepth">0 m</b></div>
-      <div class="pmid"><div class="hdots" id="hDots"></div><span id="hCount">Prompt 1 of 7</span></div>
+      <div class="pod mid"><span class="label" id="hCL">Prompt</span><b id="hCount">1/7</b><div class="hdots" id="hDots"></div></div>
       <div class="pod r"><span class="label" id="hRL">Best dive</span><b id="hR">0 m</b></div>
     </header>
     
@@ -1144,15 +1262,14 @@ body[data-scr="boot"] .nav{display:none}
 <div class="modal" id="howM" hidden>
   <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="howT">
     <h2 id="howT">How to play</h2>
-    <p>Every dive is 7 prompts, like “Name a type of pasta”. Type one answer. If it’s valid, you sink. The rarer the answer, the deeper you go.</p>
+    <p>7 prompts. One answer each. Rarer answers sink you deeper.</p>
     <div class="ladder" id="howLadder"></div>
-    <p><b>Fool’s gold</b> is the trap: the “obscure” answer every clever person reaches for.</p>
     <h3>With friends</h3>
     <ul>
-      <li>Everyone gets the same prompt. No timer: you all dive together once everyone has answered.</li>
-      <li>Say the same thing as someone else and you both <b>sink nowhere</b>.</li>
-      <li>Deepest diver after 7 prompts wins. The last prompt counts double.</li>
-      <li><b>Crew</b> mode: work together to fill the captain’s order at exact depths. Three wrong depths and the kraken takes a plank.</li>
+      <li>Everyone gets the same prompt.</li>
+      <li>Same answer as someone else? You both sink nowhere.</li>
+      <li>Deepest diver wins. The last prompt counts double.</li>
+      <li>Crew: fill the captain’s order together. Three wrong depths costs a plank.</li>
     </ul>
     <div class="row"><button class="btn red" type="button" id="howX">Got it</button></div>
   </div>
@@ -1170,11 +1287,11 @@ body[data-scr="boot"] .nav{display:none}
 <div class="modal" id="leaveM" hidden>
   <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="leaveT">
     <h2 id="leaveT">Leave?</h2>
-    <p id="leaveP">You’ll leave this lobby.</p>
+    <p id="leaveP"></p>
     <div class="row"><button class="btn" type="button" id="leaveNo">Stay</button><button class="btn red" type="button" id="leaveYes">Leave</button></div>
   </div>
 </div>
-<div class="modal" id="busyM" hidden><div class="dlg" style="justify-items:center;text-align:center;max-width:360px"><div class="spin"></div><h2 id="busyT" style="font-size:1.8rem">Finding lobby…</h2><button class="lnk" type="button" id="busyX">Cancel</button></div></div>
+<div class="modal" id="busyM" hidden><div class="dlg" style="justify-items:center;text-align:center;max-width:360px"><div class="spin"></div><h2 id="busyT">Finding lobby…</h2><button class="btn" type="button" id="busyX">Cancel</button></div></div>
 <div class="moment" id="moment" hidden></div>
 <div class="bubbles" id="bubbles" aria-hidden="true"></div>
 <div class="floaters" id="floaters" aria-hidden="true"></div>
