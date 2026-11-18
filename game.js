@@ -492,12 +492,12 @@ function doBack() {
 }
 window.addEventListener('popstate', () => { if (C.peek) return; if (C.role || ['meM', 'howM', 'leaveM'].some(id => !$(id).hidden)) { doBack(); if (C.role && !C.peek) pushNav(); } });
 const ICON = {
-  down: '<svg class="ico" viewBox="-14 -14 284 284" aria-hidden="true"><path d="M229.66,141.66l-96,96a8,8,0,0,1-11.32,0l-96-96A8,8,0,0,1,32,128H72V48A16,16,0,0,1,88,32h80a16,16,0,0,1,16,16v80h40a8,8,0,0,1,5.66,13.66Z" fill="currentColor" stroke="#000" stroke-width="22" stroke-linejoin="round" paint-order="stroke"/></svg>',
-  check: '<svg class="ico" viewBox="-14 -14 284 284" aria-hidden="true"><path d="M243.31,90.91l-128.4,128.4a16,16,0,0,1-22.62,0l-71.62-72a16,16,0,0,1,0-22.61l20-20a16,16,0,0,1,22.58,0L104,144.22l96.76-95.57a16,16,0,0,1,22.59,0l19.95,19.54A16,16,0,0,1,243.31,90.91Z" fill="currentColor" stroke="#000" stroke-width="22" stroke-linejoin="round" paint-order="stroke"/></svg>',
-  up: '<svg class="ico" viewBox="-14 -14 284 284" aria-hidden="true"><path d="M231.39,123.06A8,8,0,0,1,224,128H184v80a16,16,0,0,1-16,16H88a16,16,0,0,1-16-16V128H32a8,8,0,0,1-5.66-13.66l96-96a8,8,0,0,1,11.32,0l96,96A8,8,0,0,1,231.39,123.06Z" fill="currentColor" stroke="#000" stroke-width="22" stroke-linejoin="round" paint-order="stroke"/></svg>',
+  down: '<svg class="ico" viewBox="-3 -3 30 30" aria-hidden="true"><path d="M12 3.5V19.5M4.5 12.5 12 20l7.5-7.5" fill="none" stroke="#000" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 3.5V19.5M4.5 12.5 12 20l7.5-7.5" fill="none" stroke="currentColor" stroke-width="6.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  check: '<svg class="ico" viewBox="-3 -3 30 30" aria-hidden="true"><path d="M4 12.5l5.2 5.2L20 6.8" fill="none" stroke="#000" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 12.5l5.2 5.2L20 6.8" fill="none" stroke="currentColor" stroke-width="6.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  up: '<svg class="ico" viewBox="-3 -3 30 30" aria-hidden="true"><path d="M12 20.5V4.5M4.5 11.5 12 4l7.5 7.5" fill="none" stroke="#000" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 20.5V4.5M4.5 11.5 12 4l7.5 7.5" fill="none" stroke="currentColor" stroke-width="6.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
 };
-const NAV_R = '<svg viewBox="0 0 256 256" aria-hidden="true"><path d="M237.66,133.66l-96,96A8,8,0,0,1,128,224V184H48a16,16,0,0,1-16-16V88A16,16,0,0,1,48,72h80V32a8,8,0,0,1,13.66-5.66l96,96A8,8,0,0,1,237.66,133.66Z" fill="#000"/></svg>';
-const NAV_L = '<svg viewBox="0 0 256 256" aria-hidden="true"><path d="M224,88v80a16,16,0,0,1-16,16H128v40a8,8,0,0,1-13.66,5.66l-96-96a8,8,0,0,1,0-11.32l96-96A8,8,0,0,1,128,32V72h80A16,16,0,0,1,224,88Z" fill="#000"/></svg>';
+const NAV_R = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 12H19.5M12.5 4.5 20 12l-7.5 7.5" fill="none" stroke="#000" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const NAV_L = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 12H4.5M11.5 4.5 4 12l7.5 7.5" fill="none" stroke="#000" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 function navAct() {
   for (const id of ['meM', 'howM', 'leaveM']) if (!$(id).hidden) { $(id).hidden = true; return; }
   if (document.body.dataset.scr === 'home') {
@@ -838,7 +838,7 @@ function renderDivers(v) {
   const key = act.map(p => p.id + p.av + p.nm).join('|');
   if (box._key !== key) {
     box._key = key;
-    box.innerHTML = act.map(p => `<div class="dvr ${p.id === ME.id ? 'me' : ''}" data-pid="${esc(p.id)}"><span class="bb"><i></i><i></i><i></i><i></i><i></i><i></i></span>${avatar(p.av)}<span class="nm">${esc(p.id === ME.id && n > 1 ? 'you' : p.nm)}</span>${p.id === ME.id ? '<span class="meflag" aria-hidden="true"><svg viewBox="-16 -16 288 288"><path d="M231.39,123.06A8,8,0,0,1,224,128H184v80a16,16,0,0,1-16,16H88a16,16,0,0,1-16-16V128H32a8,8,0,0,1-5.66-13.66l96-96a8,8,0,0,1,11.32,0l96,96A8,8,0,0,1,231.39,123.06Z" fill="#000" stroke="#fff" stroke-width="26" stroke-linejoin="round" paint-order="stroke"/></svg><b>ME</b></span>' : ''}<span class="tag" hidden></span></div>`).join('');
+    box.innerHTML = act.map(p => `<div class="dvr ${p.id === ME.id ? 'me' : ''}" data-pid="${esc(p.id)}"><span class="bb"><i></i><i></i><i></i><i></i><i></i><i></i></span>${avatar(p.av)}<span class="nm">${esc(p.id === ME.id && n > 1 ? 'you' : p.nm)}</span>${p.id === ME.id ? '<span class="meflag" aria-hidden="true"><svg viewBox="-3 -3 30 30"><path d="M12 20.5V4.5M4.5 11.5 12 4l7.5 7.5" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 20.5V4.5M4.5 11.5 12 4l7.5 7.5" fill="none" stroke="#000" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg><b>ME</b></span>' : ''}<span class="tag" hidden></span></div>`).join('');
   }
   act.forEach((p, i) => {
     const el = box.querySelector(`[data-pid="${CSS.escape(p.id)}"]`); if (!el) return;

@@ -1584,6 +1584,27 @@ html body .scr .ansFx .cur{display:inline-block;width:.5em;height:.14em;backgrou
 @keyframes curBlink{0%{opacity:1}55%{opacity:0}100%{opacity:0}}
 
 .dv-in .ansWrap:not(:focus-within) .ansFx .cur{display:none !important}
+
+/* black text on white: heavier, never thin */
+html body .scr .dv-hud .pod:first-child,html body .scr .dv-hud .pod:first-child *,html body .mprail .dv-hud .pod:first-child,html body .mprail .dv-hud .pod:first-child *,html body .scr .dv-q,html body .scr .dv-q *,html body .mprail .dv-q,html body .mprail .dv-q *,html body .scr .dvr:not(.me) .nm,html body .scr .dvr:not(.me) .nm *,html body .mprail .dvr:not(.me) .nm,html body .mprail .dvr:not(.me) .nm *,html body .scr .dvr .tag.lk,html body .scr .dvr .tag.lk *,html body .mprail .dvr .tag.lk,html body .mprail .dvr .tag.lk *,html body .scr .dvr .tag.ty,html body .scr .dvr .tag.ty *,html body .mprail .dvr .tag.ty,html body .mprail .dvr .tag.ty *,html body .scr .dvr .tag.none,html body .scr .dvr .tag.none *,html body .mprail .dvr .tag.none,html body .mprail .dvr .tag.none *,html body .scr .room:not(.live),html body .scr .room:not(.live) *,html body .mprail .room:not(.live),html body .mprail .room:not(.live) *,html body .scr .mechip,html body .scr .mechip *,html body .mprail .mechip,html body .mprail .mechip *,html body .scr .fn-log,html body .scr .fn-log *,html body .mprail .fn-log,html body .mprail .fn-log *,html body .scr .fn-board,html body .scr .fn-board *,html body .mprail .fn-board,html body .mprail .fn-board *,html body .scr .toast:not(.ok),html body .scr .toast:not(.ok) *,html body .mprail .toast:not(.ok),html body .mprail .toast:not(.ok) *,html body .scr .dv-sealed,html body .scr .dv-sealed *,html body .mprail .dv-sealed,html body .mprail .dv-sealed *,html body .scr .dv-watch,html body .scr .dv-watch *,html body .mprail .dv-watch,html body .mprail .dv-watch *,html body .scr .dv-land .lt-k,html body .scr .dv-land .lt-k *,html body .mprail .dv-land .lt-k,html body .mprail .dv-land .lt-k *,html body .scr .dv-land .lboard,html body .scr .dv-land .lboard *,html body .mprail .dv-land .lboard,html body .mprail .dv-land .lboard *,html body .scr .dv-land.sunk,html body .scr .dv-land.sunk *,html body .mprail .dv-land.sunk,html body .mprail .dv-land.sunk *,html body .scr .dv-land.none,html body .scr .dv-land.none *,html body .mprail .dv-land.none,html body .mprail .dv-land.none *,html body .scr .hm-rejoin,html body .scr .hm-rejoin *,html body .mprail .hm-rejoin,html body .mprail .hm-rejoin *,html body .scr .fn-b,html body .scr .fn-b *,html body .mprail .fn-b,html body .mprail .fn-b *,html body .scr .lwait,html body .scr .lwait *,html body .mprail .lwait,html body .mprail .lwait *,html body .scr .dv-land .btn.desc,html body .scr .dv-land .btn.desc *,html body .mprail .dv-land .btn.desc,html body .mprail .dv-land .btn.desc *,html body .scr .lob-ready.on,html body .scr .lob-ready.on *,html body .mprail .lob-ready.on,html body .mprail .lob-ready.on *{-webkit-text-stroke:2.4px #000 !important;paint-order:stroke fill !important}
+
+html body .scr .room:not(.live) .ra,html body .mprail .room:not(.live) .ra{-webkit-text-stroke:7px #000 !important}
+html body .scr .dv-land .lt-k span{font-size:1.35rem !important}
+html body .scr .dv-land .lt-k b{font-size:2.1rem !important;line-height:1.1 !important}
+html body .scr .dv-land .btn.desc{font-size:2.1rem !important}
+@media (max-width:700px){html body .scr .dv-land .lt-k span{font-size:1.15rem !important}html body .scr .dv-land .lt-k b{font-size:1.7rem !important}}
+/* new round-ended stroke arrows */
+.ico{width:1em !important;height:1em !important;filter:drop-shadow(2px 2px 0 #000) !important}
+html body .scr .dv-land .btn.desc .ico,html body .scr .lob-ready.on .ico{filter:none !important}
+html body .scr .dv-land .btn.desc .ico path,html body .scr .lob-ready.on .ico path{stroke:#000 !important;fill:none !important}
+.nav svg{width:32px !important;height:32px !important}
+.dvr .meflag svg{width:20px !important;height:20px !important}
+
+.ico{width:1.1em !important;height:1.1em !important}
+html body .scr .dv-land .btn.desc .ico path:first-child,html body .scr .lob-ready.on .ico path:first-child{display:none}
+html body .scr .dv-land .lt-k span,html body .scr .dv-land .lt-k span *{-webkit-text-stroke:.8px #000 !important}
+
+html body .scr .dv-land .btn.desc .ico path:last-child,html body .scr .lob-ready.on .ico path:last-child{stroke-width:8.6 !important}
 </style>
 </head>
 <body data-scr="boot">
@@ -1611,7 +1632,7 @@ html body .scr .ansFx .cur{display:inline-block;width:.5em;height:.14em;backgrou
     <div class="lb-col hm-col">
       <div class="hm-kraken" id="homeKraken"></div>
       <h1 class="hm-logo">Kraken</h1>
-      <button class="lb-start" id="practice" type="button">Solo dive <svg class="ico" viewBox="-14 -14 284 284" aria-hidden="true"><path d="M229.66,141.66l-96,96a8,8,0,0,1-11.32,0l-96-96A8,8,0,0,1,32,128H72V48A16,16,0,0,1,88,32h80a16,16,0,0,1,16,16v80h40a8,8,0,0,1,5.66,13.66Z" fill="currentColor" stroke="#000" stroke-width="22" stroke-linejoin="round" paint-order="stroke"/></svg></button>
+      <button class="lb-start" id="practice" type="button">Solo dive <svg class="ico" viewBox="-3 -3 30 30" aria-hidden="true"><path d="M12 3.5V19.5M4.5 12.5 12 20l7.5-7.5" fill="none" stroke="#000" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 3.5V19.5M4.5 12.5 12 20l7.5-7.5" fill="none" stroke="currentColor" stroke-width="6.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       <div class="lb-eye hm-eye">Play with friends</div>
       <div class="rooms" id="hmRooms"></div>
       <button class="hm-rejoin" id="rejoin" type="button" hidden>Rejoin</button>
