@@ -1421,6 +1421,63 @@ body .scr .pod b,body .scr .dv-q h2,body .scr .lt-a,body .scr .lt-p,body .scr .l
 }
 .lob-modes,#setup{display:none !important}
 .fn-col .reacts,.fn-awards{display:none !important}
+
+/* ═════════════ CALM-DOWN PASS: thinner outlines, single black borders, room to breathe ═════════════ */
+body .scr *,body .mprail *,body .toast,body .dlg h2,body .dlg h3,body .dlg .btn,body .dlg .label,body .dlg .field{-webkit-text-stroke:5px #000 !important;text-shadow:2px 2px 0 #000 !important;letter-spacing:.02em !important}
+body .scr .pod b,body .scr .dv-q h2,body .scr .lt-a,body .scr .lt-p,body .scr .lt-k b,body .scr .room .rt b,body .scr .room .ra,body .scr .lb-start,body .scr .lob-ready,body .scr .dv-in .btn,body .scr .btn.desc,body .scr .fn-b,body .scr .fn-sub,body .scr .fn-log b,body .scr .fn-board b,body .scr .fn-board .n,body .scr .dvr .tag,body .scr .lb-eye,body .mprail .rl b,body .dlg h2,body .dlg .btn,body .toast,body .scr .dv-in .field,body .scr .dv-mp,body .scr .room.live .ra{-webkit-text-stroke:7px #000 !important;text-shadow:3px 3px 0 #000 !important}
+body .scr .hm-logo,body .scr .lob-name,body .scr .lob-cd,body .scr .lt-t,body .scr .fn-big{-webkit-text-stroke:11px #000 !important;text-shadow:5px 5px 0 #000 !important}
+/* one border colour: black. No white rings. */
+.dv-hud .pod,.dv-q,.dlg,.fn-log,.fn-board,.room,.toast,.dv-in .field,.dvr .nm,.dvr .tag,.dvr.me .tag,.mechip,.dv-sealed,.dv-watch,.dv-land,.dv-land .btn.desc,.lb-start,.lob-ready,.dv-in .btn,.btn.desc,.room .ra,.fn-b,.dlg .btn,.dv-mp,.hm-rejoin,#busyM .btn,.lob-state{border:4px solid #000 !important}
+.dv-in .field:focus{border-color:#ffd400 !important}
+.dvr .nm,.dvr .tag{border-width:3px !important}
+/* result card: smaller, roomier */
+.dv-land{padding:24px 26px 26px !important;gap:12px !important;width:min(540px,calc(100% - 32px)) !important}
+.lt-t{font-size:clamp(2.6rem,7vw,4rem) !important;line-height:1.05 !important}
+.lt-a{font-size:1.7rem !important;line-height:1.15 !important}
+.lt-p{font-size:1.7rem !important;line-height:1.15 !important}
+.lt-k{padding:12px 16px !important;gap:6px !important}
+.lt-k span{font-size:1.05rem !important}
+.lt-k b{font-size:1.5rem !important;line-height:1.15 !important}
+.btn.desc{font-size:1.9rem !important;padding:14px 32px !important;margin-top:6px !important}
+.lboard{padding:8px !important;gap:6px !important}
+.lboard li{padding:8px 12px !important;gap:12px !important}
+.lboard .n{font-size:1.3rem !important;line-height:1.15 !important}.lboard .n small{font-size:1.05rem !important;margin-top:4px !important}
+.lboard b,.lboard em{font-size:1.3rem !important}
+/* a little less shouty elsewhere, a little more air */
+.dvr.me .tag{font-size:2rem !important;padding:10px 18px !important}
+.dvr .tag{font-size:1.4rem !important}
+.dvr .nm{font-size:1.5rem !important}.dvr.me .nm{font-size:1.75rem !important}
+.dv-q{padding:18px 26px 20px !important}
+.dv-q h2{line-height:1.08 !important;margin:10px 0 2px !important}
+.pod{padding:8px 16px 10px !important}
+.pod b{font-size:2rem !important}
+.fn-log li{padding:12px 12px !important}
+.fn-log .q{line-height:1.15 !important}
+.fn-board li{padding:10px 14px !important}
+.room{padding:16px 18px !important}
+.room .rt{gap:6px !important}
+.room .rt b{font-size:2rem !important}
+.lb-start{font-size:2.3rem !important;padding:18px !important}
+.lob-ready{font-size:2.5rem !important}
+.fn-big{font-size:clamp(4rem,12vw,6.2rem) !important}
+.fn-sub{font-size:1.7rem !important}
+.hm-logo{font-size:clamp(5.6rem,22vw,9.6rem) !important}
+.lob-name{font-size:clamp(3.6rem,10.5vw,6rem) !important}
+@media (max-width:700px){
+  .lt-t{font-size:clamp(2.4rem,11vw,3.2rem) !important}
+  .lt-a,.lt-p{font-size:1.45rem !important}
+  .dvr.me .tag{font-size:1.55rem !important}
+  .dvr .nm{font-size:1.25rem !important}.dvr.me .nm{font-size:1.45rem !important}
+  .pod b{font-size:1.7rem !important}
+  .room .rt b{font-size:1.8rem !important}
+  .lb-start{font-size:2rem !important}.lob-ready{font-size:2.2rem !important}
+  .btn.desc{font-size:1.7rem !important}
+  .hm-logo{font-size:clamp(5rem,23vw,7rem) !important}
+}
+
+.dv-hud .pod:first-child,.dv-hud .pod.mid,.dv-hud .pod.r{border:4px solid #000 !important}
+.scr button:focus,.scr button:focus-visible,.dlg button:focus-visible,.mprail button:focus-visible,.nav:focus-visible{outline:none !important}
+.scr button:focus-visible{filter:brightness(1.12)}
 </style>
 </head>
 <body data-scr="boot">
