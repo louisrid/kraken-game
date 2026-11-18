@@ -1665,6 +1665,10 @@ html body #playScr .lob-modes button{font:italic 900 1.5rem/1 'Barlow Condensed'
 html body #playScr .lob-modes button[aria-pressed=true]{background:#ffd400 !important}
 html body #playScr .lob-modes button:disabled{cursor:default}
 html body #playScr .lob-modes button,html body #playScr .lob-modes button *{text-shadow:none !important;-webkit-text-stroke:0 !important;font-size:1.7rem !important;padding:14px 22px !important}
+html body #playScr #num{width:64px !important;height:64px !important;border-radius:50% !important;background:#ff1e3c !important;border:4px solid #000 !important;box-shadow:4px 4px 0 #000 !important;color:#fff !important;font:italic 900 2rem/1 'Barlow Condensed',sans-serif !important;-webkit-text-stroke:6px #000 !important;paint-order:stroke fill !important;display:grid;place-items:center}
+html body #playScr #num[hidden],html body #playScr #fuseW[hidden]{display:none !important}
+html body #playScr #fuseW{height:14px !important;background:#fff !important;border:3px solid #000 !important;border-radius:99px !important;overflow:hidden}
+html body #playScr #fuseW *{background:#ffd400 !important;height:100% !important;box-shadow:none !important}
 </style>
 </head>
 <body data-scr="boot">
@@ -1753,7 +1757,9 @@ html body #playScr .lob-modes button,html body #playScr .lob-modes button *{text
       <li>Everyone gets the same prompt.</li>
       <li>Same answer as someone else? You both sink nowhere.</li>
       <li>Deepest diver wins. The last prompt counts double.</li>
-      <li><b>Versus</b>: 7 prompts, deepest diver wins. <b>Blitz</b>: 3 quick prompts. <b>Co-op</b>: fill the Kraken’s order together, 3 lives.</li>
+      <li><b>Versus</b>: 7 prompts. Deepest diver wins.</li>
+      <li><b>Team</b>: everyone’s depth adds up. Don’t say the same thing as a teammate.</li>
+      <li><b>Blitz</b>: 10 prompts, 20 seconds each.</li>
     </ul>
     <div class="row"><button class="btn red" type="button" id="howX">Got it</button></div>
   </div>

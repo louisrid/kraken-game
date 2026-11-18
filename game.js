@@ -909,6 +909,7 @@ function renderDive(v) {
   $('hDots').innerHTML = Array.from({ length: v.n }, (_, i) => { const tr = C.myTiers[i]; return `<i class="${i === v.r && !rv ? 'cur' : ''} ${tr ? 'done ' + (TCLS[tr] || tr) : ''}"></i>`; }).join('');
   $('hCount').textContent = `${v.r + 1}/${v.n}`; $('hCL').textContent = crew ? 'Order' : 'Prompt';
   if (crew) { $('hRL').textContent = 'Planks'; $('hR').textContent = String(v.cr.lives); }
+  else if (act.length > 1 && v.set.team) { $('hRL').textContent = 'Team'; $('hR').textContent = M(act.reduce((a, p) => a + p.pts, 0)); }
   else if (act.length > 1) { const rank = act.slice().sort((a, b) => b.pts - a.pts).findIndex(p => p.id === ME.id) + 1; $('hRL').textContent = 'Rank'; $('hR').textContent = rank > 0 ? `${rank} of ${act.length}` : 'watching'; }
   else { $('hRL').textContent = 'Best dive'; $('hR').textContent = M(LS.get('best', 0)); }
   $('qN').textContent = `${(CATINFO[q.cat] || ['Mix'])[0]}${!crew && act.length > 1 && v.r === v.n - 1 ? ' · double depth' : ''}`;
@@ -1061,10 +1062,10 @@ function renderLobby(v) {
   $('start').classList.toggle('on', mine);
   $('start').hidden = !me || !!me.spec;
   $('setup').hidden = !!cd;
-  const s = v.set; const sig = s.mode + s.rounds + host;
+  const s = v.set; const sig = s.mode + s.rounds + (s.team ? 't' : '') + host;
   if ($('setup')._sig !== sig) {
     $('setup')._sig = sig;
-    $('setup').innerHTML = [['vs', 7, 'Versus'], ['crew', 7, 'Co-op'], ['vs', 3, 'Blitz']].map(([k, r, n]) => `<button type="button" data-mode="${k}" data-r="${r}" aria-pressed="${s.mode === k && (k === 'crew' || s.rounds === r)}" ${host ? '' : 'disabled'}>${n}</button>`).join('');
+    $('setup').innerHTML = [['vs', 7, 0, 0, 'Versus'], ['vs', 7, 0, 1, 'Team'], ['vs', 10, 20, 0, 'Blitz']].map(([k, r, sc, tm, n]) => `<button type="button" data-mode="${k}" data-r="${r}" data-s="${sc}" data-t="${tm}" aria-pressed="${s.rounds === r && !!s.team === !!tm}" ${host ? '' : 'disabled'}>${n}</button>`).join('');
   }
   $('dvMp').hidden = true;
   renderDivers(v);
@@ -1210,6 +1211,7 @@ const fnHead = (eye, big, sub, sm) => `<div class="fn-big${sm ? ' sm' : ''}">${e
 function vsFinal(v) {
   const rows = v.pl.filter(p => !p.spec).slice().sort((a, b) => b.pts - a.pts);
   const tie = rows[1] && rows[1].pts === rows[0].pts;
+  if (v.set.team) { const tot = rows.reduce((a, p) => a + p.pts, 0); const bt = Math.max(LS.get('teamBest', 0), tot); LS.set('teamBest', bt); return fnHead('Team dive', M(tot), tot >= bt ? 'new team best' : `team best ${esc(M(bt))}`, true) + `<ol class="fn-board">${rows.map((p, i) => `<li class="${p.id === ME.id ? 'me' : ''}"><span class="rk">${i + 1}</span>${avatar(p.av)}<span class="n">${esc(p.nm)}</span><b>${esc(M(p.pts))}</b></li>`).join('')}</ol>`; }
   const head = tie ? fnHead('Dive complete', 'It’s a tie', 'Same depth at the top', true) : fnHead('Dive complete', rows[0].nm, `went deepest · ${esc(M(rows[0].pts))}`, true);
   const board = `<ol class="fn-board">${rows.map((p, i) => `<li class="${p.id === ME.id ? 'me' : ''}"><span class="rk">${i + 1}</span>${avatar(p.av)}<span class="n">${esc(p.nm)}${p.tot ? `<small>${esc(M(p.tot))} all-time</small>` : ''}</span><b>${esc(M(p.pts))}</b></li>`).join('')}</ol>`;
   return head + board;
@@ -1334,7 +1336,7 @@ function bind() {
   ['howM', 'leaveM', 'meM'].forEach(id => $(id).addEventListener('click', (e) => { if (e.target.id === id) $(id).hidden = true; }));
   $('setup').addEventListener('click', (e) => {
     if (!H) return;
-    const mb = e.target.closest('[data-mode]'); if (mb) { if (!H || mb.disabled) return; H.set.mode = mb.dataset.mode; H.set.rounds = +mb.dataset.r || 7; for (const p of H.players) p.rdy = 0; H.cdAt = 0; H.dirty = true; broadcast(); return; }
+    const mb = e.target.closest('[data-mode]'); if (mb) { if (!H || mb.disabled) return; H.set.mode = mb.dataset.mode; H.set.rounds = +mb.dataset.r || 7; H.set.secs = +mb.dataset.s || 0; H.set.team = mb.dataset.t === '1'; for (const p of H.players) p.rdy = 0; H.cdAt = 0; H.dirty = true; broadcast(); return; }
     const sb = e.target.closest('.seg button'); if (sb) { const k = sb.parentElement.dataset.set; H.set[k] = +sb.dataset.v; H.dirty = true; broadcast(); return; }
     const tb = e.target.closest('[data-topic]');
     if (tb) {
