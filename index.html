@@ -833,9 +833,27 @@ body[data-scr="final"] .mprail{z-index:20}
 @media (max-width:1099px){.mprail{display:none !important}}
 .lb-code{font:italic 900 clamp(3.4rem,12vw,5.8rem)/.9 var(--cond);text-transform:uppercase;letter-spacing:.04em;color:#fff;text-shadow:0 0 26px rgba(98,228,255,.7),4px 4px 0 #0a0a0a}
 @media (max-width:520px){.room{padding:12px}.room .rt b{font-size:1.45rem}.room .ravs .av{width:28px;height:28px}.room .ra{padding:9px 12px;font-size:1.05rem}}
+
+/* first paint: no home flash, just the sea the dive opens on */
+html{background:#1e70a3}
+body[data-scr="boot"]{background:linear-gradient(to bottom,#a8dcf2 0%,#e6f6fb 52%,#2f8fc0 52%,#1e70a3 72%,#145483 100%)}
+body[data-scr="boot"] .scr,body[data-scr="boot"] .mprail{display:none !important}
+.ocean{display:none}
+body[data-from="boot"] .scr,body[data-from="boot"] .scr>*{animation:none !important}
+
+/* back = big icon-only circle, top right */
+.bk{left:auto;right:max(14px,env(safe-area-inset-right));width:62px;height:62px;padding:0;justify-content:center;border-width:2.5px}
+.bk span{display:none}
+.bk svg{width:34px;height:34px}
+.bk:active{transform:scale(.94)}
+@media (max-width:700px){.bk{width:58px;height:58px}}
+.dv-mp{right:auto;left:max(14px,env(safe-area-inset-left))}
+.dv-hud{padding:0 90px}
+@media (max-width:700px){.dv-hud{padding:0 76px 0 8px}body.solo .dv-hud{padding:72px 8px 0}}
+@media (min-width:1100px){body.solo .scr.play .bk{right:max(14px,env(safe-area-inset-right))}}
 </style>
 </head>
-<body data-scr="home">
+<body data-scr="boot">
 <noscript>Kraken needs JavaScript turned on.</noscript>
 <div class="themes" id="themes" role="group" aria-label="Theme"></div>
 <div class="ocean" aria-hidden="true">

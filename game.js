@@ -103,7 +103,7 @@ let toastT = 0;
 function toast(msg, kind = '') { const t = $('toast'); t.textContent = msg; t.className = 'toast ' + kind; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => (t.hidden = true), 3200); }
 function busy(msg) { $('busyM').hidden = !msg; if (msg) $('busyT').textContent = msg; }
 const SCR_ORDER = { home: 0, lobby: 1, play: 2, final: 3 };
-function scr(name) { const cur = document.body.dataset.scr; if (cur !== name) document.body.dataset.dir = (SCR_ORDER[name] ?? 0) < (SCR_ORDER[cur] ?? 0) ? 'back' : 'fwd'; document.body.dataset.scr = name; }
+function scr(name) { const cur = document.body.dataset.scr; if (cur !== name) { document.body.dataset.dir = (SCR_ORDER[name] ?? 0) < (SCR_ORDER[cur] ?? 0) ? 'back' : 'fwd'; document.body.dataset.from = cur || ''; } document.body.dataset.scr = name; }
 const avatar = (id, cls = '') => `<span class="av ${cls}">${ART.avatar(id)}</span>`;
 const tierPill = (t) => `<span class="tp ${TCLS[t]}">${esc(TIERS[t].name)}</span>`;
 function splitPrompt(p) { const m = p.match(/^Name (an?|the) (.*)$/i); return m ? ['Name ' + m[1].toLowerCase() + '…', m[2]] : ['', p]; }
@@ -495,7 +495,7 @@ function leave() {
   clearRejoin();
   const hub = (H && H.hub) || C.hub;
   if (hub) { const keep = hub; setTimeout(() => keep.end(), 400); if (H) H.hub = null; C.hub = null; }
-  teardown(); setUrl(''); render();
+  C.booting = false; teardown(); setUrl(''); render();
 }
 window.addEventListener('pagehide', () => {
   if (C.role === 'host' && H && H.hub) { publishInfo(true); H.hub.pub(NET.NS + H.code + '/s', { t: 'end', msg: 'The host closed the game.' }, 0); }
@@ -956,7 +956,7 @@ function openMe() { renderMe(); $('nm2').value = ME.name; $('meM').hidden = fals
 function render() {
   renderRail();
   const v = C.view;
-  if (!C.role || !v) { if (!C.role) { scr('home'); renderHome(); } return; }
+  if (!C.role || !v) { if (!C.role && !C.booting) { scr('home'); renderHome(); } return; }
   const map = { lobby: 'lobby', play: 'play', reveal: 'play', final: 'final' };
   scr(map[v.ph] || 'home');
   if (v.ph === 'lobby') renderLobby(v);
@@ -1310,7 +1310,8 @@ function bind() {
 /* ═════════════════ BOOT ═════════════════ */
 function boot() {
   try { const fav = 'data:image/svg+xml,' + encodeURIComponent(ART.mark); $('favicon').setAttribute('href', fav); } catch {}
-  startWatcher(); bind(); renderHome(); buildOcean(); render();
+  C.booting = true; startWatcher(); bind(); renderHome(); buildOcean();
+  setTimeout(() => { C.booting = false; if (!C.role) render(); }, 2600);
   const params = new URLSearchParams(location.search);
   const j = (params.get('join') || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
   const srj = SS.get('rj', null);
