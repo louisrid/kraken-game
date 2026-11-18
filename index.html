@@ -9,7 +9,7 @@
 <link rel="icon" id="favicon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;600;700;800&family=Barlow+Condensed:ital,wght@1,700;1,800;1,900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;600;700;800&family=Barlow+Condensed:ital,wght@1,700;1,800;1,900&family=Anton&display=swap" rel="stylesheet">
 <style>
 :root{
   --r:#FF2B2B; --on-r:#0a0a0a;
@@ -979,11 +979,96 @@ body[data-from="boot"] .scr,body[data-from="boot"] .scr>*{animation:none !import
   body.solo .dv-q{top:calc(max(12px,env(safe-area-inset-top)) + 136px) !important}
 }
 .lwait{background:#0c2638;border:3px solid #000;border-radius:12px;padding:12px 18px;color:#fff !important;font-size:1.25rem !important;box-shadow:4px 4px 0 rgba(0,0,0,.6)}
+
+/* one nav button: same size, same place, every screen */
+.nav{position:fixed;top:max(14px,env(safe-area-inset-top));right:max(14px,env(safe-area-inset-right));z-index:46;width:62px;height:62px;border-radius:50%;background:#fff;color:#000;border:3px solid #000;box-shadow:4px 4px 0 #000;display:grid;place-items:center;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.nav svg{width:34px;height:34px}
+.nav:active{transform:translate(3px,3px);box-shadow:1px 1px 0 #000}
+@media (max-width:700px){.nav{width:58px;height:58px}}
+body[data-scr="boot"] .nav{display:none}
+
+/* ═════════════ BRAND FONT + WHITE PASS ═════════════ */
+:root{--disp:'Anton','Barlow Condensed',Impact,'Arial Narrow',sans-serif}
+/* display face for everything big: logo, titles, numbers, buttons */
+.hm-logo,.lob-name,.lob-cd,.lob-state,.dv-q h2,.lt-t,.lt-a,.lt-p,.lt-k b,.fn-big,.fn-sub,.pod b,.room .rt b,.dlg h2,.mprail .rl b,.dv-mk.z b,
+.lb-start,.lob-ready,.lob-modes button,.dv-in .btn,.btn.desc,.fn-b,.room .ra,.dv-mp,.dlg .btn,.hm-rejoin,.lb-eye,.toast,.fn-board b,.fn-log b,.lboard b,.lboard em,.fn-awards b,.dvr .tag,.dvr .nm,.mechip b{font-family:var(--disp) !important;font-weight:400 !important;font-style:normal !important;letter-spacing:.01em !important;text-transform:uppercase}
+/* white, always */
+.scr,.scr *,.dlg,.dlg *,.mprail,.mprail *,.toast{color:#fff}
+.lb-eye,.pod .label,.pmid span,.lt-k span,.fn-awards span,.room .rt small,.lboard .n small,.fn-board .n small,.dlg .label,.mechip i{color:#fff !important;opacity:1 !important}
+.dv-mk,.dv-mk.z b,.dv-ruler i.big b{color:rgba(255,255,255,.55) !important}
+/* tiers: no pastel text. White words; colour only as solid fills */
+.lt-t,.lt-t.sunk,.lt-t.none,.fn-log .q small,.dv-tl span,.dv-q .qn{color:#fff !important}
+.dv-tl{border-top-color:rgba(255,255,255,.45) !important}
+.dv-tl.hit{border-top-color:#fff !important}
+.dv-tl.t5 span,.dv-tl.t5.hit{color:#ff3b3b !important;border-top-color:#ff3b3b !important}
+.lt-t.t5,.lt-t.sunk{color:#ff3b3b !important}
+.dv-q .qn{background:#ff3b3b;padding:4px 12px;border-radius:8px;display:inline-block;font:italic 900 1.15rem/1 var(--cond) !important}
+.dvr .tag,.dvr .tag.t0,.dvr .tag.t1,.dvr .tag.t2,.dvr .tag.t3,.dvr .tag.t4,.dvr .tag.lk,.dvr .tag.ty,.dvr .tag.mine,.dvr .tag.none{background:#0c2638 !important;color:#fff !important}
+.dvr .tag.t5,.dvr .tag.sunk{background:#ff3b3b !important;color:#fff !important}
+.dvr .tag.rdy{background:#fff !important;color:#000 !important}
+.hdots i.done{background:#fff !important;border-color:#fff !important}
+.hdots i.t5,.hdots i.sunk{background:#ff3b3b !important;border-color:#ff3b3b !important}
+.hdots i.none{background:#3b5161 !important;border-color:#3b5161 !important}
+.fn-cells i{background:#fff !important}.fn-cells i.t5{background:#ff3b3b !important}.fn-cells i.none{background:#3b5161 !important}
+.lob-modes button[aria-pressed="true"],.lob-ready.on,.room.busy .ra,.lob-state,.dvr .tag.rdy{color:#000 !important}
+.lob-modes button[aria-pressed="true"] *,.lob-ready.on *{color:#000 !important}
+.dlg .ladder div,.dlg .ladder div *{color:#000 !important}
+.dlg .avb,.dlg .avb *{color:#000 !important}
+/* the answer box: big, white, every device */
+.dv-in{width:min(760px,100%) !important;gap:12px !important}
+.dv-in .field{height:84px !important;font:400 2.4rem/1 var(--disp) !important;letter-spacing:.01em !important;text-transform:uppercase;color:#fff !important;caret-color:#fff;background:#0c2638 !important;border:3px solid #fff !important;border-radius:16px !important;padding:0 22px !important;box-shadow:5px 5px 0 #000 !important}
+.dv-in .field::placeholder{color:rgba(255,255,255,.6) !important;font:400 2.2rem/1 var(--disp) !important;text-transform:uppercase}
+.dv-in .field:focus{border-color:#ff3b3b !important;box-shadow:5px 5px 0 #000 !important}
+.dv-in .btn{height:84px !important;font-size:2.6rem !important;padding:0 30px !important;border-radius:16px !important}
+@media (max-width:700px){
+  .dv-in .field{height:76px !important;font-size:2rem !important;padding:0 16px !important}
+  .dv-in .field::placeholder{font-size:1.8rem !important}
+  .dv-in .btn{height:76px !important;font-size:2.1rem !important;padding:0 18px !important}
+}
+/* bigger button text */
+.lb-start{font-size:2.8rem !important;padding:22px !important}
+.lob-ready{font-size:3.2rem !important;padding:22px !important}
+.btn.desc{font-size:2.3rem !important;padding:18px 40px !important}
+.fn-b{font-size:1.7rem !important;padding:16px 10px !important}
+.room .ra{font-size:1.7rem !important;padding:12px 22px !important}
+.room .rt b{font-size:2.4rem !important}
+.room .rt small{font:italic 900 1.3rem/1 var(--cond) !important}
+.lob-modes button{font-size:1.8rem !important;padding:12px 24px !important}
+.dv-mp{font-size:1.4rem !important;padding:12px 16px !important}
+.dlg .btn{font-size:1.8rem !important;padding:14px !important}
+.dlg h2{font-size:3.2rem !important}
+.hm-logo{font-size:clamp(5.4rem,19vw,8.8rem) !important}
+.lob-name{font-size:clamp(4.6rem,14vw,8rem) !important}
+.lob-state{font-size:1.8rem !important}
+.lob-cd{font-size:clamp(10rem,32vw,18rem) !important}
+.dv-q h2{font-size:clamp(2.4rem,5.6vw,3.8rem) !important;line-height:1 !important}
+.lt-t{font-size:clamp(3.8rem,11vw,6.2rem) !important;line-height:.95 !important}
+.lt-a{font-size:2.3rem !important}.lt-p{font-size:2.3rem !important}
+.fn-big{font-size:clamp(5rem,16vw,8rem) !important}.fn-big.sm{font-size:clamp(3.6rem,12vw,6rem) !important}
+.fn-sub{font-size:2rem !important}
+.pod b{font-size:2.4rem !important}
+.dvr .tag{font-size:1.5rem !important}
+.dvr .nm{font-size:1.25rem !important}
+@media (max-width:700px){
+  .lb-start{font-size:2.3rem !important}.lob-ready{font-size:2.6rem !important}.btn.desc{font-size:2rem !important}
+  .room .rt b{font-size:2rem !important}.room .ra{font-size:1.45rem !important;padding:10px 16px !important}
+  .pod b{font-size:1.8rem !important}
+  .lob-modes button{font-size:1.5rem !important}
+}
+
+/* avatars keep their black line art */
+.av,.av *,.scr .av,.scr .av *,.mprail .av,.mprail .av *,.dlg .avb,.dlg .avb *,.avb,.avb *{color:#0a0a0a !important}
+.dlg .avb[aria-pressed="true"],.dlg .avb[aria-pressed="true"] *{color:#fff !important}
+/* side-panel lobby rows stay compact */
+.rooms.sm .room .rt b{font-size:1.55rem !important;white-space:nowrap}
+.rooms.sm .room .rt small{font-size:1rem !important}
+.rooms.sm .room .ra{font-size:1.2rem !important;padding:8px 12px !important}
 </style>
 </head>
 <body data-scr="boot">
 <noscript>Kraken needs JavaScript turned on.</noscript>
 <div class="themes" id="themes" role="group" aria-label="Theme"></div>
+<button class="nav" type="button" data-act="back" aria-label="Home" id="tbX"></button>
 <div class="ocean" aria-hidden="true">
   <div class="o-rays"><i></i><i></i><i></i><i></i></div>
   <div class="o-snow"></div>
@@ -1026,7 +1111,7 @@ body[data-from="boot"] .scr,body[data-from="boot"] .scr>*{animation:none !import
       <div class="pmid"><div class="hdots" id="hDots"></div><span id="hCount">Prompt 1 of 7</span></div>
       <div class="pod r"><span class="label" id="hRL">Best dive</span><b id="hR">0 m</b></div>
     </header>
-    <button class="bk" type="button" data-act="back" aria-label="Back" id="tbX"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5 7.5 12l7 7"/><path d="M8 12h11"/></svg><span>Back</span></button>
+    
     <button class="dv-mp" type="button" data-act="friends" id="dvMp" hidden>Lobbies</button>
     <div class="dv-q" id="pCard"><span class="qn" id="qN"></span><h2 id="qT"></h2></div>
     <div class="dv-crew" id="crewBox" hidden><div class="card orders" id="orders"></div><div class="hull" id="hull"></div><ul class="feed" id="feed"></ul></div>
@@ -1042,7 +1127,7 @@ body[data-from="boot"] .scr,body[data-from="boot"] .scr>*{animation:none !import
       <div class="dv-watch" id="watching" hidden>You’re watching this dive. You’ll be in the next game.</div>
       <form class="dv-in" id="ansF" autocomplete="off">
         <div class="num" id="num" hidden><span></span></div>
-        <input class="field" id="ans" maxlength="80" placeholder="type one answer…" aria-label="Your answer" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go">
+        <input class="field" id="ans" maxlength="80" placeholder="Your answer" aria-label="Your answer" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go">
         <button class="btn" id="ansB" type="submit">Dive</button>
       </form>
       <div class="fuse" id="fuseW" hidden><i id="fill"></i></div>

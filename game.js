@@ -103,7 +103,7 @@ let toastT = 0;
 function toast(msg, kind = '') { const t = $('toast'); t.textContent = msg; t.className = 'toast ' + kind; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => (t.hidden = true), 3200); }
 function busy(msg) { $('busyM').hidden = !msg; if (msg) $('busyT').textContent = msg; }
 const SCR_ORDER = { home: 0, lobby: 1, play: 2, final: 3 };
-function scr(name) { const cur = document.body.dataset.scr; if (cur !== name) { document.body.dataset.dir = (SCR_ORDER[name] ?? 0) < (SCR_ORDER[cur] ?? 0) ? 'back' : 'fwd'; document.body.dataset.from = cur || ''; } document.body.dataset.scr = name; }
+function scr(name) { const cur = document.body.dataset.scr; if (cur !== name) { document.body.dataset.dir = (SCR_ORDER[name] ?? 0) < (SCR_ORDER[cur] ?? 0) ? 'back' : 'fwd'; document.body.dataset.from = cur || ''; } document.body.dataset.scr = name; renderNav(); }
 const avatar = (id, cls = '') => `<span class="av ${cls}">${ART.avatar(id)}</span>`;
 const tierPill = (t) => `<span class="tp ${TCLS[t]}">${esc(TIERS[t].name)}</span>`;
 function splitPrompt(p) { const m = p.match(/^Name (an?|the) (.*)$/i); return m ? ['Name ' + m[1].toLowerCase() + '…', m[2]] : ['', p]; }
@@ -482,13 +482,30 @@ function setUrl(code) { try { history.replaceState(history.state, '', location.p
 function pushNav() { try { if (!history.state || !history.state.kr) history.pushState({ kr: 1 }, ''); } catch {} }
 function doBack() {
   for (const id of ['meM', 'howM', 'leaveM']) if (!$(id).hidden) { $(id).hidden = true; return; }
-  if (!C.role) return;
+  if (!C.role || C.peek) return;
   const v = C.view;
+  if (C.role === 'solo' && v && v.ph !== 'final') { C.peek = true; render(); return; }
   if (C.role === 'guest' && v && v.ph === 'lobby') { leave(); return; }
   if (C.role === 'host' && v && v.ph === 'lobby' && v.pl.filter(p => !p.gone).length <= 1) { leave(); return; }
   confirmLeave();
 }
-window.addEventListener('popstate', () => { if (C.role || ['meM', 'howM', 'leaveM'].some(id => !$(id).hidden)) { doBack(); if (C.role) pushNav(); } });
+window.addEventListener('popstate', () => { if (C.peek) return; if (C.role || ['meM', 'howM', 'leaveM'].some(id => !$(id).hidden)) { doBack(); if (C.role && !C.peek) pushNav(); } });
+const NAV_R = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 5l7 7-7 7"/><path d="M16 12H5"/></svg>';
+const NAV_L = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5l-7 7 7 7"/><path d="M8 12h11"/></svg>';
+function navAct() {
+  for (const id of ['meM', 'howM', 'leaveM']) if (!$(id).hidden) { $(id).hidden = true; return; }
+  if (document.body.dataset.scr === 'home') {
+    if (C.role === 'solo' && C.peek) { C.peek = false; pushNav(); render(); } else practice();
+    return;
+  }
+  doBack();
+}
+function renderNav() {
+  const b = $('tbX'); if (!b) return;
+  const home = document.body.dataset.scr === 'home';
+  const k = home ? 'L' : 'R';
+  if (b._k !== k) { b._k = k; b.innerHTML = home ? NAV_L : NAV_R; b.setAttribute('aria-label', home ? 'Back to the dive' : 'Home'); b.classList.toggle('home', home); }
+}
 const BACK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5 7.5 12l7 7"/><path d="M8 12h11"/></svg>';
 
 /* ───────── leaving ───────── */
@@ -497,7 +514,7 @@ function teardown() {
   if (H) { clearInterval(H.loop); if (H.hub) H.hub.end(); }
   if (C.hub) C.hub.end();
   H = null;
-  Object.assign(C, { role: null, code: null, hub: null, link: null, view: null, joined: false, recovering: 0, myLock: null, mySubs: [], fb: null, timeKey: '', revealKey: '', finalSig: '' });
+  Object.assign(C, { peek: false, role: null, code: null, hub: null, link: null, view: null, joined: false, recovering: 0, myLock: null, mySubs: [], fb: null, timeKey: '', revealKey: '', finalSig: '' });
   busy(null); wakeLock(false);
 }
 function leave() {
@@ -936,7 +953,7 @@ function bubbles(n) {
 
 /* ═════════════════ RENDER ═════════════════ */
 function renderRail() {
-  const on = C.role === 'solo';
+  const on = C.role === 'solo' && !C.peek;
   document.body.classList.toggle('solo', on);
   $('mprail').hidden = !on; if (!on) return;
   if ($('mrAv')._av !== ME.av) { $('mrAv')._av = ME.av; $('mrAv').innerHTML = avatar(ME.av); }
@@ -957,6 +974,7 @@ function setMe(nm, av) {
 function openMe() { renderMe(); $('nm2').value = ME.name; $('meM').hidden = false; }
 function render() {
   renderRail();
+  if (C.peek && C.role === 'solo') { scr('home'); renderHome(); return; }
   const v = C.view;
   if (!C.role || !v) { if (!C.role && !C.booting) { scr('home'); renderHome(); } return; }
   const map = { lobby: 'play', play: 'play', reveal: 'play', final: 'final' };
@@ -1140,7 +1158,7 @@ function renderFinal(v) {
     : host
       ? `<button class="lb-start" type="button" data-act="rematch">Dive again ▼</button><div class="fn-links"><button class="fn-b" type="button" data-act="lobby">Back to lobby</button><button class="fn-b" type="button" data-act="share">Copy results</button></div>`
       : `<p class="lb-wait">Waiting for the host…</p><div class="fn-links"><button class="fn-b" type="button" data-act="share">Copy results</button></div>`;
-  box.innerHTML = `<button class="bk" type="button" data-act="back" aria-label="Back">${BACK}<span>Back</span></button><div class="lb-col fn-col">${body}${acts}${v.solo ? '' : `<div class="reacts">${EMOS.map(e => `<button type="button" data-emo="${e}" aria-label="React ${e}">${e}</button>`).join('')}</div>`}</div>`;
+  box.innerHTML = `<div class="lb-col fn-col">${body}${acts}${v.solo ? '' : `<div class="reacts">${EMOS.map(e => `<button type="button" data-emo="${e}" aria-label="React ${e}">${e}</button>`).join('')}</div>`}</div>`;
 }
 const fnHead = (eye, big, sub, sm) => `<div class="fn-big${sm ? ' sm' : ''}">${esc(big)}</div><div class="fn-sub">${sub}</div>`;
 function vsFinal(v) {
@@ -1211,7 +1229,7 @@ function live() {
     const can = !inIntro && left > 0 && me && !me.spec && (v.set.mode === 'crew' || !C.myLock);
     const inp = $('ans');
     if (inp.disabled === !!can) { inp.disabled = !can; $('ansB').disabled = !can; if (can && !matchMedia('(pointer: coarse)').matches) inp.focus(); }
-    if (inIntro) inp.placeholder = 'descending…'; else inp.placeholder = v.set.mode === 'crew' ? 'answer for the crew…' : 'type one answer…';
+    if (inIntro) inp.placeholder = 'Get ready'; else inp.placeholder = v.set.mode === 'crew' ? 'Crew answer' : 'Your answer';
   } else {
     document.body.classList.remove('panic');
   }
@@ -1250,7 +1268,7 @@ function bind() {
   document.addEventListener('pointerdown', () => SFX.unlock(), { once: true });
   $('nm').addEventListener('input', (e) => { ME.name = cleanName(e.target.value); LS.set('name', e.target.value.trim() ? ME.name : ''); });
   $('avs').addEventListener('click', (e) => { const b = e.target.closest('.avb'); if (!b) return; ME.av = b.dataset.av; LS.set('av', ME.av); renderHome(); SFX.bubble(); });
-  $('practice').addEventListener('click', practice);
+  $('practice').addEventListener('click', () => { if (C.role === 'solo' && C.peek) { C.peek = false; pushNav(); render(); } else practice(); });
   $('rejoin').addEventListener('click', () => { const rj = SS.get('rj', null) || LS.get('rj', null); if (!rj) return; if (rj.id) { ME.id = rj.id; SS.set('id', ME.id); } if (!$('nm').value.trim()) $('nm').value = ME.name || 'Player'; joinLobby(rj.code, true); });
   $('how').addEventListener('click', () => { $('howM').hidden = false; $('howX').focus(); });
   $('nm2').addEventListener('input', (e) => { if (e.target.value.trim()) setMe(e.target.value, null); });
@@ -1290,7 +1308,7 @@ function bind() {
     const a = e.target.closest('[data-act]'); if (!a) return;
     const act = a.dataset.act;
     if (act === 'leave') confirmLeave();
-    if (act === 'back') doBack();
+    if (act === 'back') navAct();
     if (act === 'next' && H) nextRound();
     if (act === 'force' && H) forceReveal();
     if (act === 'friends') { if (C.role === 'solo') leave(); else if (!C.role) render(); }
