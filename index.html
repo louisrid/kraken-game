@@ -9,7 +9,7 @@
 <link rel="icon" id="favicon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;600;700;800&family=Barlow+Condensed:ital,wght@1,700;1,800;1,900&family=Anton&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;600;700;800&family=Barlow+Condensed:ital,wght@1,700;1,800;1,900&family=Anton&family=Bangers&display=swap" rel="stylesheet">
 <style>
 :root{
   --r:#FF2B2B; --on-r:#0a0a0a;
@@ -1181,6 +1181,51 @@ body.solo .dv-q{top:calc(max(12px,env(safe-area-inset-top)) + 118px) !important}
 .dlg .ladder div{background:#fff !important;border-left:2px solid #000 !important}
 .dlg .ladder div,.dlg .ladder div *{color:#000 !important}
 .dlg .ladder div.t5{background:#ff3b3b !important}.dlg .ladder div.t5 *{color:#fff !important}
+
+/* ═════════════ COMIC PASS: Bangers + black outlines + hard drop shadows ═════════════ */
+:root{
+  --disp:'Bangers','Anton',Impact,'Arial Narrow',sans-serif;
+  --o1:-1.2px -1.2px 0 #000,1.2px -1.2px 0 #000,-1.2px 1.2px 0 #000,1.2px 1.2px 0 #000,0 1.5px 0 #000,1.5px 0 0 #000,2.5px 2.5px 0 #000;
+  --o2:-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000,2px 2px 0 #000,0 2.5px 0 #000,2.5px 0 0 #000,0 -2.5px 0 #000,-2.5px 0 0 #000,4px 4px 0 #000;
+  --o3:-3px -3px 0 #000,3px -3px 0 #000,-3px 3px 0 #000,3px 3px 0 #000,0 4px 0 #000,4px 0 0 #000,0 -4px 0 #000,-4px 0 0 #000,8px 8px 0 #000;
+}
+body .scr,body .scr *,body .dlg h2,body .dlg h3,body .dlg .btn,body .dlg .label,body .dlg .field,body .dlg .ladder *,body .mprail,body .mprail *,body .toast,body .nav{font-family:var(--disp) !important;letter-spacing:.035em !important;font-weight:400 !important;font-style:normal !important}
+/* every bit of display text gets a black comic edge */
+body .scr *,body .mprail *,body .toast,body .dlg h2,body .dlg h3,body .dlg .btn,body .dlg .label{text-shadow:var(--o1) !important}
+/* medium: buttons, numbers, prompts, names */
+body .scr .pod b,body .scr .dv-q h2,body .scr .lt-a,body .scr .lt-p,body .scr .lt-k b,body .scr .room .rt b,body .scr .room .ra,body .scr .lb-start,body .scr .lob-ready,body .scr .dv-in .btn,body .scr .btn.desc,body .scr .fn-b,body .scr .lob-modes button,body .scr .dv-mp,body .scr .fn-sub,body .scr .fn-log b,body .scr .fn-board b,body .scr .fn-board .n,body .scr .dvr .tag,body .scr .lob-state,body .scr .dv-mk.z b,body .scr .lb-eye,body .mprail .rl b,body .dlg h2,body .dlg .btn,body .toast,body .scr .dv-in .field{text-shadow:var(--o2) !important}
+/* giant: logo, lobby name, countdown, result tier, final depth */
+body .scr .hm-logo,body .scr .lob-name,body .scr .lob-cd,body .scr .lt-t,body .scr .fn-big{text-shadow:var(--o3) !important}
+/* comic slant on the big moments */
+.hm-logo,.lob-name,.fn-big{transform:rotate(-2deg)}
+.lt-t{transform:rotate(-2.5deg)}
+.lob-cd{transform:translate(-50%,-50%) rotate(-6deg) !important}
+/* sizes tuned for Bangers (it runs a touch smaller than Anton) */
+.hm-logo{font-size:clamp(7.6rem,32vw,14rem) !important;line-height:.85 !important}
+.lob-name{font-size:clamp(5rem,15vw,8.6rem) !important}
+.lt-t{font-size:clamp(4.2rem,12vw,6.8rem) !important}
+.fn-big{font-size:clamp(5.4rem,17vw,8.6rem) !important}
+.dv-q h2{font-size:clamp(2.6rem,6vw,4rem) !important;line-height:1 !important}
+.pod b{font-size:2.6rem !important}
+.lb-start{font-size:3.2rem !important}.lob-ready{font-size:3.6rem !important}
+.dv-in .btn{font-size:3rem !important}.btn.desc{font-size:2.7rem !important}
+.room .rt b{font-size:2.6rem !important}.room .ra{font-size:2rem !important}
+.fn-b{font-size:2rem !important}.dlg .btn{font-size:2.1rem !important}
+.dv-in .field{font-size:2.5rem !important}
+.dv-in .field::placeholder{font-size:2.3rem !important}
+/* white buttons / pills keep black words with a white edge so they still pop */
+body .scr .lob-ready.on,body .scr .lob-modes button[aria-pressed="true"],body .scr .lob-state,body .scr .room.busy .ra,body .scr .dvr .tag.rdy{text-shadow:none !important}
+/* the sentences in dialogs stay clean and readable */
+body .dlg p,body .dlg li{text-shadow:none !important}
+/* avatars: no outline bleed */
+body .scr .av,body .scr .av *,body .mprail .av,body .mprail .av *{text-shadow:none !important}
+@media (max-width:700px){
+  .pod b{font-size:2.1rem !important}
+  .lb-start{font-size:2.7rem !important}.lob-ready{font-size:3rem !important}.dv-in .btn{font-size:2.5rem !important}
+  .btn.desc{font-size:2.4rem !important}.room .rt b{font-size:2.3rem !important}.room .ra{font-size:1.7rem !important}
+  .dv-in .field{font-size:2.1rem !important}.dv-in .field::placeholder{font-size:1.9rem !important}
+  .dv-q h2{font-size:clamp(2.2rem,9vw,2.8rem) !important}
+}
 </style>
 </head>
 <body data-scr="boot">
