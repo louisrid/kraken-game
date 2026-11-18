@@ -5,7 +5,7 @@ Same build model as Pass the Bomb: one static folder, no server of our own.
 
 Open the link and you're straight into a solo dive, answer box ready. It plays as one continuous descent: each answer becomes a glowing tag that sinks you past the depth lines and real ocean landmarks (332 m scuba record, the Titanic at 3,800 m, the hadal zone) down towards the kraken's trench. No timer, no sound. Everyone gets a random lowercase name (riptide, barnacle, saltbeard…) and a random character; tap **change** to edit them.
 
-**Multiplayer has no codes.** The home screen lists four public lobbies (Lobby 1–4) with live player counts. Tap an empty one to open it (you host), tap a live one to join. If two people open the same empty lobby at once, one hosts and the other joins automatically. Invite links look like `?lobby=2`.
+**Multiplayer has no codes.** The home screen lists four public lobbies (Lobby 1–4) with live player counts. Tap an empty one to open it (you host), tap a live one to join. You land straight in the game at the surface: friends' divers appear as they join, everyone taps READY, and a 3-2-1 countdown starts the dive. If two people open the same empty lobby at once, one hosts and the other joins automatically. Invite links look like `?lobby=2`.
 
 Every screen has a big **Back** arrow; the browser/phone back gesture and Esc do the same.
 

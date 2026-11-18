@@ -152,6 +152,7 @@ function hostHandle(m) {
     case 'draft': if (H.crew && H.phase === 'play') { H.crew.drafts[p.id] = String(m.text || '').slice(0, 24); H.dirty = true; } break;
     case 'ty': p.ty = m.on ? t : 0; H.dirty = true; break;
     case 'emo': if (EMOS.includes(m.e)) { p.emo = [m.e, t]; H.dirty = true; } break;
+    case 'rdy': if (H.phase === 'lobby' && !p.spec) { p.rdy = m.on ? 1 : 0; H.dirty = true; } break;
   }
 }
 const curQH = () => QMAP[H.qs[H.round]];
@@ -190,7 +191,8 @@ function hostCrewSub(p, text) {
 }
 function activePlayers() { return H.players.filter(p => !p.spec && !p.gone); }
 function startGame() {
-  for (const p of H.players) { p.spec = p.gone ? p.spec : 0; p.pts = 0; }
+  for (const p of H.players) { p.spec = p.gone ? p.spec : 0; p.pts = 0; p.rdy = 0; }
+  H.cdAt = 0;
   H.players = H.players.filter(p => !p.gone);
   H.seed = rid(6);
   const mode = H.set.mode === 'crew' ? 'coop' : 'vs';
@@ -257,7 +259,8 @@ function finishGame() {
 }
 function backToLobby() {
   H.phase = 'lobby'; H.players = H.players.filter(p => !p.gone);
-  for (const p of H.players) { p.pts = 0; p.spec = 0; }
+  for (const p of H.players) { p.pts = 0; p.spec = 0; p.rdy = 0; }
+  H.cdAt = 0;
   H.crew = null; H.res = null; H.hist = []; H.dirty = true; broadcast();
 }
 function hostTick() {
@@ -269,6 +272,13 @@ function hostTick() {
       if (p.id === ME.id || p.gone) continue;
       if (t - p.seen > GRACE) { if (H.phase === 'lobby') H.players = H.players.filter(x => x !== p); else p.gone = 1; H.dirty = true; }
     }
+  }
+  if (H.phase === 'lobby' && !H.solo) {
+    const live = H.players.filter(p => !p.gone);
+    const all = live.length >= 2 && live.every(p => p.rdy);
+    if (all && !H.cdAt) { H.cdAt = t + 3200; H.dirty = true; }
+    if (!all && H.cdAt) { H.cdAt = 0; H.dirty = true; }
+    if (H.cdAt && t >= H.cdAt) { H.cdAt = 0; startGame(); return; }
   }
   if (H.phase === 'play') {
     if (H.set.mode === 'vs') {
@@ -286,12 +296,13 @@ function view() {
     code: H.code, ph: H.phase, host: ME.id, solo: H.solo ? 1 : 0, set: H.set, r: H.round, n: H.qs.length, q: H.qs[H.round] || null,
     pl: H.players.map(p => ({ id: p.id, nm: p.name, av: p.av, pts: p.pts, tot: H.tot[p.name.toLowerCase()] || 0,
       off: p.id !== ME.id && t - p.seen > OFF_AFTER ? 1 : 0, gone: p.gone ? 1 : 0, spec: p.spec ? 1 : 0,
-      lk: H.phase === 'play' && H.answers[p.id] ? 1 : 0, ty: p.ty && t - p.ty < 2600 ? 1 : 0, emo: p.emo && t - p.emo[1] < 5000 ? p.emo : null })),
+      lk: H.phase === 'play' && H.answers[p.id] ? 1 : 0, rdy: p.rdy ? 1 : 0, ty: p.ty && t - p.ty < 2600 ? 1 : 0, emo: p.emo && t - p.emo[1] < 5000 ? p.emo : null })),
     rem: H.phase === 'play' && isFinite(H.endsAt) ? Math.max(0, H.endsAt - t) : -1,
     intro: H.phase === 'play' ? Math.max(0, H.introEnd - t) : 0,
     dur: H.phase === 'play' && isFinite(H.endsAt) ? H.endsAt - H.introEnd : 0,
     res: (H.phase === 'reveal' || H.phase === 'final') && H.set.mode === 'vs' ? H.res : null,
     hist: H.phase === 'final' || H.phase === 'reveal' ? H.hist : null,
+    cd: H.phase === 'lobby' && H.cdAt ? Math.max(0, H.cdAt - t) : -1,
     cr: H.set.mode === 'crew' && cr && H.phase !== 'lobby' ? cr : null,
   };
 }
@@ -394,7 +405,7 @@ function roomsHTML() {
   return ROOMS.map(([code, name]) => {
     const info = (C.rooms || {})[code]; const live = roomFresh(info);
     const busyR = live && info.ph !== 'lobby';
-    const status = !live ? 'Empty · tap to open it' : busyR ? `${info.n} mid-dive · you’ll watch, then play` : `${info.n} waiting · ${info.host} is hosting`;
+    const status = !live ? 'Empty' : busyR ? `${info.n} diving` : `${info.n} waiting`;
     const act = !live ? 'Open' : busyR ? 'Watch' : 'Join';
     return `<button class="room ${live ? 'live' : ''} ${busyR ? 'busy' : ''}" type="button" data-room="${code}"><span class="rt"><b>${esc(name)}</b><small>${esc(status)}</small></span><span class="ravs">${live ? info.avs.map(a => avatar(a)).join('') : ''}</span><span class="ra">${act}</span></button>`;
   }).join('');
@@ -514,6 +525,7 @@ function onState(v) {
   const d = pnow() + v.rem, di = pnow() + v.intro;
   if (key !== C.timeKey || Math.abs(d - C.deadline) > 450) C.deadline = d;
   if (key !== C.timeKey || Math.abs(di - C.introUntil) > 450) C.introUntil = di;
+  if (v.cd >= 0) { const cu = pnow() + v.cd; if (!C.cdUntil || Math.abs(cu - C.cdUntil) > 400) C.cdUntil = cu; } else C.cdUntil = 0;
   if (key !== C.timeKey) { const prev = C.timeKey; C.timeKey = key; onPhase(v, prev); }
   checkEmotes(v);
   render();
@@ -714,24 +726,14 @@ function renderGauge(v) {
 const DV = { S: 1.6, SKY: 500, built: false, anchor: 0.6, lastT: 0, sink: null, landShown: '', tlKey: '' };
 const DV_MAX = 8200, DV_OFF = 64;
 const DV_MARKS = [
-  [30, 'r', 'most recreational divers turn back here'],
-  [150, 'l', 'reef corals give up around here'],
-  [200, 'z', 'The twilight zone', 'sunlight starts to run out'],
-  [332, 'r', 'deepest scuba dive ever · 332 m'],
-  [500, 'l', 'pressure: 50× the surface'],
-  [650, 'r', 'swordfish hunt down to here'],
-  [1000, 'z', 'The midnight zone', 'no sunlight reaches this far'],
-  [1300, 'l', 'sperm whales chase giant squid'],
-  [1800, 'r', 'anglerfish dangle glowing lures'],
-  [2300, 'l', 'the water is barely above freezing'],
-  [2992, 'r', 'deepest whale dive ever · 2,992 m'],
-  [3800, 'l', 'the Titanic lies here · 3,800 m'],
-  [4000, 'z', 'The abyss', '2°C and pitch black'],
-  [4800, 'r', 'the abyssal plain runs flat for miles'],
-  [6000, 'z', 'The hadal zone', 'named after Hades'],
-  [6600, 'l', 'most submarines would crumple by now'],
-  [7300, 'r', 'snailfish still live down here'],
-  [7900, 'z', 'The kraken’s trench', 'a perfect dive ends here'],
+  [200, 'z', 'Twilight zone', ''],
+  [332, 'r', 'Scuba record · 332 m'],
+  [1000, 'z', 'Midnight zone', ''],
+  [2992, 'l', 'Whale record · 2,992 m'],
+  [3800, 'r', 'Titanic · 3,800 m'],
+  [4000, 'z', 'The abyss', ''],
+  [6000, 'z', 'Hadal zone', ''],
+  [7900, 'z', 'Kraken’s trench', ''],
 ];
 const yOf = (m) => DV.SKY + m * DV.S;
 const SHIP = `<svg viewBox="0 0 200 140" aria-hidden="true"><path d="M97 8 V98" stroke="#0a0a0a" stroke-width="6"/><path d="M97 8 L124 15 L97 22 Z" fill="#ff2b2b" stroke="#0a0a0a" stroke-width="4" stroke-linejoin="round"/><path d="M101 26 Q 152 56 101 90 Z" fill="#fff" stroke="#0a0a0a" stroke-width="5" stroke-linejoin="round"/><path d="M93 30 Q 50 58 93 88 Z" fill="#f1ebdc" stroke="#0a0a0a" stroke-width="5" stroke-linejoin="round"/><circle cx="116" cy="56" r="8" fill="#0a0a0a"/><path d="M110 66 l12 -2" stroke="#0a0a0a" stroke-width="4"/><path d="M16 98 H184 L162 130 H40 Z" fill="#3b2a21" stroke="#0a0a0a" stroke-width="6" stroke-linejoin="round"/><path d="M26 108 H176" stroke="#ff2b2b" stroke-width="6"/></svg>`;
@@ -751,9 +753,9 @@ function buildWorld() {
   w.style.setProperty('--S', DV.S + 'px'); w.style.setProperty('--sky', DV.SKY + 'px');
   w.style.height = Math.round(yOf(DV_MAX) + 500) + 'px';
   let ruler = '';
-  for (let m = 100; m <= 8000; m += 100) ruler += `<i style="top:${(m * DV.S).toFixed(1)}px"${m % 500 ? '' : ' class="big"'}><b>${m.toLocaleString('en-GB')} m</b></i>`;
+  for (let m = 100; m <= 8000; m += 100) ruler += `<i style="top:${(m * DV.S).toFixed(1)}px"${m % 500 ? '' : ' class="big"'}>${m % 500 ? '' : `<b>${m.toLocaleString('en-GB')} m</b>`}</i>`;
   const marks = DV_MARKS.map(([m, side, a, b]) => side === 'z'
-    ? `<div class="dv-mk z" style="top:${yOf(m).toFixed(0)}px"><b>${esc(a)}</b><span>${esc(b)}</span></div>`
+    ? `<div class="dv-mk z" style="top:${yOf(m).toFixed(0)}px"><b>${esc(a)}</b></div>`
     : `<div class="dv-mk ${side}" style="top:${yOf(m).toFixed(0)}px">${esc(a)}</div>`).join('');
   w.innerHTML = `<div class="dv-sun"></div><i class="dv-cloud c1"></i><i class="dv-cloud c2"></i><i class="dv-cloud c3"></i>
     <div class="dv-ship">${SHIP}</div><div class="dv-surf"></div><div class="dv-rays"></div>
@@ -795,8 +797,8 @@ function renderTierLines(v) {
   $('tlines').innerHTML = TORDER.map(t => { const m = base + TIERS[t].pts * 10; return `<div class="dv-tl ${TCLS[t]}" data-m="${m}" style="top:${(yOf(m) + DV_OFF).toFixed(1)}px"><span>${esc(TIERS[t].name)} · +${(TIERS[t].pts * 10).toLocaleString('en-GB')} m</span></div>`; }).join('');
 }
 function renderDivers(v) {
-  const q = QMAP[v.q]; const rv = v.ph === 'reveal';
-  const act = v.pl.filter(p => !p.spec && !p.gone); const n = act.length;
+  const q = v.q ? QMAP[v.q] : null; const rv = v.ph === 'reveal';
+  const act = v.pl.filter(p => (!p.spec || v.ph === 'lobby') && !p.gone); const n = act.length;
   const box = $('divers');
   const key = act.map(p => p.id + p.av + p.nm).join('|');
   if (box._key !== key) {
@@ -808,10 +810,11 @@ function renderDivers(v) {
     const x = n === 1 ? 50 : 20 + (i / (n - 1)) * 60;
     el.style.left = x + '%'; el.classList.toggle('lt', x > 62); el.classList.toggle('dim', !!p.off);
     let txt = '', cls = '';
-    if (rv && v.res) {
+    if (v.ph === 'lobby') { if (p.rdy) { txt = 'ready'; cls = 'rdy'; } }
+    else if (rv && v.res && q) {
       const r = v.res.find(z => z[0] === p.id);
       if (r) { if (r[1] < 0) { txt = 'no answer'; cls = 'none'; } else { txt = q.answers[r[1]].name; cls = r[3] ? 'sunk' : TCLS[q.answers[r[1]].tier]; } }
-    } else if (v.ph === 'play' && v.set.mode === 'vs') {
+    } else if (v.ph === 'play' && v.set.mode === 'vs' && q) {
       if (p.id === ME.id && C.myLock && q.answers[C.myLock.aid]) { txt = q.answers[C.myLock.aid].name; cls = 'mine'; }
       else if (p.lk) { txt = 'locked in'; cls = 'lk'; }
       else if (p.ty) { txt = '…'; cls = 'ty'; }
@@ -823,14 +826,14 @@ function renderDivers(v) {
 function landHTML(v) {
   const q = QMAP[v.q]; const res = v.res || []; const mine = res.find(r => r[0] === ME.id); const me = meIn(v);
   let t1 = '', cls = '', a = '', gain = '', quip = '';
-  if (!mine) { t1 = 'Watching'; quip = 'You’ll dive in the next game.'; }
-  else if (mine[1] < 0) { t1 = 'No dive'; cls = 'none'; quip = 'No answer, so you stayed where you were.'; }
+  if (!mine) { t1 = 'Watching'; }
+  else if (mine[1] < 0) { t1 = 'No dive'; cls = 'none'; }
   else if (mine[3]) {
     const others = res.filter(r => r[0] !== ME.id && r[1] === mine[1]).map(r => pinfo(r[0], v).nm);
-    t1 = 'Sunk'; cls = 'sunk'; a = q.answers[mine[1]].name; gain = '+0 m'; quip = `${others.join(' & ') || 'Someone'} said it too. Same answer, nobody moves.`;
+    t1 = 'Sunk'; cls = 'sunk'; a = q.answers[mine[1]].name; gain = '+0 m'; quip = `Same as ${others.join(' & ') || 'someone'}`;
   } else {
     const tr = q.answers[mine[1]].tier; t1 = TIERS[tr].name; cls = TCLS[tr]; a = q.answers[mine[1]].name;
-    gain = `+${M(mine[2])}${mine[2] > TIERS[tr].pts ? ' · doubled' : ''}`; quip = TIERS[tr].line;
+    gain = `+${M(mine[2])}${mine[2] > TIERS[tr].pts ? ' · doubled' : ''}`; quip = '';
   }
   const board = res.length > 1 ? `<ol class="lboard">${res.slice().sort((x, y) => (pinfo(y[0], v).pts - pinfo(x[0], v).pts)).map(r => { const pl = pinfo(r[0], v); return `<li class="${r[0] === ME.id ? 'me' : ''}">${avatar(pl.av)}<span class="n">${esc(pl.nm)}<small>${r[1] < 0 ? 'no answer' : esc(q.answers[r[1]].name)}${r[3] ? ' · sunk' : ''}</small></span><b>+${M(r[2])}</b><em>${M(pl.pts)}</em></li>`; }).join('')}</ol>` : '';
   const X = q.answers.find(z => z.tier === 'x');
@@ -838,16 +841,16 @@ function landHTML(v) {
   const deep = shuffled(q.answers.filter(z => z.tier === 'f' && !said.has(z.id)), v.q + v.r).slice(0, 4).map(z => z.name);
   const last = v.r >= v.n - 1; const host = C.role === 'host' || C.role === 'solo';
   const btn = host ? `<button class="btn desc" type="button" data-act="next">${last ? 'Surface · see results' : 'Descend ▼'}</button>` : `<p class="lwait">Waiting for the host to descend…</p>`;
-  return `<div class="lt-t ${cls}">${esc(t1)}</div>${a ? `<div class="lt-a">“${esc(a)}”</div>` : ''}${gain ? `<div class="lt-p">${esc(gain)}${me && !me.spec ? ` · now ${M(me.pts)} down` : ''}</div>` : ''}<p class="lt-q">${esc(quip)}</p>${board}
-    <div class="lt-k"><span>The kraken’s pick</span><b>${esc(X.name)}</b><small>${esc(q.fact)}</small>${deep.length ? `<em>Other abyss answers: ${deep.map(esc).join(' · ')}</em>` : ''}</div>${btn}`;
+  return `<div class="lt-t ${cls}">${esc(t1)}</div>${a ? `<div class="lt-a">“${esc(a)}”</div>` : ''}${gain ? `<div class="lt-p">${esc(gain)}</div>` : ''}${quip ? `<p class="lt-q">${esc(quip)}</p>` : ''}${board}
+    <div class="lt-k"><span>Kraken’s pick</span><b>${esc(X.name)}</b></div>${btn}`;
 }
 function crewLandHTML(v) {
   const q = QMAP[v.q]; const cr = v.cr; const clear = cr.out === 'clear';
   const X = q.answers.find(z => z.tier === 'x');
   const host = C.role === 'host'; const last = v.r >= v.n - 1 || cr.lives <= 0;
   const btn = host ? `<button class="btn desc" type="button" data-act="next">${last ? 'Surface · see results' : 'Next order ▼'}</button>` : `<p class="lwait">Waiting for the host…</p>`;
-  return `<div class="lt-t ${clear ? 't2' : 'sunk'}">${clear ? 'Order filled' : 'Lost a plank'}</div><div class="lt-p">${clear ? '★'.repeat(cr.rs) + '☆'.repeat(3 - cr.rs) : `${cr.lives} ${cr.lives === 1 ? 'plank' : 'planks'} left`}</div><p class="lt-q">${clear ? (cr.miss ? `${cr.miss} wrong ${cr.miss > 1 ? 'depths' : 'depth'} on the way.` : 'Not one wrong depth.') : cr.miss >= STRIKES ? 'Three wrong depths.' : 'The crew gave up the order.'}</p>
-    <div class="lt-k"><span>${cr.gem ? 'You found the kraken’s pick' : 'The kraken’s pick'}</span><b>${esc(X.name)}</b><small>${esc(q.fact)}</small></div>${btn}`;
+  return `<div class="lt-t ${clear ? 't2' : 'sunk'}">${clear ? 'Order filled' : 'Lost a plank'}</div><div class="lt-p">${clear ? '★'.repeat(cr.rs) + '☆'.repeat(3 - cr.rs) : `${cr.lives} ${cr.lives === 1 ? 'plank' : 'planks'} left`}</div>
+    <div class="lt-k"><span>Kraken’s pick</span><b>${esc(X.name)}</b></div>${btn}`;
 }
 function showLand(v) {
   $('land').innerHTML = v.set.mode === 'crew' ? crewLandHTML(v) : landHTML(v);
@@ -861,16 +864,15 @@ function renderDive(v) {
   if (!DV.built) buildWorld();
   C.myTiers = C.myTiers || {};
   const sec = $('playScr'); const rv = v.ph === 'reveal'; const crew = v.set.mode === 'crew';
-  sec.classList.toggle('rv', rv); if (!rv) sec.classList.remove('landed');
+  sec.classList.remove('lob'); sec.classList.toggle('rv', rv); if (!rv) sec.classList.remove('landed');
   const me = meIn(v); const act = v.pl.filter(p => !p.spec);
   $('hDots').innerHTML = Array.from({ length: v.n }, (_, i) => { const tr = C.myTiers[i]; return `<i class="${i === v.r && !rv ? 'cur' : ''} ${tr ? 'done ' + (TCLS[tr] || tr) : ''}"></i>`; }).join('');
   $('hCount').textContent = `${crew ? 'Order' : 'Prompt'} ${v.r + 1} of ${v.n}`;
   if (crew) { $('hRL').textContent = 'Planks'; $('hR').textContent = String(v.cr.lives); }
   else if (act.length > 1) { const rank = act.slice().sort((a, b) => b.pts - a.pts).findIndex(p => p.id === ME.id) + 1; $('hRL').textContent = 'Rank'; $('hR').textContent = rank > 0 ? `${rank} of ${act.length}` : 'watching'; }
   else { $('hRL').textContent = 'Best dive'; $('hR').textContent = M(LS.get('best', 0)); }
-  $('qN').textContent = `${crew ? 'Order' : 'Prompt'} ${v.r + 1} of ${v.n} · ${(CATINFO[q.cat] || ['Mix'])[0]}${!crew && act.length > 1 && v.r === v.n - 1 ? ' · double depth' : ''}`;
+  $('qN').textContent = `${(CATINFO[q.cat] || ['Mix'])[0]}${!crew && act.length > 1 && v.r === v.n - 1 ? ' · double depth' : ''}`;
   $('qT').textContent = q.prompt;
-  $('qS').textContent = crew ? '▼ fill the captain’s order ▼' : '▼ rarer answers sink deeper ▼';
   const watching = !me || me.spec;
   $('watching').hidden = !watching;
   $('ansF').hidden = watching || (!crew && !!C.myLock);
@@ -897,7 +899,7 @@ function renderDive(v) {
 }
 function dvFrame(v, t) {
   if (!DV.built) buildWorld();
-  const me = meIn(v); const act = v.pl.filter(p => !p.spec && !p.gone);
+  const me = meIn(v); const act = v.pl.filter(p => (!p.spec || v.ph === 'lobby') && !p.gone);
   const mine = me && !me.spec;
   const follow = mine ? me : act.slice().sort((a, b) => b.pts - a.pts)[0];
   const rv = v.ph === 'reveal';
@@ -910,7 +912,7 @@ function dvFrame(v, t) {
     if (follow && p.id === follow.id) camD = d;
   }
   const dt = DV.lastT ? Math.min(100, t - DV.lastT) : 16; DV.lastT = t;
-  const want = rv ? 0.22 : v.set.mode === 'crew' ? 0.76 : 0.6;
+  const want = rv ? 0.22 : v.ph === 'lobby' ? 0.56 : v.set.mode === 'crew' ? 0.76 : 0.6;
   DV.anchor += (want - DV.anchor) * Math.min(1, dt / 1000 * 3.2);
   const camY = innerHeight * DV.anchor - (yOf(camD) + DV_OFF);
   $('world').style.transform = `translate3d(0,${camY.toFixed(1)}px,0)`;
@@ -950,14 +952,14 @@ function setMe(nm, av) {
   const p = H && H.players.find(x => x.id === ME.id);
   if (p) { p.name = ME.name; p.av = ME.av; H.dirty = true; broadcast(); }
   if (C.role === 'guest' && C.joined) send('join', { name: ME.name, av: ME.av });
-  renderMe(); renderHome(); renderRail(); if ($('lbMe')) $('lbMe').textContent = ME.name;
+  renderMe(); renderHome(); renderRail();
 }
 function openMe() { renderMe(); $('nm2').value = ME.name; $('meM').hidden = false; }
 function render() {
   renderRail();
   const v = C.view;
   if (!C.role || !v) { if (!C.role && !C.booting) { scr('home'); renderHome(); } return; }
-  const map = { lobby: 'lobby', play: 'play', reveal: 'play', final: 'final' };
+  const map = { lobby: 'play', play: 'play', reveal: 'play', final: 'final' };
   scr(map[v.ph] || 'home');
   if (v.ph === 'lobby') renderLobby(v);
   if (v.ph === 'play' || v.ph === 'reveal') renderDive(v);
@@ -985,27 +987,24 @@ function ladderHTML() { return TORDER.map(t => `<div class="${TCLS[t]}"><b>${esc
 
 /* lobby */
 function renderLobby(v) {
-  const host = C.role === 'host';
-  if ($('lcode')._c !== v.code) { $('lcode')._c = v.code; $('lcode').textContent = roomName(v.code); }
-  const live = v.pl.filter(p => !p.gone);
-  const slots = Math.max(0, Math.min(MAXP, Math.max(4, live.length + 1)) - live.length);
-  $('plist').innerHTML = live.map(p => `<li class="${p.off ? 'off' : ''} ${p.id === ME.id ? 'me' : ''}">${avatar(p.av)}<b>${esc(p.nm)}</b><small>${p.id === v.host ? 'host' : p.id === ME.id ? 'you' : p.off ? 'reconnecting' : 'ready'}</small>${host && p.id !== ME.id ? `<button class="kick" type="button" data-kick="${esc(p.id)}" aria-label="Remove ${esc(p.nm)}">${ART.ui.close}</button>` : ''}</li>`).join('')
-    + Array.from({ length: slots }, () => `<li class="empty"><span class="ph"></span><b>&nbsp;</b><small>open seat</small></li>`).join('');
-  const s = v.set;
-  const modes = [['vs', 'Versus', 'Go deepest'], ['crew', 'Crew', 'Work together']];
-  const sig = s.mode + host;
+  if (!DV.built) buildWorld();
+  const sec = $('playScr'); sec.classList.add('lob'); sec.classList.remove('rv', 'landed');
+  const host = C.role === 'host'; const live = v.pl.filter(p => !p.gone); const me = meIn(v);
+  $('lcode').textContent = roomName(v.code);
+  const nR = live.filter(p => p.rdy).length; const cd = v.cd >= 0;
+  $('lobState').textContent = cd ? 'Diving in' : live.length < 2 ? 'Waiting for divers' : `${nR} of ${live.length} ready`;
+  const mine = !!(me && me.rdy);
+  $('start').textContent = mine ? 'Ready ✓' : 'Ready';
+  $('start').classList.toggle('on', mine);
+  $('start').hidden = !me || !!me.spec;
+  const s = v.set; const sig = s.mode + host;
   if ($('setup')._sig !== sig) {
     $('setup')._sig = sig;
-    $('setup').innerHTML = modes.map(([k, n, sub]) => `<button type="button" class="lb-m" data-mode="${k}" aria-pressed="${s.mode === k}" ${host ? '' : 'disabled'}><b>${n}</b><span>${sub}</span></button>`).join('');
+    $('setup').innerHTML = [['vs', 'Versus'], ['crew', 'Crew']].map(([k, n]) => `<button type="button" data-mode="${k}" aria-pressed="${s.mode === k}" ${host ? '' : 'disabled'}>${n}</button>`).join('');
   }
-  $('modeDesc').textContent = s.mode === 'vs'
-    ? 'Everyone answers the same prompt. Rarer answers sink you deeper. Say the same thing as someone else and you both sink nowhere. Deepest diver after 7 prompts wins.'
-    : 'One shared order per prompt: fill each depth with the right answer. Three wrong depths and the kraken takes a plank.';
-  const need = 2; const sb = $('start');
-  sb.hidden = !host; $('waitHost').hidden = host;
-  sb.disabled = live.length < need;
-  sb.textContent = live.length < need ? 'Waiting for friends…' : 'Start the dive ▼';
-  $('lbMe').textContent = ME.name;
+  $('dvMp').hidden = true;
+  renderDivers(v);
+  $('tlines').innerHTML = ''; DV.tlKey = '';
 }
 
 /* play */
@@ -1143,7 +1142,7 @@ function renderFinal(v) {
       : `<p class="lb-wait">Waiting for the host…</p><div class="fn-links"><button class="fn-b" type="button" data-act="share">Copy results</button></div>`;
   box.innerHTML = `<button class="bk" type="button" data-act="back" aria-label="Back">${BACK}<span>Back</span></button><div class="lb-col fn-col">${body}${acts}${v.solo ? '' : `<div class="reacts">${EMOS.map(e => `<button type="button" data-emo="${e}" aria-label="React ${e}">${e}</button>`).join('')}</div>`}</div>`;
 }
-const fnHead = (eye, big, sub, sm) => `<div class="lb-eye">${esc(eye)}</div><div class="fn-big${sm ? ' sm' : ''}">${esc(big)}</div><div class="fn-sub">${sub}</div>`;
+const fnHead = (eye, big, sub, sm) => `<div class="fn-big${sm ? ' sm' : ''}">${esc(big)}</div><div class="fn-sub">${sub}</div>`;
 function vsFinal(v) {
   const rows = v.pl.filter(p => !p.spec).slice().sort((a, b) => b.pts - a.pts);
   const tie = rows[1] && rows[1].pts === rows[0].pts;
@@ -1216,7 +1215,12 @@ function live() {
   } else {
     document.body.classList.remove('panic');
   }
-  if ((v.ph === 'play' || v.ph === 'reveal') && document.body.dataset.scr === 'play') dvFrame(v, t);
+  if (document.body.dataset.scr === 'play' && (v.ph === 'play' || v.ph === 'reveal' || v.ph === 'lobby')) dvFrame(v, t);
+  if (v.ph === 'lobby') {
+    const left = v.cd >= 0 ? Math.max(0, C.cdUntil - t) : -1;
+    const txt = left >= 0 ? String(Math.max(1, Math.ceil(left / 1000))) : '';
+    const el = $('lobCd'); if (el._t !== txt) { el._t = txt; el.hidden = !txt; el.textContent = txt; if (txt) { el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); } }
+  }
 }
 (function frame() { try { live(); } catch (e) { console.error(e); } requestAnimationFrame(frame); })();
 
@@ -1263,13 +1267,6 @@ function bind() {
   window.addEventListener('resize', () => { DV.built = false; });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { doBack(); } });
   ['howM', 'leaveM', 'meM'].forEach(id => $(id).addEventListener('click', (e) => { if (e.target.id === id) $(id).hidden = true; }));
-  $('lcode').addEventListener('click', () => copy(inviteLink(), 'Invite link copied'));
-  $('share').addEventListener('click', async () => {
-    const url = inviteLink();
-    if (navigator.share && matchMedia('(pointer: coarse)').matches) { try { await navigator.share({ title: 'Kraken', text: 'Dive with me in Kraken · ' + roomName(C.code), url }); return; } catch {} }
-    copy(url, 'Invite link copied');
-  });
-  $('plist').addEventListener('click', (e) => { const b = e.target.closest('[data-kick]'); if (!b || !H) return; const id = b.dataset.kick; H.banned.add(id); H.players = H.players.filter(p => p.id !== id); direct(id, { t: 'err', msg: 'The host removed you from this lobby.' }); H.dirty = true; broadcast(); });
   $('setup').addEventListener('click', (e) => {
     if (!H) return;
     const mb = e.target.closest('[data-mode]'); if (mb) { H.set.mode = mb.dataset.mode; H.dirty = true; broadcast(); return; }
@@ -1282,7 +1279,7 @@ function bind() {
       H.dirty = true; broadcast();
     }
   });
-  $('start').addEventListener('click', () => { if (H && H.phase === 'lobby') startGame(); });
+  $('start').addEventListener('click', () => { const v = C.view; if (!v || v.ph !== 'lobby') return; const me = meIn(v); send('rdy', { on: !(me && me.rdy) }); vib(20); });
   $('ansF').addEventListener('submit', (e) => { e.preventDefault(); submit(); });
   $('ans').addEventListener('input', () => { if (C.fb && C.fb.kind === 'no') { C.fb = null; renderFb(); } onTyping(); });
   $('orders').addEventListener('click', (e) => { const b = e.target.closest('button.slot'); if (!b) return; const i = +b.dataset.slot; const v = C.view; const cur = v && v.cr && v.cr.calls ? v.cr.calls[ME.id] : null; send('call', { slot: cur === i ? null : i }); });
