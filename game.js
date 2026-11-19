@@ -26,7 +26,6 @@ const ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
 const MAXP = 8, GRACE = 30000, OFF_AFTER = 7000, PING_MS = 2500, HOST_SILENT = 9000, GIVEUP = 45000;
 const INTRO = 0, STRIKES = 3, MAXSUBS = 24;
 const SECS = [0, 30, 60], ROUNDS = [5, 7, 10];
-const NUDGE = 5; /* ±50 m: nobody else said it / someone else said it too (Versus, Blitz) */
 const M = (pts) => (pts * 10).toLocaleString('en-GB') + ' m';
 const secLbl = (n) => (n ? n + 's' : 'Off');
 const EMOS = ['🔥', '😂', '😱', '🐙'];
@@ -237,7 +236,7 @@ function resolveVs() {
     const base = TIERS[q.answers[a.aid].tier].pts;
     if (!multi) return [p.id, a.aid, base, 0, ''];
     if (H.set.team) return share ? [p.id, a.aid, 0, share, 'k'] : [p.id, a.aid, base * mult, 0, ''];
-    return [p.id, a.aid, (base + (share ? -NUDGE : NUDGE)) * mult, share, share ? 's' : 'u'];
+    return [p.id, a.aid, base * mult, share, share ? 's' : ''];
   });
   for (const r of H.res) { const p = act.find(x => x.id === r[0]); if (p) p.pts += r[2]; }
   H.hist.push({ q: q.id, res: H.res });
@@ -891,8 +890,7 @@ function landHTML(v) {
       const tr = q.answers[mine[1]].tier; t1 = TIERS[tr].name; cls = TCLS[tr];
       gain = `+${M(mine[2])}`;
       const notes = [];
-      if (mine[4] === 'u') notes.push('Nobody else said it: +50 m');
-      if (mine[4] === 's') notes.push(`${others} said it too: −50 m`);
+      if (mine[4] === 's') notes.push(`${others} said it too`);
       if (res.length > 1 && v.r === v.n - 1) notes.push('Last prompt: double depth');
       quip = notes.join(' · ');
     }
@@ -903,16 +901,14 @@ function landHTML(v) {
   const deep = shuffled(q.answers.filter(z => z.tier === 'f' && !said.has(z.id)), v.q + v.r).slice(0, 4).map(z => z.name);
   const last = v.r >= v.n - 1; const host = C.role === 'host' || C.role === 'solo';
   const btn = host ? `<button class="btn desc" type="button" data-act="next">${last ? `Results ${ICON.up}` : `Descend ${ICON.down}`}<i class="acd"></i></button>` : `<p class="lwait">Descending <i class="acd"></i></p>`;
-  return `<div class="lt-t ${cls}">${esc(t1)}</div>${a ? `<div class="lt-a">“${esc(a)}”</div>` : ''}${gain ? `<div class="lt-p">${esc(gain)}</div>` : ''}${quip ? `<p class="lt-q">${esc(quip)}</p>` : ''}${board}
-    <div class="lt-k"><span>Kraken’s pick</span><b>${esc(X.name)}</b></div>${btn}`;
+  return `<div class="lt-t ${cls}">${esc(t1)}</div>${a ? `<div class="lt-a">“${esc(a)}”</div>` : ''}${gain ? `<div class="lt-p">${esc(gain)}</div>` : ''}${quip ? `<p class="lt-q">${esc(quip)}</p>` : ''}${board}${btn}`;
 }
 function crewLandHTML(v) {
   const q = QMAP[v.q]; const cr = v.cr; const clear = cr.out === 'clear';
   const X = q.answers.find(z => z.tier === 'x');
   const host = C.role === 'host'; const last = v.r >= v.n - 1 || cr.lives <= 0;
   const btn = host ? `<button class="btn desc" type="button" data-act="next">${last ? `Results ${ICON.up}` : `Next ${ICON.down}`}</button>` : `<p class="lwait">Waiting for the host…</p>`;
-  return `<div class="lt-t ${clear ? 't2' : 'sunk'}">${clear ? 'Order filled' : 'Lost a plank'}</div><div class="lt-p">${clear ? '★'.repeat(cr.rs) + '☆'.repeat(3 - cr.rs) : `${cr.lives} ${cr.lives === 1 ? 'plank' : 'planks'} left`}</div>
-    <div class="lt-k"><span>Kraken’s pick</span><b>${esc(X.name)}</b></div>${btn}`;
+  return `<div class="lt-t ${clear ? 't2' : 'sunk'}">${clear ? 'Order filled' : 'Lost a plank'}</div><div class="lt-p">${clear ? '★'.repeat(cr.rs) + '☆'.repeat(3 - cr.rs) : `${cr.lives} ${cr.lives === 1 ? 'plank' : 'planks'} left`}</div>${btn}`;
 }
 function showLand(v) {
   $('land').innerHTML = v.set.mode === 'crew' ? crewLandHTML(v) : landHTML(v);
@@ -1064,7 +1060,7 @@ function playerCard(pid) {
   const act = v.pl.filter(x => !x.spec); const rank = act.slice().sort((a, b) => b.pts - a.pts).findIndex(x => x.id === pid) + 1;
   const rows = (v.hist || []).map((h, i) => {
     const q = QMAP[h.q]; const r = (h.res || []).find(x => x[0] === pid); const a = r && r[1] >= 0 ? q.answers[r[1]] : null;
-    const flag = !r ? '' : r[4] === 'u' ? ' · unique +50 m' : r[4] === 's' ? ' · shared −50 m' : r[4] === 'k' ? ' · sunk' : '';
+    const flag = !r ? '' : r[4] === 's' ? ' · shared' : r[4] === 'k' ? ' · sunk' : '';
     return `<li><span class="n">${i + 1}. ${esc(q.prompt)}<small>${a ? esc(a.name) + ' · ' + esc(TIERS[a.tier].name) : 'No answer'}${flag}</small></span><b>+${M(r ? r[2] : 0)}</b></li>`;
   }).join('');
   $('pmBody').innerHTML = `<div class="pm-head">${avatar(p.av)}<div><h2>${esc(p.nm)}${p.id === ME.id ? ' (you)' : ''}</h2><p>${act.length > 1 ? `Rank ${rank} of ${act.length} · ` : ''}${M(p.pts)} total</p></div></div>` +
@@ -1108,7 +1104,7 @@ function renderLobby(v) {
   $('start').classList.toggle('on', mine);
   $('start').hidden = !me || !!me.spec;
   $('setup').hidden = !!cd;
-  { const st = v.set; const info = st.team ? 'Team: 10 prompts. Your depths add up. Say the same as a teammate and you both sink.' : st.rounds === 12 ? 'Blitz: 12 prompts, 20 seconds each. Unique answer +50 m, shared answer −50 m.' : 'Versus: 10 prompts. Deepest diver wins. Unique answer +50 m, shared answer −50 m.';
+  { const st = v.set; const info = st.team ? 'Team: 10 prompts. Your depths add up. Say the same as a teammate and you both sink.' : st.rounds === 12 ? 'Blitz: 12 prompts, 20 seconds each. Rarer answers sink you deeper.' : 'Versus: 10 prompts. Rarer answers sink you deeper. Deepest diver wins.';
     $('modeInfo').hidden = !!cd; if ($('modeInfo').textContent !== info) $('modeInfo').textContent = info; }
   const s = v.set; const sig = s.mode + s.rounds + (s.team ? 't' : '') + host;
   if ($('setup')._sig !== sig) {

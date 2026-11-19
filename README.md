@@ -17,7 +17,7 @@ No codes. The home screen lists four public lobbies (Lobby 1–4) with live play
 ### Scoring
 - Tiers: Common 100 m · Uncommon 200 m · Decent 400 m · Rare 800 m · Hyper rare 1,500 m · 1 in a Kraken 2,500 m.
 - Common is only the handful of answers everyone says first. Rarer answers sink you deeper; Kraken is reserved for the genuinely obscure.
-- **Versus and Blitz:** nobody else gave your answer = +50 m; someone else did too = −50 m. Base rarity still matters most.
+- **Versus and Blitz:** pure rarity, no adjustment for what others said.
 - **Team:** depths add up, but matching a teammate sinks you both (0 m). Aliases count as the same answer (NYC = New York).
 - The last prompt counts double. Solo is just the base tiers.
 - Pace: once everyone else has answered, the last diver gets 15 s. After each reveal the game descends by itself after about 10 s (the host can tap Descend sooner).
