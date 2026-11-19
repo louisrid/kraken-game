@@ -56,7 +56,7 @@ function parseQuestion(src) {
       const item = raw.trim();
       if (!item) continue;
       /* only the six most obvious answers count as common; the rest of that list is "decent" */
-      const t = t0 === 'c' && pos++ >= 6 ? 'o' : t0;
+      const t = t0 === 'c' && pos++ >= 6 ? 'o' : t0 === 'o' && (q.oSeen = (q.oSeen || 0) + 1) > 40 ? 'r' : t0;
       const names = item.split('/').map(s => s.trim()).filter(Boolean);
       const id = q.answers.length;
       q.answers.push({ id, name: names[0], tier: t });
@@ -112,7 +112,7 @@ function dlDist(a, b, max) {
   }
   return prev[bl];
 }
-function fuzzBudget(len) { return len < 5 ? 0 : len < 9 ? 1 : len < 13 ? 2 : 3; }
+function fuzzBudget(len) { return len < 4 ? 0 : len < 7 ? 1 : len < 11 ? 2 : 3; }
 
 /* Returns {ok:true,id,tier,name,fuzzy} | {ok:false, kind:'empty'|'decoy'|'ambiguous'|'unknown', msg} */
 function matchAnswer(q, input) {
@@ -137,7 +137,7 @@ function matchAnswer(q, input) {
     return { ok: false, kind: 'ambiguous', msg: 'More than one answer has that name. Add a first name.' };
   }
   /* word games: one slip allowed in longer words, and the first two letters must match */
-  const budget = q.exact ? (k.length >= 7 ? 1 : 0) : fuzzBudget(k.length);
+  const budget = q.exact ? (k.length >= 5 ? 1 : 0) : fuzzBudget(k.length);
   if (budget > 0) {
     const digits = (x) => x.replace(/[^0-9]/g, '');
     const kd = digits(k);
@@ -146,10 +146,9 @@ function matchAnswer(q, input) {
     const consider = (cand, val) => {
       const L = Math.min(k.length, cand.length);
       const famous = val.type !== 'a' || [...val.set].some(i => q.answers[i].tier === 'c' || q.answers[i].tier === 'h');
-      const b = q.exact ? (L >= 7 ? 1 : 0) : big && !famous ? (L < 9 ? 0 : L < 13 ? 1 : 2) : fuzzBudget(L);
+      const b = q.exact ? (L >= 5 ? 1 : 0) : big && !famous ? (L < 8 ? 0 : L < 12 ? 1 : 2) : fuzzBudget(L);
       if (!b) return;
       if (cand[0] !== k[0]) return;
-      if (q.exact && (cand[1] !== k[1] || b > 1)) return;
       if (digits(cand) !== kd) return;
       const d = dlDist(k, cand, Math.min(b, best));
       if (d > b) return;

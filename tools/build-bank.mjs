@@ -52,7 +52,7 @@ function bucketRanked(used, names, allowX) {
     fresh.push(n);
   }
   const N = fresh.length; const out = { O: [], R: [], F: [], X: [] };
-  fresh.forEach((n, i) => { const f = i / N; out[f < 0.5 ? 'O' : f < 0.8 ? 'R' : (!allowX || f < 0.97) ? 'F' : 'X'].push(n); });
+  fresh.forEach((n, i) => { const f = i / N; out[f < 0.35 ? 'O' : f < 0.7 ? 'R' : (!allowX || f < 0.96) ? 'F' : 'X'].push(n); });
   return Object.entries(out).filter(([, v]) => v.length).map(([t, v]) => `${t}: ${v.join(', ')}`).join('\n');
 }
 
@@ -294,10 +294,37 @@ X: Peel/Peel P50`, fact: 'The Peel P50, built on the Isle of Man, is the smalles
     no: 'Puerto Rico: A US territory; Greenland: Part of the Kingdom of Denmark; Hong Kong: Part of China; Macau/Macao: Part of China; Tibet: Part of China; Western Sahara: A disputed territory; Somaliland: Self-declared, not recognised; Gibraltar: A British overseas territory; Bermuda: A British overseas territory; Guam: A US territory; Hawaii: A US state; Texas: A US state; Antarctica: A continent; Africa: A continent; Europe: A continent; Asia: A continent; Catalonia: Part of Spain; Siam: Thailand\'s old name; Persia: Iran\'s old name; Ceylon: Sri Lanka\'s old name; Zaire: The old name for DR Congo; Rhodesia: The old name for Zimbabwe; Yugoslavia: No longer exists; USSR/Soviet Union: No longer exists; Czechoslovakia: No longer exists' });
 }
 
+/* ───────── ANY ANIMAL ───────── */
+{
+  const src = { id: 'animal', cat: 'sci', q: 'Name an animal', a: `
+C: Dog, Cat, Lion, Elephant, Tiger, Giraffe
+H: Platypus, Axolotl, Capybara, Quokka
+O: Horse, Cow, Pig, Sheep, Goat, Chicken, Duck, Rabbit, Mouse, Rat, Hamster, Guinea pig, Monkey, Gorilla, Chimpanzee, Orangutan, Bear, Polar bear, Panda, Koala, Kangaroo, Wolf, Fox, Deer, Moose, Zebra, Hippo/Hippopotamus, Rhino/Rhinoceros, Camel, Llama, Alpaca, Cheetah, Leopard, Jaguar, Hyena, Crocodile, Alligator, Snake, Lizard, Turtle, Tortoise, Frog, Toad, Shark, Whale, Dolphin, Octopus, Squirrel, Hedgehog, Bat, Owl, Eagle, Penguin, Parrot, Flamingo, Ostrich, Sloth, Otter, Badger, Beaver, Raccoon, Skunk, Armadillo, Anteater, Meerkat, Lemur, Chameleon, Iguana, Gecko, Bee, Ant, Butterfly, Spider, Snail, Worm, Crab, Lobster, Jellyfish, Starfish, Seal, Walrus, Bison, Buffalo, Yak, Donkey, Mule, Reindeer, Elk, Gazelle, Antelope, Wildebeest, Warthog, Tapir, Okapi, Pangolin, Wombat, Tasmanian devil, Dingo, Mongoose, Porcupine, Mole, Ferret, Weasel, Stoat, Mink, Lynx, Puma/Cougar/Mountain lion, Panther, Ocelot, Jackal, Coyote, Baboon, Gibbon, Macaque, Mandrill
+X: Aye-aye`, fact: 'A Madagascan lemur that taps on wood with a long, thin middle finger and listens for grubs inside.',
+    no: 'Unicorn: Mythical; Dragon: Mythical (komodo dragons count, though); Mermaid: Mythical; Bigfoot/Yeti: Unproven; Dinosaur: Extinct — and a group, not one animal; Animal: Name one!; Pokémon: Fictional' };
+  const used = usedKeys(src.a, src.no);
+  const lists = ['cat', 'cetacean', 'crocodilia', 'fish', 'insect', 'rodent', 'rabbit', 'bear', 'lion', 'snake', 'horse', 'cow', 'bird', 'dog', 'type'];
+  add(src, bucketise(used, lists.flatMap(l => (FD.animal[l] || []).map(n => [cap(n), 'R']))));
+}
+/* ───────── AIRLINES ───────── */
+{
+  const src = { id: 'airline', cat: 'brands', q: 'Name an airline', a: `
+C: British Airways/BA, Ryanair, easyJet/Easyjet, Emirates, American Airlines, Lufthansa
+H: Virgin Atlantic, Qantas, Air New Zealand
+O: Delta/Delta Air Lines, United/United Airlines, Southwest, Air France, KLM, Qatar Airways, Etihad, Singapore Airlines, Cathay Pacific, Turkish Airlines, Aer Lingus, Iberia, Alitalia, ITA Airways, Swiss/Swiss International Air Lines, Austrian Airlines, SAS/Scandinavian Airlines, Finnair, Norwegian, Wizz Air, Jet2/Jet2.com, TUI/TUI Airways, Vueling, Air Canada, WestJet, JetBlue, Alaska Airlines, Spirit, Frontier, Hawaiian Airlines, Aeroméxico/Aeromexico, LATAM, Avianca, Copa Airlines, Japan Airlines/JAL, ANA/All Nippon Airways, Korean Air, Asiana, China Airlines, EVA Air, Air China, China Eastern, China Southern, Thai Airways, Malaysia Airlines, Garuda Indonesia, Philippine Airlines, Vietnam Airlines, AirAsia, Air India, IndiGo, Emirates (no), Saudia, Gulf Air, Oman Air, Royal Jordanian, El Al, EgyptAir, Ethiopian Airlines, Kenya Airways, South African Airways, Royal Air Maroc, Virgin Australia, Jetstar, Fiji Airways, Aeroflot, LOT/LOT Polish Airlines, Icelandair, Loganair, Flybe, Monarch, Thomas Cook Airlines, Pan Am, TWA, Concorde (no)
+X: Pan Am (no)`.replace(', Emirates (no)', '').replace(', Concorde (no)', '').replace('X: Pan Am (no)', 'X: Braniff International/Braniff'),
+    fact: 'A 1970s US airline that hired fashion designer Emilio Pucci for its uniforms and Alexander Calder to paint its planes.',
+    no: 'Boeing: A plane maker; Airbus: A plane maker; Concorde: A plane, not an airline; Heathrow: An airport; Expedia: A booking site; Skyscanner: A booking site' };
+  const used = usedKeys(src.a, src.no);
+  add(src, bucketise(used, FD.airline.airline.map(a => [a.name, 'R'])));
+}
+
 /* ───────── EXTEND existing questions with dataset answers ───────── */
 const src = (id) => ctx.BANK_SRC.find(q => q.id === id);
 function extend(id, items) { const s = src(id); const used = usedKeys(s.a, s.no); const g = bucketise(used, items); if (g) EXT[id] = g; }
 extend('dog', FD.animal.dog.map(n => [n, 'R']));
+extend('seacreature', [...FD.animal.cetacean, ...FD.animal.crocodilia.filter(n => /salt|marine|sea/i.test(n))].map(n => [cap(n), 'R']));
+extend('spice', FD.food.spice.map(n => [cap(n), 'R']));
 extend('dino', dinos.map(n => [cap(n), 'R']));
 extend('proglang', linguist.filter(l => l.type === 'programming').map(l => [l.name, 'R']));
 extend('typeface', gfonts.map(f => [f.family, 'R']));

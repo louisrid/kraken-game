@@ -986,6 +986,13 @@ function dvFrame(v, t) {
   DV.anchor += (want - DV.anchor) * Math.min(1, dt / 1000 * (landed ? 2.4 : 1.6));
   const camY = innerHeight * DV.anchor - (yOf(camD) + DV_OFF);
   $('world').style.transform = `translate3d(0,${camY.toFixed(1)}px,0)`;
+  /* divers far above or below stay pinned at the screen edge with their depth, so you always see everyone */
+  { const lo = hudB + 70, hi = innerHeight - 96; let iu = 0, idn = 0;
+    for (const p of act) { if (follow && p.id === follow.id) continue;
+      const el = box.querySelector(`[data-pid="${CSS.escape(p.id)}"]`); if (!el) continue;
+      const wy = yOf(dispDepth(p)) + DV_OFF, sy = wy + camY; const up = sy < lo, dn = sy > hi;
+      if (up || dn) el.style.top = ((up ? lo : hi) - camY).toFixed(1) + 'px';
+      el.classList.toggle('far-up', up); el.classList.toggle('far-dn', dn); } }
   const dtxt = Math.round(camD).toLocaleString('en-GB') + ' m';
   if ($('hDepth')._t !== dtxt) { $('hDepth')._t = dtxt; $('hDepth').textContent = dtxt; }
   const myD = mine ? camD : -1;

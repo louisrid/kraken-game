@@ -23,7 +23,7 @@ No codes. The home screen lists four public lobbies (Lobby 1–4) with live play
 - Pace: once everyone else has answered, the last diver gets 15 s. After each reveal the game descends by itself after about 10 s (the host can tap Descend sooner).
 
 ## Answers
-58 prompts and about 49,000 accepted answers. `bank.js` is hand-written (40 prompts). `bank-gen.js` is **generated** by `tools/build-bank.mjs` from open datasets and adds 18 prompts plus extensions:
+60 prompts and about 57,000 accepted answers. `bank.js` is hand-written (40 prompts). `bank-gen.js` is **generated** by `tools/build-bank.mjs` from open datasets and adds 20 prompts plus extensions:
 - word games (rhymes, Q-words, -ology, double Z), ranked by word frequency (SCOWL), rhymes from the CMU dictionary, profanity filtered, exact spelling only
 - cities (about 30,000, ranked by population), capitals, every country, any Pokémon, comic heroes and villains, birds, music genres, fruit, veg, tech companies, car brands
 - extra dog breeds, dinosaurs, programming languages and Google Fonts added to hand-written prompts

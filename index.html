@@ -1766,6 +1766,12 @@ html body #playScr .lboard li[data-pid]{cursor:pointer}
 .pm-none{font:italic 800 1.1rem/1.2 'Barlow Condensed',sans-serif;text-transform:uppercase}
 html body #pM .dlg *:not(.btn):not(.btn *){-webkit-text-stroke:0 !important;text-shadow:none !important;color:#000 !important}
 html body #playScr .dvr .sc{position:absolute;left:50%;bottom:calc(100% + 4px);transform:translateX(-50%);z-index:4;font-size:1.1rem !important;padding:4px 10px !important;box-shadow:3px 3px 0 rgba(0,0,0,.5)}
+
+/* off-screen divers pinned to the edge */
+html body #playScr .dvr.far-up, html body #playScr .dvr.far-dn{transform:translate(-50%,-50%) scale(.72);z-index:6}
+html body #playScr .dvr.far-up .tag, html body #playScr .dvr.far-dn .tag{display:none}
+html body #playScr .dvr.far-up .sc::before{content:"▲ "}
+html body #playScr .dvr.far-dn .sc::before{content:"▼ "}
 </style>
 </head>
 <body data-scr="boot">
