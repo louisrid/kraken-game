@@ -240,7 +240,7 @@ function resolveVs() {
   });
   for (const r of H.res) { const p = act.find(x => x.id === r[0]); if (p) p.pts += r[2]; }
   H.hist.push({ q: q.id, res: H.res });
-  H.phase = 'reveal'; H.revealEnds = H.solo ? Infinity : now() + 14000; H.dirty = true;
+  H.phase = 'reveal'; H.revealEnds = Infinity; H.dirty = true;
 }
 function crewResolve(full) {
   const cr = H.crew;
@@ -296,7 +296,6 @@ function hostTick() {
     if (H.set.mode === 'vs') {
       const act = activePlayers().filter(p => p.id === ME.id || t - p.seen < OFF_AFTER);
       const all = act.length > 0 && act.every(p => H.answers[p.id]);
-      if (!H.solo && !isFinite(H.endsAt) && act.length >= 2 && act.filter(p => H.answers[p.id]).length >= act.length - 1) { H.endsAt = t + 15000; H.slowDur = 15000; H.dirty = true; }
       if (t >= H.endsAt || (all && t >= H.introEnd)) resolveVs();
     } else if (t >= H.endsAt - H.crew.pen) crewResolve(false);
   } else if (H.phase === 'reveal' && t >= H.revealEnds) nextRound();
@@ -900,7 +899,7 @@ function landHTML(v) {
   const said = new Set(res.filter(r => r[1] >= 0).map(r => r[1]));
   const deep = shuffled(q.answers.filter(z => z.tier === 'f' && !said.has(z.id)), v.q + v.r).slice(0, 4).map(z => z.name);
   const last = v.r >= v.n - 1; const host = C.role === 'host' || C.role === 'solo';
-  const btn = host ? `<button class="btn desc" type="button" data-act="next">${last ? `Results ${ICON.up}` : `Descend ${ICON.down}`}<i class="acd"></i></button>` : `<p class="lwait">Descending <i class="acd"></i></p>`;
+  const btn = host ? `<button class="btn desc" type="button" data-act="next">${last ? `Results ${ICON.up}` : `Descend ${ICON.down}`}<i class="acd"></i></button>` : `<p class="lwait">Waiting for the host</p>`;
   return `<div class="lt-t ${cls}">${esc(t1)}</div>${a ? `<div class="lt-a">“${esc(a)}”</div>` : ''}${gain ? `<div class="lt-p">${esc(gain)}</div>` : ''}${quip ? `<p class="lt-q">${esc(quip)}</p>` : ''}${board}${btn}`;
 }
 function crewLandHTML(v) {
@@ -1111,12 +1110,12 @@ function renderLobby(v) {
   $('start').classList.toggle('on', mine);
   $('start').hidden = !me || !!me.spec;
   $('setup').hidden = !!cd;
-  { const st = v.set; const info = st.team ? 'Team: 10 prompts. Your depths add up. Say the same as a teammate and you both sink.' : st.rounds === 12 ? 'Blitz: 12 prompts, 20 seconds each. Rarer answers sink you deeper.' : 'Versus: 10 prompts. Rarer answers sink you deeper. Deepest diver wins.';
+  { const st = v.set; const info = st.team ? 'Team: 10 prompts. Your depths add up. Say the same as a teammate and you both sink.' : st.rounds === 12 ? 'Blitz: 12 prompts. Rarer answers sink you deeper. Deepest diver wins.' : 'Versus: 10 prompts. Rarer answers sink you deeper. Deepest diver wins.';
     $('modeInfo').hidden = !!cd; if ($('modeInfo').textContent !== info) $('modeInfo').textContent = info; }
   const s = v.set; const sig = s.mode + s.rounds + (s.team ? 't' : '') + host;
   if ($('setup')._sig !== sig) {
     $('setup')._sig = sig;
-    $('setup').innerHTML = [['vs', 10, 0, 0, 'Versus'], ['vs', 10, 0, 1, 'Team'], ['vs', 12, 20, 0, 'Blitz']].map(([k, r, sc, tm, n]) => `<button type="button" data-mode="${k}" data-r="${r}" data-s="${sc}" data-t="${tm}" aria-pressed="${s.rounds === r && !!s.team === !!tm}" ${host ? '' : 'disabled'}>${n}</button>`).join('');
+    $('setup').innerHTML = [['vs', 10, 0, 0, 'Versus'], ['vs', 10, 0, 1, 'Team'], ['vs', 12, 0, 0, 'Blitz']].map(([k, r, sc, tm, n]) => `<button type="button" data-mode="${k}" data-r="${r}" data-s="${sc}" data-t="${tm}" aria-pressed="${s.rounds === r && !!s.team === !!tm}" ${host ? '' : 'disabled'}>${n}</button>`).join('');
   }
   $('dvMp').hidden = true;
   renderDivers(v);
@@ -1389,7 +1388,7 @@ function bind() {
   ['howM', 'leaveM', 'meM', 'pM'].forEach(id => $(id).addEventListener('click', (e) => { if (e.target.id === id) $(id).hidden = true; }));
   $('setup').addEventListener('click', (e) => {
     if (!H) return;
-    const mb = e.target.closest('[data-mode]'); if (mb) { if (!H || mb.disabled) return; H.set.mode = mb.dataset.mode; H.set.rounds = +mb.dataset.r || 7; H.set.secs = +mb.dataset.s || 0; H.set.team = mb.dataset.t === '1'; for (const p of H.players) p.rdy = 0; H.cdAt = 0; H.dirty = true; broadcast(); return; }
+    const mb = e.target.closest('[data-mode]'); if (mb) { if (!H || mb.disabled) return; H.set.mode = mb.dataset.mode; H.set.rounds = +mb.dataset.r || 7; H.set.secs = 0; H.set.team = mb.dataset.t === '1'; for (const p of H.players) p.rdy = 0; H.cdAt = 0; H.dirty = true; broadcast(); return; }
     const sb = e.target.closest('.seg button'); if (sb) { const k = sb.parentElement.dataset.set; H.set[k] = +sb.dataset.v; H.dirty = true; broadcast(); return; }
     const tb = e.target.closest('[data-topic]');
     if (tb) {

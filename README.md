@@ -12,7 +12,7 @@ No codes. The home screen lists four public lobbies (Lobby 1–4) with live play
 |---|---|---|---|
 | Versus | 10 | none | deepest diver |
 | Team | 10 | none | shared depth, beat your team best |
-| Blitz | 12 | 20 s each | deepest diver |
+| Blitz | 12 | none | deepest diver |
 
 ### Scoring
 - Tiers: Common 100 m · Uncommon 200 m · Decent 400 m · Rare 800 m · Hyper rare 1,500 m · 1 in a Kraken 2,500 m.
@@ -20,7 +20,7 @@ No codes. The home screen lists four public lobbies (Lobby 1–4) with live play
 - **Versus and Blitz:** pure rarity, no adjustment for what others said.
 - **Team:** depths add up, but matching a teammate sinks you both (0 m). Aliases count as the same answer (NYC = New York).
 - The last prompt counts double. Solo is just the base tiers.
-- Pace: once everyone else has answered, the last diver gets 15 s. After each reveal the game descends by itself after about 10 s (the host can tap Descend sooner).
+- No timers. A prompt ends when everyone has answered (the host can tap Reveal now); the host taps Descend to move on.
 
 ## Answers
 60 prompts and about 57,000 accepted answers. `bank.js` is hand-written (40 prompts). `bank-gen.js` is **generated** by `tools/build-bank.mjs` from open datasets and adds 20 prompts plus extensions:
