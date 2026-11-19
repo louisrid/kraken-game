@@ -1,0 +1,20 @@
+{
+  "name": "kraken-game",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "dependencies": {
+    "@netlify/database": "latest",
+    "drizzle-orm": "beta"
+  },
+  "devDependencies": {
+    "drizzle-kit": "beta"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "sync:questions": "node tools/sync-bank.mjs",
+    "check:questions": "node tools/sync-bank.mjs --check"
+  }
+}

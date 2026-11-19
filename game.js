@@ -129,7 +129,7 @@ function pinfo(id, v = C.view) { return (v && v.pl.find(p => p.id === id)) || { 
 function newHost(code, solo) {
   return { code, solo, hub: null, loop: 0, players: [], set: { mode: 'vs', rounds: 10, secs: 0, topics: [] }, phase: 'lobby', round: 0, qs: [], seed: '',
     endsAt: 0, introEnd: 0, revealEnds: 0, answers: {}, res: null, hist: [], crew: null, lastQ: {}, banned: new Set(),
-    tot: LS.get('tot', {}), recent: LS.get('recent', []), dirty: true, lastCast: 0, lastSeenCheck: 0 };
+    tot: LS.get('tot', {}), dirty: true, lastCast: 0, lastSeenCheck: 0 };
 }
 function hostHandle(m) {
   if (!H || !m || typeof m.from !== 'string' || m.from.length > 24) return;
@@ -144,6 +144,7 @@ function hostHandle(m) {
       p = { id: m.from, name, av, pts: 0, seen: t, spec: H.phase !== 'lobby' ? 1 : 0, gone: 0 };
       H.players.push(p);
     } else { p.name = name; p.av = av; p.gone = 0; }
+    if (typeof m.historyId === 'string' && /^[a-zA-Z0-9_-]{8,64}$/.test(m.historyId)) p.historyId = m.historyId;
     p.seen = t; p.sid = m.sid; H.dirty = true; return;
   }
   if (!p) { if (m.t !== 'bye') direct(m.from, { t: 'rejoin' }); return; }
@@ -198,19 +199,41 @@ function hostCrewSub(p, text) {
   else if (cr.miss >= STRIKES) crewResolve(false);
 }
 function activePlayers() { return H.players.filter(p => !p.spec && !p.gone); }
-function startGame() {
+async function startGame() {
+  if (!H || H.starting) return;
+  const host = H;
+  host.starting = true; host.cdAt = 0; host.go = false;
+  busy('Finding fresh questions…');
+  try {
+    if (!ME.historyId) await identifyDiver();
+    const response = await fetch('/api/questions', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ players: host.players.filter(p => !p.gone).map(p => p.historyId || (p.id === ME.id ? ME.historyId : p.id)), topics: host.set.topics, rounds: host.set.rounds, mode: host.set.mode === 'crew' ? 'coop' : 'vs' }),
+      signal: AbortSignal.timeout(12000),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'Could not load fresh questions.');
+    if (H !== host) return;
+    host.qs = result.questions;
+  } catch (error) {
+    if (H === host) { toast(error.message || 'Could not load questions. Try again.'); render(); }
+    return;
+  } finally { host.starting = false; busy(null); }
+  if (H !== host) return;
   for (const p of H.players) { p.spec = p.gone ? p.spec : 0; p.pts = 0; p.rdy = 0; }
-  H.cdAt = 0; H.go = false;
   H.players = H.players.filter(p => !p.gone);
   H.seed = rid(6);
-  const mode = H.set.mode === 'crew' ? 'coop' : 'vs';
-  H.qs = pickQuestions(BANK, H.set.topics, H.set.rounds, mode, H.recent, H.seed);
-  H.recent = [...H.qs, ...H.recent].slice(0, 40); LS.set('recent', H.recent);
   H.round = 0; H.hist = [];
   H.crew = H.set.mode === 'crew' ? { lives: 3, stars: 0, cl: 0, misses: 0 } : null;
   setupRound(); broadcast();
 }
 function setupRound() {
+  // Refresh the cooldown when a prompt is actually shown, even in a long game.
+  fetch('/api/questions/seen', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ players: H.players.filter(p => !p.spec && !p.gone).map(p => p.historyId || (p.id === ME.id ? ME.historyId : p.id)), question: H.qs[H.round] }),
+    signal: AbortSignal.timeout(10000),
+  }).then(response => { if (!response.ok) toast('Could not refresh question history. Check your connection.'); }).catch(() => toast('Could not refresh question history. Check your connection.'));
   H.phase = 'play'; H.answers = {}; H.res = null; H.slowDur = 0;
   const t = now(); H.introEnd = t + INTRO;
   for (const p of H.players) p.ty = 0;
@@ -285,7 +308,7 @@ function hostTick() {
       if (t - p.seen > GRACE) { if (H.phase === 'lobby') H.players = H.players.filter(x => x !== p); else p.gone = 1; H.dirty = true; }
     }
   }
-  if (H.phase === 'lobby' && !H.solo) {
+  if (H.phase === 'lobby' && !H.solo && !H.starting) {
     const live = H.players.filter(p => !p.gone);
     const all = live.length >= 2 && !!H.go;
     if (all && !H.cdAt) { H.cdAt = t + 3200; H.dirty = true; }
@@ -345,10 +368,10 @@ function createLobby(fixed) {
   const hub = H.hub;
   H.hub.onUp = () => {
     if (opened || !H || H.hub !== hub) return; opened = true; C.connecting = false; busy(null);
-    hostHandle({ t: 'join', from: ME.id, name: ME.name, av: ME.av });
+    hostHandle({ t: 'join', from: ME.id, name: ME.name, av: ME.av, historyId: ME.historyId });
     startHostLoop(); broadcast(); publishInfo();
   };
-  hostHandle({ t: 'join', from: ME.id, name: ME.name, av: ME.av });
+  hostHandle({ t: 'join', from: ME.id, name: ME.name, av: ME.av, historyId: ME.historyId });
   startHostLoop(); broadcast();
   H.hub.connect(); pushNav();
   setTimeout(() => { if (!opened && H && H.hub === hub && C.role === 'host') { busy(null); toast('Couldn’t reach the game servers. Check your connection and try again.'); teardown(); render(); } }, 15000);
@@ -358,14 +381,14 @@ function practice() {
   teardown();
   H = newHost('SOLO', true);
   C.role = 'solo'; C.code = 'SOLO';
-  hostHandle({ t: 'join', from: ME.id, name: ME.name, av: ME.av });
+  hostHandle({ t: 'join', from: ME.id, name: ME.name, av: ME.av, historyId: ME.historyId });
   H.set = { mode: 'vs', rounds: 10, secs: 0, topics: [] };
   startHostLoop(); startGame(); pushNav();
 }
 
 
-/* ═════════════════ PUBLIC LOBBIES: two rooms, no codes ═════════════════ */
-const ROOMS = [['LOBA', 'Lobby 1'], ['LOBB', 'Lobby 2']];
+/* ═════════════════ PUBLIC LOBBY: one shared sea ═════════════════ */
+const ROOMS = [['LOBA', 'Lobby']];
 const isRoom = (code) => ROOMS.some(r => r[0] === code);
 const roomName = (code) => (ROOMS.find(r => r[0] === code) || [code, 'Lobby ' + code])[1];
 const ROOM_FRESH = 16000;
@@ -451,12 +474,13 @@ function connectGuest(code) {
       onDirect(m);
     }
   });
-  hub.onUp = (c) => { try { c.publish(base + 'h', JSON.stringify({ t: 'join', from: ME.id, sid: SID, q: ++QSEQ, name: ME.name, av: ME.av }), { qos: 1 }); } catch {} };
+  hub.onUp = (c) => { try { c.publish(base + 'h', JSON.stringify({ t: 'join', from: ME.id, sid: SID, q: ++QSEQ, name: ME.name, av: ME.av, historyId: ME.historyId }), { qos: 1 }); } catch {} };
   C.hub = hub;
   hub.connect();
 }
 function joinLobby(code, quiet) {
   code = String(code || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
+  if (code === 'LOBB') code = 'LOBA';
   if (code.length !== 4) { toast('Lobby codes are four letters'); return; }
   if (!quiet && !needName()) return;
   teardown();
@@ -480,7 +504,7 @@ function startGuestLoop() {
     if (C.role !== 'guest') return;
     const t = pnow();
     if (!C.joined) {
-      if (t - lastJoin > 2000) { lastJoin = t; send('join', { name: ME.name, av: ME.av }); }
+      if (t - lastJoin > 2000) { lastJoin = t; send('join', { name: ME.name, av: ME.av, historyId: ME.historyId }); }
       if (t > C.joinDeadline) {
         const code = C.code; busy(null); clearRejoin(); teardown();
         if (isRoom(code)) { if (C.rooms) delete C.rooms[code]; toast(roomName(code) + ' was empty, so it’s yours now.'); createLobby(code); return; }
@@ -491,7 +515,7 @@ function startGuestLoop() {
     if (t - lastPing > PING_MS) { lastPing = t; send('ping'); }
     if (!C.recovering && t - C.lastStateAt > HOST_SILENT) { C.recovering = t; busy('Reconnecting…'); connectGuest(C.code); }
     if (C.recovering && t - C.recovering > GIVEUP) { busy(null); toast('Lost the lobby. The host may have left.'); clearRejoin(); teardown(); render(); }
-    if (C.recovering && t - lastJoin > 2500) { lastJoin = t; send('join', { name: ME.name, av: ME.av }); }
+    if (C.recovering && t - lastJoin > 2500) { lastJoin = t; send('join', { name: ME.name, av: ME.av, historyId: ME.historyId }); }
   }, 400);
 }
 function hostEnded(msg) { if (C.role !== 'guest') return; toast(msg || 'The host closed the game.'); clearRejoin(); teardown(); render(); }
@@ -502,7 +526,7 @@ function buildQ(code) { const p = new URLSearchParams(); const ri = ROOMS.findIn
 function setUrl(code) { try { history.replaceState(history.state, '', location.pathname + buildQ(code)); } catch {} }
 function pushNav() { try { if (!history.state || !history.state.kr) history.pushState({ kr: 1 }, ''); } catch {} }
 function doBack() {
-  for (const id of ['meM', 'howM', 'leaveM', 'pM']) if (!$(id).hidden) { $(id).hidden = true; return; }
+  for (const id of ['menuM', 'meM', 'howM', 'leaveM', 'pM']) if (!$(id).hidden) { $(id).hidden = true; return; }
   if (!C.role || C.peek) return;
   const v = C.view;
   if (C.role === 'solo') { navAct(); return; }
@@ -510,7 +534,7 @@ function doBack() {
   if (C.role === 'host' && v && v.ph === 'lobby' && v.pl.filter(p => !p.gone).length <= 1) { leave(); return; }
   confirmLeave();
 }
-window.addEventListener('popstate', () => { if (C.peek) return; if (C.role || ['meM', 'howM', 'leaveM', 'pM'].some(id => !$(id).hidden)) { doBack(); if (C.role && !C.peek) pushNav(); } });
+window.addEventListener('popstate', () => { if (C.peek) return; if (C.role || ['menuM', 'meM', 'howM', 'leaveM', 'pM'].some(id => !$(id).hidden)) { doBack(); if (C.role && !C.peek) pushNav(); } });
 const ICON = {
   down: '<svg class="ico" viewBox="-3 -3 30 30" aria-hidden="true"><path d="M12 3.5V19.5M4.5 12.5 12 20l7.5-7.5" fill="none" stroke="#000" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 3.5V19.5M4.5 12.5 12 20l7.5-7.5" fill="none" stroke="currentColor" stroke-width="6.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   check: '<svg class="ico" viewBox="-3 -3 30 30" aria-hidden="true"><path d="M4 12.5l5.2 5.2L20 6.8" fill="none" stroke="#000" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 12.5l5.2 5.2L20 6.8" fill="none" stroke="currentColor" stroke-width="6.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
@@ -518,7 +542,7 @@ const ICON = {
 };
 const NAV_R = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 12H19.5M12.5 4.5 20 12l-7.5 7.5" fill="none" stroke="#000" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 function navAct() {
-  for (const id of ['meM', 'howM', 'leaveM', 'pM']) $(id).hidden = true;
+  for (const id of ['menuM', 'meM', 'howM', 'leaveM', 'pM']) $(id).hidden = true;
   if (C.role === 'solo' || !C.role) enterRoom(ROOMS[0][0]);
   else leave(true);
 }
@@ -562,7 +586,7 @@ function onState(v) {
   C.view = v; C.lastStateAt = pnow();
   if (C.recovering) { C.recovering = 0; busy(null); }
   if (!C.joined && v.pl.some(p => p.id === ME.id)) { C.joined = true; busy(null); if (C.role === 'guest') setUrl(C.code); }
-  if (C.role === 'guest' && C.joined && !v.pl.some(p => p.id === ME.id)) send('join', { name: ME.name, av: ME.av });
+  if (C.role === 'guest' && C.joined && !v.pl.some(p => p.id === ME.id)) send('join', { name: ME.name, av: ME.av, historyId: ME.historyId });
   const key = v.ph + ':' + v.r + ':' + (v.q || '');
   const d = pnow() + v.rem, di = pnow() + v.intro;
   if (key !== C.timeKey || Math.abs(d - C.deadline) > 450) C.deadline = d;
@@ -595,7 +619,7 @@ function onPhase(v, prev) {
 function onDirect(m) {
   const v = C.view;
   if (m.t === 'err') { busy(null); toast(m.msg || 'Something went wrong.'); clearRejoin(); teardown(); render(); return; }
-  if (m.t === 'rejoin') { send('join', { name: ME.name, av: ME.av }); return; }
+  if (m.t === 'rejoin') { send('join', { name: ME.name, av: ME.av, historyId: ME.historyId }); return; }
   if (m.t !== 'fb' || !v || m.r !== v.r) return;
   const q = QMAP[v.q];
   if (m.kind === 'locked') { C.myLock = { aid: m.aid }; render(); return; }
@@ -869,11 +893,13 @@ function startSink(v) {
     const tr = r && r[1] >= 0 && r[4] !== 'k' ? QMAP[v.q].answers[r[1]].tier : null;
     DV.sink.dur[p.id] = tr ? [2100, 2600, 3300, 4200, 5300, 6800][TIERS[tr].i] : 700;
   }
+  DV.sink.endAt = DV.sink.t0 + Math.max(0, ...Object.values(DV.sink.dur)) + 1000;
   DV.landShown = '';
   const mine = res.find(r => r[0] === ME.id); const q = QMAP[v.q];
   C.myTiers = C.myTiers || {};
   if (mine) C.myTiers[v.r] = mine[1] < 0 ? 'none' : mine[4] === 'k' ? 'sunk' : q.answers[mine[1]].tier;
 }
+function scoresHidden(v) { return v.ph === 'reveal' && DV.sink && pnow() < DV.sink.endAt; }
 function dispDepth(p) {
   const s = DV.sink, v = C.view;
   if (!s || !v || v.ph !== 'reveal' || !(p.id in s.to)) return p.pts * 10;
@@ -917,12 +943,12 @@ function renderDivers(v) {
   act.forEach((p, i) => {
     const el = box.querySelector(`[data-pid="${CSS.escape(p.id)}"]`); if (!el) return;
     const narrow = innerWidth < 700 && n >= 4;
-    const x = n === 1 ? 50 : narrow ? 13 + (i / (n - 1)) * 74 : innerWidth < 700 ? 54 + (i / (n - 1)) * 32 : 42 + (i / (n - 1)) * 40;
-    { const sc = el.querySelector('.sc'); const t = n > 1 && v.ph !== 'lobby' && p.pts > 0 ? M(p.pts) : ''; if (sc.textContent !== t) sc.textContent = t; sc.hidden = !t; }
+    const x = n === 1 ? 50 : 18 + (i / (n - 1)) * 64;
+    { const sc = el.querySelector('.sc'); const t = n > 1 && v.ph !== 'lobby' && !scoresHidden(v) && p.pts > 0 ? M(p.pts) : ''; if (sc.textContent !== t) sc.textContent = t; sc.hidden = !t; }
     el.style.left = x + '%'; el.classList.toggle('stag', narrow && i % 2 === 1); el.classList.toggle('lt', x > 62); el.classList.toggle('dim', !!p.off);
     let txt = '', cls = '';
     if (v.ph === 'lobby') { if (p.rdy) { txt = 'ready'; cls = 'rdy'; } }
-    else if (rv && v.res && q) {
+    else if (rv && !scoresHidden(v) && v.res && q) {
       const r = v.res.find(z => z[0] === p.id);
       if (r) { if (r[1] < 0) { txt = 'no answer'; cls = 'none'; } else { txt = q.answers[r[1]].name; cls = r[4] === 'k' ? 'sunk' : TCLS[q.answers[r[1]].tier]; } }
     } else if (v.ph === 'play' && v.set.mode === 'vs' && q) {
@@ -996,6 +1022,7 @@ function renderDive(v) {
   else if (act.length > 1 && v.set.team) { $('hRL').textContent = 'Team'; $('hR').textContent = M(act.reduce((a, p) => a + p.pts, 0)); }
   else if (act.length > 1) { const rank = act.slice().sort((a, b) => b.pts - a.pts).findIndex(p => p.id === ME.id) + 1; $('hRL').textContent = 'Rank'; $('hR').textContent = rank > 0 ? `${rank} of ${act.length}` : 'watching'; }
   else { $('hRL').textContent = 'Best dive'; $('hR').textContent = M(Math.max(LS.get('best', 0), PROFILE.get().best)); }
+  if (scoresHidden(v)) $('hR').textContent = 'Diving…';
   $('qN').textContent = `${(CATINFO[q.cat] || ['Mix'])[0]}${!crew && act.length > 1 && v.r === v.n - 1 ? ' · double depth' : ''}`;
   $('qT').textContent = q.prompt;
   const watching = !me || me.spec;
@@ -1048,7 +1075,7 @@ function dvFrame(v, t) {
   const controlsTop = $('playScr').classList.contains('lob') ? innerHeight : $('playScr').querySelector('.dv-bar').getBoundingClientRect().top;
   const halfDiver = innerHeight < 500 ? 48 : 82;
   const playAnchor = Math.max(promptBottom + halfDiver + 12, Math.min(innerHeight * 0.58, controlsTop - halfDiver - 12)) / innerHeight;
-  const want = rv ? (landed ? DV.landY / innerHeight : 0.56) : v.ph === 'lobby' ? 0.56 : v.set.mode === 'crew' ? 0.76 : playAnchor;
+  const want = rv ? (landed ? DV.landY / innerHeight : 0.4) : v.ph === 'lobby' ? 0.56 : v.set.mode === 'crew' ? 0.76 : playAnchor;
   DV.anchor += (want - DV.anchor) * Math.min(1, dt / 1000 * (landed ? 2.4 : 1.6));
   { const pk = v.ph + ':' + v.r; if (DV.panKey !== pk) { DV.panKey = pk; DV.panHold = false; }
     if (!DV.panHold && !DV.dragging) DV.pan = Math.abs(DV.pan || 0) < 1 ? 0 : DV.pan * Math.pow(0.002, dt / 1000);
@@ -1074,7 +1101,7 @@ function dvFrame(v, t) {
       const wy = yW(dispDepth(p)) + DV_OFF, sy = wy + camY; const up = sy < lo, dn = sy > hi;
       if (up || dn) el.style.top = ((up ? lo : hi) - camY).toFixed(1) + 'px';
       el.classList.toggle('far-up', up); el.classList.toggle('far-dn', dn); } }
-  const dtxt = Math.round(camD).toLocaleString('en-GB') + ' m';
+  const dtxt = scoresHidden(v) ? 'Diving…' : Math.round(camD).toLocaleString('en-GB') + ' m';
   if ($('hDepth')._t !== dtxt) { $('hDepth')._t = dtxt; $('hDepth').textContent = dtxt; }
   const myD = mine ? camD : -1;
   let zone = -1;
@@ -1095,8 +1122,8 @@ function dvFrame(v, t) {
     }
   }
   if (rv && DV.landShown !== C.timeKey) {
-    const done = !DV.sink || !mine || pnow() - DV.sink.t0 >= (DV.sink.dur[ME.id] || 0) + 150;
-    if (done) { DV.landShown = C.timeKey; showLand(v); }
+    const done = !scoresHidden(v);
+    if (done) { DV.landShown = C.timeKey; showLand(v); renderDive(v); }
   }
 }
 function bubbles(n) {
@@ -1122,7 +1149,7 @@ function setMe(nm, av) {
   if (av) { ME.av = av; LS.set('av', av); }
   const p = H && H.players.find(x => x.id === ME.id);
   if (p) { p.name = ME.name; p.av = ME.av; H.dirty = true; broadcast(); }
-  if (C.role === 'guest' && C.joined) send('join', { name: ME.name, av: ME.av });
+  if (C.role === 'guest' && C.joined) send('join', { name: ME.name, av: ME.av, historyId: ME.historyId });
   renderMe(); renderHome(); renderRail();
 }
 function openMe() { renderMe(); $('nm2').value = ME.name; $('meM').hidden = false; }
@@ -1140,7 +1167,7 @@ function render() {
 /* home */
 let homeBuilt = false;
 function playerCard(pid) {
-  const v = C.view; if (!v) return; const p = v.pl.find(x => x.id === pid); if (!p) return;
+  const v = C.view; if (!v) return; if (scoresHidden(v)) { toast('Watch the dive — scores follow when everyone lands.'); return; } const p = v.pl.find(x => x.id === pid); if (!p) return;
   const act = v.pl.filter(x => !x.spec); const rank = act.slice().sort((a, b) => b.pts - a.pts).findIndex(x => x.id === pid) + 1;
   const rows = (v.hist || []).map((h, i) => {
     const q = QMAP[h.q]; const r = (h.res || []).find(x => x[0] === pid); const a = r && r[1] >= 0 ? q.answers[r[1]] : null;
@@ -1442,6 +1469,8 @@ function confirmLeave() {
   $('leaveM').hidden = false; $('leaveYes').focus();
 }
 function bind() {
+  document.addEventListener('keydown', e => { if (e.key === 'Tab') document.body.classList.add('keyboard'); });
+  document.addEventListener('pointerdown', () => document.body.classList.remove('keyboard'));
   $('themes').innerHTML = THEMES.map(t => `<button type="button" data-th="${t.id}" style="--sw:${t.bg}" aria-label="${t.n} theme"></button>`).join('');
   $('themes').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) setTheme(b.dataset.th); });
   setTheme(LS.get('theme', 'deep'));
@@ -1464,9 +1493,18 @@ function bind() {
     if (e.key === 'Enter' && C.view && C.view.ph === 'reveal' && H && !$('land').hidden && document.activeElement.tagName !== 'BUTTON') { e.preventDefault(); nextRound(); }
   });
   window.addEventListener('resize', () => { DV.built = false; });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { doBack(); } });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { doBack(); $('menuButton').focus(); }
+    if (e.key !== 'Tab') return;
+    const modal = [...document.querySelectorAll('.modal:not([hidden])')].pop();
+    if (!modal) return;
+    const controls = [...modal.querySelectorAll('button:not(:disabled), input:not(:disabled), [tabindex="0"]')].filter(el => el.getClientRects().length);
+    const first = controls[0], last = controls[controls.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last?.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first?.focus(); }
+  });
   $('pmX').addEventListener('click', () => ($('pM').hidden = true));
-  ['howM', 'leaveM', 'meM', 'pM'].forEach(id => $(id).addEventListener('click', (e) => { if (e.target.id === id) $(id).hidden = true; }));
+  ['menuM', 'howM', 'leaveM', 'meM', 'pM'].forEach(id => $(id).addEventListener('click', (e) => { if (e.target.id === id) $(id).hidden = true; }));
   $('setup').addEventListener('click', (e) => {
     if (!H) return;
     const mb = e.target.closest('[data-mode]'); if (mb) { if (!H || mb.disabled) return; H.set.mode = mb.dataset.mode; H.set.rounds = +mb.dataset.r || 7; H.set.secs = 0; H.set.team = mb.dataset.t === '1'; H.go = false; H.cdAt = 0; H.dirty = true; broadcast(); return; }
@@ -1502,6 +1540,11 @@ function bind() {
     const sb = e.target.closest('#nextBox .seg button'); if (sb && H) { H.set.secs = +sb.dataset.v; H.dirty = true; broadcast(); $('nextBox')._sig = ''; renderReveal(C.view); return; }
     const a = e.target.closest('[data-act]'); if (!a) return;
     const act = a.dataset.act;
+    if (act === 'menu') { $('menuM').hidden = !$('menuM').hidden; if (!$('menuM').hidden) $('menuClose').focus(); return; }
+    if (act === 'menu-close') { $('menuM').hidden = true; $('menuButton').focus(); return; }
+    $('menuM').hidden = true;
+    if (act === 'solo') practice();
+    if (act === 'multiplayer') { if (C.role === 'host' || C.role === 'guest') render(); else navAct(); }
     if (act === 'leave') confirmLeave();
     if (act === 'back') navAct();
     if (act === 'next' && H) nextRound();
@@ -1518,15 +1561,22 @@ function bind() {
 }
 
 /* ═════════════════ BOOT ═════════════════ */
-function boot() {
+async function identifyDiver() {
+  const response = await fetch('/api/diver', { signal: AbortSignal.timeout(10000) });
+  if (!response.ok) throw new Error('Could not connect to question history.');
+  ME.historyId = (await response.json()).id;
+}
+async function boot() {
   try { const fav = 'data:image/svg+xml,' + encodeURIComponent(ART.mark); $('favicon').setAttribute('href', fav); } catch {}
   C.booting = true; startWatcher(); bind(); renderHome(); buildOcean();
+  try { await identifyDiver(); } catch { toast('Question history is unavailable. Use the menu to retry a solo dive.'); }
   setTimeout(() => { C.booting = false; if (!C.role) render(); }, 2600);
   const params = new URLSearchParams(location.search);
   const j = (params.get('join') || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
   const srj = SS.get('rj', null);
   if (srj && srj.code && (!j || j === srj.code) && now() - srj.at < 3 * 3600e3) { if (srj.id) { ME.id = srj.id; SS.set('id', ME.id); } joinLobby(srj.code, true); return; }
-  const ln = parseInt(params.get('lobby') || '0', 10);
+  const requestedLobby = parseInt(params.get('lobby') || '0', 10);
+  const ln = requestedLobby === 2 ? 1 : requestedLobby;
   if (ln >= 1 && ln <= ROOMS.length) { busy('Finding ' + ROOMS[ln - 1][1] + '…'); setTimeout(() => { busy(null); enterRoom(ROOMS[ln - 1][0]); }, 1800); return; }
   if (j.length === 4) { joinLobby(j, false); return; }
   practice();

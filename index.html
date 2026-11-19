@@ -1813,7 +1813,7 @@ html body #playScr #world,html body #playScr #world *,html body #playScr .dv-hud
 /* The fixed arrow switches between solo (left) and multiplayer (right). */
 .nav svg{transition:transform .24s cubic-bezier(.2,.9,.3,1)}
 .nav.to-solo svg{transform:rotate(180deg)}
-html body .nav:focus-visible{outline:3px solid #ffd400 !important;outline-offset:6px}
+html body .nav:focus-visible{outline:3px solid #64bdc8 !important;outline-offset:6px}
 html body .hm-stats[hidden]{display:none}
 html body .scr.hm .hm-logo{font-size:clamp(3.2rem,12vw,5.6rem) !important}
 .hm-help{max-width:400px;text-align:center;margin:0 0 20px;line-height:1.4}
@@ -1902,7 +1902,7 @@ html body #pM .dlg{display:flex;flex-direction:column;overflow:hidden}
 html body #pmBody{overflow:auto;min-height:0}
 html body #pmX{flex:none}
 html body .toast{top:auto;bottom:max(84px,env(safe-area-inset-bottom));font-size:1rem !important;width:max-content;max-width:calc(100% - 32px)}
-html body button:focus-visible,html body input:focus-visible{outline:3px solid #ffd400 !important;outline-offset:3px}
+html body button:focus-visible,html body input:focus-visible{outline:3px solid #64bdc8 !important;outline-offset:3px}
 @media(max-width:360px){
   html body #playScr .dv-hud{gap:5px !important;padding-right:72px !important}
   html body #playScr .dv-hud .pod{padding:6px !important}
@@ -1945,12 +1945,88 @@ html body #playScr.lob.crowded .dvr .av{width:44px !important;height:44px !impor
 @media(max-height:500px){html body #playScr.lob .dvr .av{width:36px !important;height:36px !important}html body #playScr.lob .dvr .nm{font-size:.75rem !important;padding:2px 6px !important}}
 @media(max-width:500px){html body #playScr.lob .lob-profile{position:static}html body #playScr.lob .lob-bot{padding-top:6px}html body #playScr.lob .lob-profile{padding:6px 12px;min-height:32px}html body #playScr.lob .lob-info{display:none}}
 html body #playScr.lob .dvr{margin-top:0 !important;transform:translate(-50%,-50%) !important}
-html body .scr button:focus-visible,html body .dlg button:focus-visible,html body .scr input:focus-visible,html body .dlg input:focus-visible{outline:3px solid #ffd400 !important;outline-offset:3px}
+html body .scr button:focus-visible,html body .dlg button:focus-visible,html body .scr input:focus-visible,html body .dlg input:focus-visible{outline:3px solid #64bdc8 !important;outline-offset:3px}
+
+/* Spacious, symmetric game chrome and a menu available on every screen. */
+:root{--hud-height:76px;--ui-gap:18px}
+html body .menu-button{position:fixed;top:max(12px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));z-index:80;display:flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:10px 14px;border:3px solid #0a0a0a;border-radius:14px;background:#fff;color:#0a0a0a;font:800 1.1rem/1 var(--body);box-shadow:3px 3px 0 #0a0a0a}
+.menu-button svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round}
+html body .menu-heading{display:flex;align-items:center;justify-content:space-between;gap:16px}
+html body #menuM .dlg{gap:18px;max-width:600px;padding:28px;overflow:auto}
+html body #menuM .btn{font-size:1.45rem !important;min-height:58px;white-space:normal;line-height:1.2}
+html body #menuM p{font-size:1.15rem}
+html body #menuM .menu-note{font-size:1rem;text-align:center}
+html body .mprail{display:none !important}
+html body.solo #playScr .dv-hud,html body:not(.solo) #playScr .dv-hud{padding:0 134px !important;justify-content:center !important;height:var(--hud-height);gap:14px !important}
+html body #playScr .dv-hud .pod{max-width:220px;padding:10px 16px !important}
+html body #playScr .dv-hud .pod .label{font-size:1rem !important}
+html body #playScr .dv-hud .pod b{font-size:clamp(1.65rem,3.5vw,2.25rem) !important}
+html body.solo #playScr .dv-q,html body #playScr .dv-q{left:50% !important;transform:translateX(-50%);width:min(860px,calc(100% - 40px)) !important;top:calc(max(12px,env(safe-area-inset-top)) + var(--hud-height) + var(--ui-gap)) !important;padding:20px 26px !important}
+html body #playScr .dv-q .qn{font-size:1.1rem !important;padding:5px 10px !important}
+html body #playScr .dv-q h2{font-size:clamp(1.9rem,4.5vw,3.2rem) !important;line-height:1.1 !important;margin:12px 0 4px !important;text-wrap:balance;overflow-wrap:normal}
+html body #playScr .dv-bar{left:0 !important;right:0 !important;width:100% !important;padding:20px 20px max(22px,env(safe-area-inset-bottom)) !important}
+html body #playScr .dv-in{width:min(860px,100%) !important;margin:0 auto;gap:14px}
+html body #playScr .dv-in .field,html body #playScr .dv-in .btn{height:76px !important;font-size:1.9rem !important;padding:12px 24px !important}
+html body #playScr .dv-in .field::placeholder{font-size:1.55rem !important}
+html body #playScr .ansWrap{flex:1;min-width:0}
+html body #playScr .dvr .nm{font-size:1.25rem !important;max-width:180px;padding:6px 12px !important}
+html body #playScr .dvr.me .av{width:88px !important;height:88px !important}
+html body #playScr .dvr:not(.me) .av{width:76px !important;height:76px !important}
+html body #playScr .dvr .tag{font-size:1.25rem !important}
+html body #playScr .lob-top{padding:0 134px;left:0;right:0}
+html body #playScr .lob-info{font-size:1.2rem !important;max-width:600px}
+html body #playScr .lob-modes button{font-size:1.6rem !important;padding:14px 20px !important}
+html body #playScr .lob-ready{font-size:2rem !important;min-height:62px;width:min(540px,100%)}
+html body #playScr .status:not(:empty),html body #playScr .dv-sealed,html body #playScr .dv-watch{font-size:1.3rem !important;max-width:min(860px,100%)}
+html body .modal .dlg{max-width:620px;padding:24px;gap:16px}
+html body .modal .dlg h2{font-size:2.5rem !important}
+html body .modal .dlg .field,html body .modal .dlg .btn{font-size:1.4rem !important;min-height:54px}
+html body #meM .avb{width:58px;height:58px}
+html body #meM #avs2{grid-template-columns:repeat(auto-fit,minmax(58px,1fr));min-height:66px}
+html body button:focus,html body input:focus{outline:none !important}
+html body .scr button:focus-visible,html body .dlg button:focus-visible,html body .scr input:focus-visible,html body .dlg input:focus-visible,html body .nav:focus-visible{outline:none !important}
+html body.keyboard button:focus-visible,html body.keyboard input:focus-visible{outline:3px solid #64bdc8 !important;outline-offset:4px}
+html body #ans:focus{box-shadow:none !important}
+@media(max-width:700px){
+  :root{--hud-height:68px;--ui-gap:14px}
+  html body .menu-button{width:50px;height:50px;min-height:50px;padding:10px}
+  .menu-button span{display:none}
+  html body.solo #playScr .dv-hud,html body:not(.solo) #playScr .dv-hud{padding:0 72px !important;gap:5px !important}
+  html body #playScr .dv-hud .pod{padding:9px 5px !important}
+  html body #playScr .dv-hud .pod .label{font-size:.75rem !important}
+  html body #playScr .dv-hud .pod b{font-size:clamp(1rem,4vw,1.7rem) !important}
+  html body #playScr .dv-q{padding:16px !important}
+  html body #playScr .dv-q h2{font-size:clamp(1.65rem,6.5vw,2.3rem) !important}
+  html body #playScr .dv-in .field,html body #playScr .dv-in .btn{height:64px !important;font-size:1.6rem !important;padding:10px 14px !important}
+  html body #playScr .dv-in{gap:8px}
+  html body #playScr .dvr.me .av{width:76px !important;height:76px !important}
+  html body #playScr .dvr:not(.me) .av{width:64px !important;height:64px !important}
+  html body #playScr .lob-top{padding:0 72px}
+  html body #playScr .lob-modes button{font-size:1.25rem !important;padding:12px !important}
+  html body #playScr .lob-ready{min-height:56px}
+  html body .modal .dlg,html body #menuM .dlg{padding:20px}
+}
+@media(max-height:600px){
+  :root{--hud-height:48px;--ui-gap:10px}
+  html body #playScr .dv-hud .pod{padding:5px 8px !important}
+  html body #playScr .dv-hud .pod .label{font-size:.65rem !important}
+  html body #playScr .dv-hud .pod b{font-size:1.25rem !important;margin-top:2px}
+  html body.solo #playScr .dv-q,html body #playScr .dv-q{padding:8px 16px !important;width:min(740px,calc(100% - 32px)) !important}
+  html body #playScr .dv-q h2{font-size:1.7rem !important;margin:6px 0 0 !important}
+  html body #playScr .dv-q .qn{font-size:.85rem !important}
+  html body #playScr .dv-bar{padding:10px 16px !important}
+  html body #playScr .dv-in .field,html body #playScr .dv-in .btn{height:50px !important;font-size:1.4rem !important}
+  html body #playScr .dvr.me .av,html body #playScr .dvr:not(.me) .av{width:48px !important;height:48px !important}
+  html body #playScr .lob-ready{min-height:44px;font-size:1.5rem !important}
+  html body #playScr .lob-modes button{font-size:1.1rem !important;padding:8px 12px !important}
+}
+
 </style>
 </head>
 <body data-scr="boot">
 <noscript>Kraken needs JavaScript turned on.</noscript>
 <div class="themes" id="themes" role="group" aria-label="Theme"></div>
+<button class="menu-button" id="menuButton" type="button" data-act="menu" aria-label="Open general menu" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span>Menu</span></button>
 <button class="nav" type="button" data-act="back" aria-label="Switch to multiplayer lobby" id="tbX"></button>
 <div class="ocean" aria-hidden="true">
   <div class="o-rays"><i></i><i></i><i></i><i></i></div>
@@ -2026,6 +2102,18 @@ html body .scr button:focus-visible,html body .dlg button:focus-visible,html bod
   <section class="scr final" aria-label="Final results" id="finalScr"></section>
 </main>
 
+<div class="modal" id="menuM" hidden>
+  <div class="dlg general-menu" role="dialog" aria-modal="true" aria-labelledby="menuTitle">
+    <div class="menu-heading"><h2 id="menuTitle">Your next dive</h2><button class="btn" id="menuClose" type="button" data-act="menu-close" aria-label="Close menu">Close</button></div>
+    <p>Your diver, your game. Jump in anywhere.</p>
+    <button class="btn big" type="button" data-act="me">Change name &amp; profile picture</button>
+    <button class="btn big" type="button" data-act="solo">Solo dive</button>
+    <button class="btn big" type="button" data-act="multiplayer">Multiplayer lobby</button>
+    <button class="btn big" type="button" data-act="howto">How to play</button>
+    <button class="btn" type="button" data-act="leave">Leave current game</button>
+    <p class="menu-note">112 prompts · 10 topics · no repeats for one hour</p>
+  </div>
+</div>
 <div class="modal" id="pM" hidden>
   <div class="dlg" role="dialog" aria-modal="true"><div id="pmBody"></div><button class="btn red" id="pmX" type="button">Close</button></div>
 </div>
@@ -2050,7 +2138,7 @@ html body .scr button:focus-visible,html body .dlg button:focus-visible,html bod
     <h2 id="meT">Your diver</h2>
     <div class="label" style="margin-top:12px">Name</div>
     <input class="field" id="nm2" maxlength="14" autocomplete="nickname" spellcheck="false" aria-label="Your name">
-    <div class="label" style="margin-top:12px">Look</div>
+    <div class="label" style="margin-top:12px">Profile picture</div>
     <div class="avs" id="avs2" role="group" aria-label="Character"></div>
     <div class="row"><button class="btn" type="button" id="meRnd">Shuffle</button><button class="btn red" type="button" id="meX">Done</button></div>
   </div>
@@ -2072,6 +2160,7 @@ html body .scr button:focus-visible,html body .dlg button:focus-visible,html bod
 <script src="bank.js"></script>
 <script src="bank-gen.js"></script>
 <script src="bank-fun.js"></script>
+<script src="bank-extra.js"></script>
 <script src="engine.js"></script>
 <script src="art.js"></script>
 <script src="net.js"></script>

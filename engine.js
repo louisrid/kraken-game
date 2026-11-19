@@ -210,8 +210,7 @@ function pickQuestions(bank, cats, n, mode, avoid, seed) {
   const R = rng(seed);
   let pool = bank.filter(q => !cats || !cats.length || cats.includes(q.cat));
   if (mode === 'coop') { const rich = pool.filter(q => q.counts.c >= 2 && q.counts.o >= 3 && q.counts.r >= 2); if (rich.length >= n) pool = rich; }
-  const fresh = pool.filter(q => !avoid.includes(q.id));
-  if (fresh.length >= n) pool = fresh;
+  pool = pool.filter(q => !avoid.includes(q.id));
   pool = pool.slice();
   for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
   /* variety: never the same topic twice in a row, and at most ~2 per topic in a game */
@@ -230,3 +229,6 @@ function pickQuestions(bank, cats, n, mode, avoid, seed) {
 }
 
 if (typeof module !== 'undefined') module.exports = { TIERS, TORDER, CATS, normText, keyOf, parseQuestion, matchAnswer, makeOrder, coopDuration, pickQuestions, rng, hashStr, dlDist };
+
+// Shared rule API for the Netlify question selector.
+globalThis.KRAKEN_ENGINE = { parseQuestion, pickQuestions };
