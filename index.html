@@ -1773,14 +1773,15 @@ html body #playScr .dvr.far-up .tag, html body #playScr .dvr.far-dn .tag{display
 html body #playScr .dvr.far-up .sc::before{content:"▲ "}
 html body #playScr .dvr.far-dn .sc::before{content:"▼ "}
 
-/* rarity zones: the water between two lines is fully dyed in that rarity's colour */
-#tlines .dv-band{position:absolute;left:0;right:0;z-index:1;pointer-events:none;border-top:4px solid #000}
-#tlines .dv-band.t0{background:rgba(20,70,255,.82)}
-#tlines .dv-band.t1{background:rgba(140,30,230,.84)}
-#tlines .dv-band.t2{background:rgba(255,130,0,.84)}
-#tlines .dv-band.t3{background:rgba(225,20,30,.86)}
+/* rarity zones: equal-height bands that fade softly into each other (no hard lines) */
+#tlines .dv-band{position:absolute;left:0;right:0;z-index:1;pointer-events:none;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 var(--ov,160px));mask-image:linear-gradient(to bottom,transparent 0,#000 var(--ov,160px))}
+#tlines .dv-band.t0{background:linear-gradient(to bottom,rgba(40,110,255,.75),rgba(20,60,230,.9))}
+#tlines .dv-band.t1{background:linear-gradient(to bottom,rgba(110,40,235,.88),rgba(150,30,220,.92))}
+#tlines .dv-band.t2{background:linear-gradient(to bottom,rgba(255,120,20,.9),rgba(255,150,0,.92))}
+#tlines .dv-band.t3{background:linear-gradient(to bottom,rgba(235,40,40,.92),rgba(190,10,30,.95))}
 #tlines .dv-band.t4{background:var(--galaxy);animation:guessHue 7s linear infinite}
-#tlines .dv-band.t5{background:#000 repeating-conic-gradient(#fff 0 9deg,#000 0 18deg,#ff1e3c 0 27deg,#000 0 36deg) 0 0/7px 7px}
+#tlines .dv-band.t5{background:#000 repeating-conic-gradient(#fff 0 9deg,#000 0 18deg,#ff1e3c 0 27deg,#000 0 36deg) 0 0/7px 7px;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 var(--ov,160px),#000 82%,transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 var(--ov,160px),#000 82%,transparent 100%)}
+.dv-ruler{display:none !important}
 html body #playScr .dv-tl,html body #playScr .dv-tl:not(.hit){border-top-color:transparent !important}
 html body #playScr.landed .dv-tl:not(.hit){opacity:1 !important}
 html body #playScr.landed .dv-tl span{visibility:hidden !important}

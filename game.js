@@ -786,6 +786,43 @@ const DV_MARKS = [
   [7900, 'z', 'Kraken’s trench', ''],
 ];
 const yOf = (m) => DV.SKY + m * DV.S;
+/* Below your current depth the water is drawn in equal-height rarity zones (not to scale),
+   so Common is as tall as Rare. W = { base (m), mult, H (zone px), H0 (gap to Common px) }. */
+const KN = [0, 100, 200, 400, 800, 1500, 2500];
+function wPix(d, W) {
+  const k = KN.map((x) => x * W.mult);
+  if (d <= k[1]) return (d / k[1]) * W.H0;
+  for (let i = 1; i < 6; i++) if (d <= k[i + 1]) return W.H0 + (i - 1) * W.H + ((d - k[i]) / (k[i + 1] - k[i])) * W.H;
+  return W.H0 + 5 * W.H + ((d - k[6]) / (1000 * W.mult)) * W.H;
+}
+function wInv(px, W) {
+  const k = KN.map((x) => x * W.mult);
+  if (px <= W.H0) return (px / W.H0) * k[1];
+  for (let i = 1; i < 6; i++) { const top = W.H0 + (i - 1) * W.H; if (px <= top + W.H) return k[i] + ((px - top) / W.H) * (k[i + 1] - k[i]); }
+  return k[6] + ((px - W.H0 - 5 * W.H) / W.H) * 1000 * W.mult;
+}
+const yAt = (m, W) => (!W || m <= W.base ? yOf(m) : yOf(W.base) + wPix(m - W.base, W));
+function yW(m) {
+  const k = DV.Wt0 ? Math.min(1, (pnow() - DV.Wt0) / 700) : 1;
+  if (k >= 1 || !DV.Wprev) return yAt(m, DV.W);
+  const e = -(Math.cos(Math.PI * k) - 1) / 2;
+  return yAt(m, DV.Wprev) + (yAt(m, DV.W) - yAt(m, DV.Wprev)) * e;
+}
+function mOfY(y) { const W = DV.W; const yb = W ? yOf(W.base) : Infinity; return y <= yb ? (y - DV.SKY) / DV.S : W.base + wInv(y - yb, W); }
+function roundMult(v) { return v && v.pl.filter((p) => !p.spec).length > 1 && v.r === v.n - 1 ? 2 : 1; }
+function warpBase(v) {
+  const me = meIn(v); const act = v.pl.filter((p) => !p.spec && !p.gone);
+  const t = me && !me.spec ? me : act.slice().sort((a, b) => b.pts - a.pts)[0];
+  if (!t) return 0;
+  return v.ph === 'reveal' && DV.sink && t.id in DV.sink.from ? DV.sink.from[t.id] : t.pts * 10;
+}
+function setWarp(v) {
+  const on = v && (v.ph === 'play' || v.ph === 'reveal') && v.set.mode !== 'crew';
+  const W = on ? { base: warpBase(v), mult: roundMult(v), H: Math.round(Math.max(460, innerHeight * 0.8)), H0: Math.round(Math.max(140, innerHeight * 0.24)) } : null;
+  const same = (a, b) => (!a && !b) || (a && b && a.base === b.base && a.mult === b.mult && a.H === b.H && a.H0 === b.H0);
+  if (same(W, DV.W)) return;
+  DV.Wprev = DV.W && W ? DV.W : null; DV.Wt0 = DV.Wprev ? pnow() : 0; DV.W = W;
+}
 const SHIP = `<svg viewBox="0 0 200 140" aria-hidden="true"><path d="M97 8 V98" stroke="#0a0a0a" stroke-width="6"/><path d="M97 8 L124 15 L97 22 Z" fill="#ff2b2b" stroke="#0a0a0a" stroke-width="4" stroke-linejoin="round"/><path d="M101 26 Q 152 56 101 90 Z" fill="#fff" stroke="#0a0a0a" stroke-width="5" stroke-linejoin="round"/><path d="M93 30 Q 50 58 93 88 Z" fill="#f1ebdc" stroke="#0a0a0a" stroke-width="5" stroke-linejoin="round"/><circle cx="116" cy="56" r="8" fill="#0a0a0a"/><path d="M110 66 l12 -2" stroke="#0a0a0a" stroke-width="4"/><path d="M16 98 H184 L162 130 H40 Z" fill="#3b2a21" stroke="#0a0a0a" stroke-width="6" stroke-linejoin="round"/><path d="M26 108 H176" stroke="#ff2b2b" stroke-width="6"/></svg>`;
 function lifeHTML() {
   const R = rng('kraken-life'); let h = '';
@@ -835,7 +872,8 @@ function dispDepth(p) {
   if (!s || !v || v.ph !== 'reveal' || !(p.id in s.to)) return p.pts * 10;
   const k = Math.max(0, Math.min(1, (pnow() - s.t0) / s.dur[p.id]));
   const e = -(Math.cos(Math.PI * k) - 1) / 2;
-  return s.from[p.id] + (s.to[p.id] - s.from[p.id]) * e;
+  const ya = yAt(s.from[p.id], DV.W), yb = yAt(s.to[p.id], DV.W);
+  return mOfY(ya + (yb - ya) * e);
 }
 function myBase(v) {
   const me = meIn(v); if (!me || me.spec) return 0;
@@ -843,11 +881,22 @@ function myBase(v) {
 }
 function renderTierLines(v) {
   if (v.set.mode === 'crew') { $('tlines').innerHTML = ''; DV.tlKey = ''; return; }
-  const base = myBase(v); const key = base + ':' + DV.S + ':' + v.r;
+  setWarp(v);
+  const base = myBase(v); const mult = roundMult(v); const key = base + ':' + mult + ':' + v.r;
   if (DV.tlKey === key) return; DV.tlKey = key;
-  const PAD = 46; const ms = TORDER.map(t => base + TIERS[t].pts * 10);
-  const bands = TORDER.map((t, i) => { const y0 = yOf(ms[i]) + DV_OFF - PAD; const y1 = i + 1 < ms.length ? yOf(ms[i + 1]) + DV_OFF - PAD : y0 + 1000 * DV.S; return `<i class="dv-band ${TCLS[t]}" style="top:${y0.toFixed(1)}px;height:${(y1 - y0).toFixed(1)}px"></i>`; }).join('');
-  $('tlines').innerHTML = bands + TORDER.map(t => { const m = base + TIERS[t].pts * 10; return `<div class="dv-tl ${TCLS[t]}" data-m="${m}" style="top:${(yOf(m) + DV_OFF).toFixed(1)}px"><span>${esc(TIERS[t].name)} · +${(TIERS[t].pts * 10).toLocaleString('en-GB')} m</span></div>`; }).join('');
+  const ms = TORDER.map(t => base + TIERS[t].pts * 10 * mult);
+  const bands = TORDER.map((t, i) => `<i class="dv-band ${TCLS[t]}" data-a="${ms[i]}" data-b="${i + 1 < ms.length ? ms[i + 1] : ''}"></i>`).join('');
+  $('tlines').innerHTML = bands + TORDER.map((t, i) => `<div class="dv-tl ${TCLS[t]}" data-m="${ms[i]}"><span>${esc(TIERS[t].name)} · +${(TIERS[t].pts * 10 * mult).toLocaleString('en-GB')} m</span></div>`).join('');
+  placeZones();
+}
+function placeZones() {
+  const W = DV.W; if (!W) return; const OV = Math.round(W.H * 0.22);
+  for (const b of $('tlines').children) {
+    if (b.classList.contains('dv-band')) {
+      const y0 = yW(+b.dataset.a) + DV_OFF; const y1 = b.dataset.b ? yW(+b.dataset.b) + DV_OFF : y0 + W.H * 1.7;
+      b.style.top = (y0 - OV).toFixed(1) + 'px'; b.style.height = (y1 - y0 + OV * 2).toFixed(1) + 'px'; b.style.setProperty('--ov', OV * 2 + 'px');
+    } else b.style.top = (yW(+b.dataset.m) + DV_OFF).toFixed(1) + 'px';
+  }
 }
 function renderDivers(v) {
   const q = v.q ? QMAP[v.q] : null; const rv = v.ph === 'reveal';
@@ -972,13 +1021,14 @@ function dvFrame(v, t) {
   const rv = v.ph === 'reveal';
   let camD = 0; const ys = [];
   const box = $('divers');
+  setWarp(v); if (DV.W) placeZones();
   for (const p of act) {
-    const d = dispDepth(p); ys.push(yOf(d) + DV_OFF);
+    const d = dispDepth(p); ys.push(yW(d) + DV_OFF);
     const el = box.querySelector(`[data-pid="${CSS.escape(p.id)}"]`);
-    if (el) { el.style.top = (yOf(d) + DV_OFF).toFixed(1) + 'px'; el.classList.toggle('sinking', rv && !!DV.sink && pnow() >= DV.sink.t0 && d < DV.sink.to[p.id] - 0.5); }
+    if (el) { el.style.top = (yW(d) + DV_OFF).toFixed(1) + 'px'; el.classList.toggle('sinking', rv && !!DV.sink && pnow() >= DV.sink.t0 && d < DV.sink.to[p.id] - 0.5); }
     if (follow && p.id === follow.id) camD = d;
   }
-  { const narrow = innerWidth < 700; for (const tl of $('tlines').querySelectorAll('.dv-tl')) { const y = parseFloat(tl.style.top); tl.classList.toggle('near', narrow && ys.some(d => Math.abs(d - y) < 70)); } }
+  { const narrow = innerWidth < 700; for (const tl of $('tlines').querySelectorAll('.dv-tl')) { const y = parseFloat(tl.style.top) || 0; tl.classList.toggle('near', narrow && ys.some(d => Math.abs(d - y) < 70)); } }
   const ps = $('playScr'); if (ps.scrollTop || ps.scrollLeft) { ps.scrollTop = 0; ps.scrollLeft = 0; }
   const dt = DV.lastT ? Math.min(100, t - DV.lastT) : 16; DV.lastT = t;
   const hudB = (document.querySelector('#playScr .dv-hud') || { getBoundingClientRect: () => ({ bottom: 120 }) }).getBoundingClientRect().bottom;
@@ -988,14 +1038,14 @@ function dvFrame(v, t) {
   DV.anchor += (want - DV.anchor) * Math.min(1, dt / 1000 * (landed ? 2.4 : 1.6));
   { const pk = v.ph + ':' + v.r; if (DV.panKey !== pk) { DV.panKey = pk; DV.panHold = false; }
     if (!DV.panHold && !DV.dragging) DV.pan = Math.abs(DV.pan || 0) < 1 ? 0 : DV.pan * Math.pow(0.002, dt / 1000);
-    DV.pan = Math.max(-(2600 * DV.S), Math.min(yOf(camD) - innerHeight * 0.2, DV.pan || 0)); }
-  const camY = innerHeight * DV.anchor - (yOf(camD) + DV_OFF) + DV.pan;
+    DV.pan = Math.max(-(DV.W ? DV.W.H0 + DV.W.H * 6.2 : 2600 * DV.S), Math.min(yW(camD) - innerHeight * 0.2, DV.pan || 0)); }
+  const camY = innerHeight * DV.anchor - (yW(camD) + DV_OFF) + DV.pan;
   $('world').style.transform = `translate3d(0,${camY.toFixed(1)}px,0)`;
   /* divers far above or below stay pinned at the screen edge with their depth, so you always see everyone */
   { const lo = hudB + 70, hi = innerHeight - 96; let iu = 0, idn = 0;
     for (const p of act) { if (follow && p.id === follow.id) continue;
       const el = box.querySelector(`[data-pid="${CSS.escape(p.id)}"]`); if (!el) continue;
-      const wy = yOf(dispDepth(p)) + DV_OFF, sy = wy + camY; const up = sy < lo, dn = sy > hi;
+      const wy = yW(dispDepth(p)) + DV_OFF, sy = wy + camY; const up = sy < lo, dn = sy > hi;
       if (up || dn) el.style.top = ((up ? lo : hi) - camY).toFixed(1) + 'px';
       el.classList.toggle('far-up', up); el.classList.toggle('far-dn', dn); } }
   const dtxt = Math.round(camD).toLocaleString('en-GB') + ' m';
