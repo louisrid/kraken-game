@@ -1704,6 +1704,25 @@ html body #playScr .dv-land:has(.lboard li:nth-child(4)) .btn.desc{font-size:1.6
   html body #playScr .dv-land:has(.lboard li:nth-child(4)) .lt-t{font-size:2rem !important}
   html body #playScr .lboard:has(li:nth-child(4)) li{padding:2px 8px !important}
 }
+html body #playScr .dv-land .acd{font-style:italic;margin-left:.35em}
+html body #playScr .dv-land .acd:empty{display:none}
+html body #playScr .dv-land .btn.desc .acd{display:inline-grid;place-items:center;min-width:1.5em;height:1.5em;margin-left:.4em;border-radius:50%;background:#ff1e3c;color:#fff !important;-webkit-text-stroke:4px #000 !important;paint-order:stroke fill;font-size:.8em;border:3px solid #000}
+html body #playScr .dv-land .btn.desc .acd:empty{display:none}
+@media (min-height:860px){
+  html body #playScr .lboard:has(li:nth-child(4)) .n{font-size:1.3rem !important}
+  html body #playScr .lboard:has(li:nth-child(4)) .n small{font-size:1.05rem !important}
+  html body #playScr .lboard:has(li:nth-child(4)) em{font-size:1.35rem !important}
+  html body #playScr .lboard:has(li:nth-child(4)) .av{width:30px !important;height:30px !important}
+}
+html body #playScr .dvr.stag{margin-top:92px}
+@media (max-width:700px){
+  html body #playScr .dvr:not(.me) .nm{max-width:86px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  html body #playScr #ansF:has(#num:not([hidden])) #num{width:52px !important;height:52px !important;font-size:1.6rem !important}
+  html body #playScr #ansF:has(#num:not([hidden])) #ansB{padding-left:14px !important;padding-right:14px !important}
+  html body #playScr #ansF:has(#num:not([hidden])) .ansFx{font-size:1.3rem !important}
+  html body #playScr #ansF:has(#num:not([hidden])) .ansFx .ph{font-size:1.3rem !important}
+}
+@media (max-width:700px){html body #playScr .dvr:not(.me) .nm{max-width:100px;font-size:1.1rem !important;padding-left:8px !important;padding-right:8px !important}}
 </style>
 </head>
 <body data-scr="boot">

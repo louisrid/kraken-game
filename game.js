@@ -204,7 +204,7 @@ function startGame() {
   setupRound(); broadcast();
 }
 function setupRound() {
-  H.phase = 'play'; H.answers = {}; H.res = null;
+  H.phase = 'play'; H.answers = {}; H.res = null; H.slowDur = 0;
   const t = now(); H.introEnd = t + INTRO;
   for (const p of H.players) p.ty = 0;
   if (H.set.mode === 'crew') {
@@ -229,7 +229,7 @@ function resolveVs() {
     return [p.id, a.aid, pts, sunk];
   });
   H.hist.push({ q: q.id, res: H.res });
-  H.phase = 'reveal'; H.revealEnds = Infinity; H.dirty = true;
+  H.phase = 'reveal'; H.revealEnds = H.solo ? Infinity : now() + 14000; H.dirty = true;
 }
 function crewResolve(full) {
   const cr = H.crew;
@@ -285,6 +285,7 @@ function hostTick() {
     if (H.set.mode === 'vs') {
       const act = activePlayers().filter(p => p.id === ME.id || t - p.seen < OFF_AFTER);
       const all = act.length > 0 && act.every(p => H.answers[p.id]);
+      if (!H.solo && !isFinite(H.endsAt) && act.length >= 2 && act.filter(p => H.answers[p.id]).length >= act.length - 1) { H.endsAt = t + 15000; H.slowDur = 15000; H.dirty = true; }
       if (t >= H.endsAt || (all && t >= H.introEnd)) resolveVs();
     } else if (t >= H.endsAt - H.crew.pen) crewResolve(false);
   } else if (H.phase === 'reveal' && t >= H.revealEnds) nextRound();
@@ -300,7 +301,8 @@ function view() {
       lk: H.phase === 'play' && H.answers[p.id] ? 1 : 0, rdy: p.rdy ? 1 : 0, ty: p.ty && t - p.ty < 2600 ? 1 : 0, emo: p.emo && t - p.emo[1] < 5000 ? p.emo : null })),
     rem: H.phase === 'play' && isFinite(H.endsAt) ? Math.max(0, H.endsAt - t) : -1,
     intro: H.phase === 'play' ? Math.max(0, H.introEnd - t) : 0,
-    dur: H.phase === 'play' && isFinite(H.endsAt) ? H.endsAt - H.introEnd : 0,
+    dur: H.phase === 'play' && isFinite(H.endsAt) ? (H.slowDur || H.endsAt - H.introEnd) : 0,
+    re: H.phase === 'reveal' && isFinite(H.revealEnds) ? Math.max(0, H.revealEnds - t) : -1,
     res: (H.phase === 'reveal' || H.phase === 'final') && H.set.mode === 'vs' ? H.res : null,
     hist: H.phase === 'final' || H.phase === 'reveal' ? H.hist : null,
     cd: H.phase === 'lobby' && H.cdAt ? Math.max(0, H.cdAt - t) : -1,
@@ -548,6 +550,7 @@ function onState(v) {
   const d = pnow() + v.rem, di = pnow() + v.intro;
   if (key !== C.timeKey || Math.abs(d - C.deadline) > 450) C.deadline = d;
   if (key !== C.timeKey || Math.abs(di - C.introUntil) > 450) C.introUntil = di;
+  C.reAt = v.re >= 0 ? pnow() + v.re : 0;
   if (v.cd >= 0) { const cu = pnow() + v.cd; if (!C.cdUntil || Math.abs(cu - C.cdUntil) > 400) C.cdUntil = cu; } else C.cdUntil = 0;
   if (key !== C.timeKey) { const prev = C.timeKey; C.timeKey = key; onPhase(v, prev); }
   checkEmotes(v);
@@ -842,8 +845,9 @@ function renderDivers(v) {
   }
   act.forEach((p, i) => {
     const el = box.querySelector(`[data-pid="${CSS.escape(p.id)}"]`); if (!el) return;
-    const x = n === 1 ? 50 : 20 + (i / (n - 1)) * 60;
-    el.style.left = x + '%'; el.classList.toggle('lt', x > 62); el.classList.toggle('dim', !!p.off);
+    const narrow = innerWidth < 700 && n >= 4;
+    const x = n === 1 ? 50 : narrow ? 13 + (i / (n - 1)) * 74 : 20 + (i / (n - 1)) * 60;
+    el.style.left = x + '%'; el.classList.toggle('stag', narrow && i % 2 === 1); el.classList.toggle('lt', x > 62); el.classList.toggle('dim', !!p.off);
     let txt = '', cls = '';
     if (v.ph === 'lobby') { if (p.rdy) { txt = 'ready'; cls = 'rdy'; } }
     else if (rv && v.res && q) {
@@ -875,7 +879,7 @@ function landHTML(v) {
   const said = new Set(res.filter(r => r[1] >= 0).map(r => r[1]));
   const deep = shuffled(q.answers.filter(z => z.tier === 'f' && !said.has(z.id)), v.q + v.r).slice(0, 4).map(z => z.name);
   const last = v.r >= v.n - 1; const host = C.role === 'host' || C.role === 'solo';
-  const btn = host ? `<button class="btn desc" type="button" data-act="next">${last ? `Results ${ICON.up}` : `Descend ${ICON.down}`}</button>` : `<p class="lwait">Waiting for the host to descend…</p>`;
+  const btn = host ? `<button class="btn desc" type="button" data-act="next">${last ? `Results ${ICON.up}` : `Descend ${ICON.down}`}<i class="acd"></i></button>` : `<p class="lwait">Descending <i class="acd"></i></p>`;
   return `<div class="lt-t ${cls}">${esc(t1)}</div>${a ? `<div class="lt-a">“${esc(a)}”</div>` : ''}${gain ? `<div class="lt-p">${esc(gain)}</div>` : ''}${quip ? `<p class="lt-q">${esc(quip)}</p>` : ''}${board}
     <div class="lt-k"><span>Kraken’s pick</span><b>${esc(X.name)}</b></div>${btn}`;
 }
@@ -1259,6 +1263,7 @@ function shareText() {
 function live() {
   const v = C.view; if (!v) return;
   const t = pnow();
+  if (v.ph === 'reveal') { const sl = C.reAt ? Math.ceil((C.reAt - t) / 1000) : 0; const txt = sl > 0 && sl <= 9 ? String(sl) : ''; for (const e of document.querySelectorAll('#land .acd')) if (e.textContent !== txt) e.textContent = txt; }
   if (v.ph === 'play') {
     const timed = v.rem >= 0;
     const left = timed ? Math.max(0, C.deadline - t) : 1e9, inIntro = t < C.introUntil;
