@@ -10,8 +10,10 @@ const ROOT = new URL('..', import.meta.url).pathname;
 
 /* load the engine + hand-written bank so we can dedupe against it */
 const ctx = {}; vm.createContext(ctx);
-vm.runInContext(fs.readFileSync(ROOT + 'engine.js', 'utf8') + '\n' + fs.readFileSync(ROOT + 'bank.js', 'utf8') + '\nthis.BANK_SRC=BANK_SRC;this.keyOf=keyOf;this.parseQuestion=parseQuestion;', ctx);
-const { keyOf } = ctx;
+vm.runInContext(fs.readFileSync(ROOT + 'engine.js', 'utf8') + '\n' + fs.readFileSync(ROOT + 'bank.js', 'utf8') + '\nthis.BANK_SRC=BANK_SRC;this.keyOf=keyOf;this.parseQuestion=parseQuestion;this.pluralVariants=pluralVariants;', ctx);
+const { keyOf, pluralVariants } = ctx;
+/* a key counts as taken if it, or any singular form of it, is taken (Potatoes = Potato) */
+const taken = (used, k) => used.has(k) || used.has(sing(k)) || pluralVariants(k).some(v => used.has(v));
 const sing = (k) => (k.length > 4 && /(ch|sh|x|ss)es$/.test(k) ? k.slice(0, -2) : k.length > 4 && k.endsWith('s') && !k.endsWith('ss') ? k.slice(0, -1) : k);
 
 const clean = (s) => String(s).replace(/[,/]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -32,10 +34,25 @@ function bucketise(used, items) {
   const out = { C: [], H: [], O: [], R: [], F: [], X: [] };
   for (const [name, tier] of items) {
     const n = clean(name); const k = keyOf(n); const kb = keyOf(n.replace(/\s*\([^)]*\)\s*/g, ' ').trim());
-    if (!n || !k || k.length < 2 || used.has(k) || used.has(sing(k)) || (kb && kb !== k && (used.has(kb) || used.has(sing(kb))))) continue;
+    if (!n || !k || k.length < 2 || taken(used, k) || (kb && kb !== k && taken(used, kb))) continue;
     used.add(k); used.add(sing(k)); if (kb) { used.add(kb); used.add(sing(kb)); }
     out[tier].push(n);
   }
+  return Object.entries(out).filter(([, v]) => v.length).map(([t, v]) => `${t}: ${v.join(', ')}`).join('\n');
+}
+
+/* Ranked data (most familiar first): ~half Open sea, ~30% Deep water, the rest Abyss,
+   and only the most obscure ~3% Kraken (when the ranking really measures obscurity). */
+function bucketRanked(used, names, allowX) {
+  const fresh = [];
+  for (const name of names) {
+    const n = clean(name); const k = keyOf(n); const kb = keyOf(n.replace(/\s*\([^)]*\)\s*/g, ' ').trim());
+    if (!n || !k || k.length < 2 || taken(used, k) || (kb && kb !== k && taken(used, kb))) continue;
+    used.add(k); used.add(sing(k)); if (kb) { used.add(kb); used.add(sing(kb)); }
+    fresh.push(n);
+  }
+  const N = fresh.length; const out = { O: [], R: [], F: [], X: [] };
+  fresh.forEach((n, i) => { const f = i / N; out[f < 0.5 ? 'O' : f < 0.8 ? 'R' : (!allowX || f < 0.97) ? 'F' : 'X'].push(n); });
   return Object.entries(out).filter(([, v]) => v.length).map(([t, v]) => `${t}: ${v.join(', ')}`).join('\n');
 }
 
@@ -55,8 +72,9 @@ const CMU = require('cmu-pronouncing-dictionary').dictionary;
 const rhymePart = (pron, w) => { const ph = pron.split(' '); let i = -1; for (let j = ph.length - 1; j >= 0; j--) { if (!/[12]$/.test(ph[j])) continue; if (ph[j] === 'IY2' && j === ph.length - 1 && /(y|ie|ey|phe|ope|ole)$/.test(w) && ph.some((p, x) => x < j && /1$/.test(p))) continue; i = j; break; } if (i < 0) return null; return ph.slice(i).map(p => p.replace(/\d/, '')).join(' '); };
 const RHYME = new Map();
 for (const [k, pron] of Object.entries(CMU)) { const w = k.replace(/\(\d+\)$/, ''); if (!LEVEL.has(w)) continue; const r = rhymePart(pron, w); if (!r) continue; if (!RHYME.has(r)) RHYME.set(r, new Set()); RHYME.get(r).add(w); }
-const rhymesOf = (part, self) => [...(RHYME.get(part) || [])].filter(w => w !== self).sort((a, b) => LEVEL.get(a) - LEVEL.get(b) || a.localeCompare(b));
-const words = (pred) => [...LEVEL.keys()].filter(pred).sort((a, b) => LEVEL.get(a) - LEVEL.get(b) || a.localeCompare(b));
+const byFamiliar = (a, b) => LEVEL.get(a) - LEVEL.get(b) || a.length - b.length || a.localeCompare(b);
+const rhymesOf = (part, self) => [...(RHYME.get(part) || [])].filter(w => w !== self).sort(byFamiliar);
+const words = (pred) => [...LEVEL.keys()].filter(pred).sort(byFamiliar);
 
 const pokemon = require('pokemon').all('en');
 const dinos = require('dinosaurs').default || require('dinosaurs');
@@ -72,11 +90,11 @@ const add = (src, gen) => { src.a = src.a.trim() + '\n' + gen; OUT.push(src); };
 
 /* ───────── WORD GAMES ───────── */
 function rhymeQ(id, word, part, head, xName, fact, no) {
-  const src = { id, cat: 'words', q: `Name a word that rhymes with ${word.toUpperCase()}`, a: head, fact, no: `${cap(word)}: That's the word itself!; ${no || ''}`.replace(/;\s*$/, '') };
+  const src = { id, cat: 'words', exact: 1, q: `Name a word that rhymes with ${word.toUpperCase()}`, a: head, fact, no: `${cap(word)}: That's the word itself!; ${no || ''}`.replace(/;\s*$/, '') };
   const used = usedKeys(src.a, src.no);
   const list = rhymesOf(part, word);
   // the featured Kraken word is hand-checked; some aren't in the CMU dictionary
-  add(src, bucketise(used, list.map(w => [cap(w), wordTier(LEVEL.get(w))])));
+  add(src, bucketRanked(used, list.map(cap), true));
 }
 rhymeQ('rh_day', 'day', 'EY', `
 C: Play, Say, Way, May, Stay, Pay
@@ -96,9 +114,9 @@ H: Shampoo, Tattoo, Bamboo
 X: Kangaroo`, 'Kangaroo', 'It doesn\'t mean "I don\'t understand", as the myth goes. It comes from gangurru in the Guugu Yimithirr language.');
 
 function patternQ(id, q, head, pred, xName, fact, no) {
-  const src = { id, cat: 'words', q, a: head, fact, no };
+  const src = { id, cat: 'words', exact: 1, q, a: head, fact, no };
   const used = usedKeys(src.a, src.no);
-  add(src, bucketise(used, words(pred).map(w => [cap(w), wordTier(LEVEL.get(w))])));
+  add(src, bucketRanked(used, words(pred).map(cap), true));
   if (!src.a.toLowerCase().includes(xName.toLowerCase())) throw new Error('missing ' + xName);
 }
 patternQ('w_q', 'Name a word that starts with Q', `
@@ -123,8 +141,8 @@ X: Spinda`, fact: 'Every Spinda\'s spots are different. There are over four bill
     no: 'Digimon: Wrong franchise; Agumon: That\'s a Digimon; MissingNo/Missingno: A glitch, not a Pokémon; Ash/Ash Ketchum: He\'s a trainer; Misty: She\'s a trainer; Brock: He\'s a trainer; Professor Oak/Oak: He\'s a professor; Team Rocket: They\'re villains, not Pokémon' };
   const used = usedKeys(src.a, src.no);
   const seen = new Set();
-  const items = pokemon.map((n, i) => { const id = i + 1; let nm = n.replace(/[♀♂]/g, '').trim(); const k = keyOf(nm); if (seen.has(k)) return null; seen.add(k); return [nm, id <= 151 ? 'O' : id <= 649 ? 'R' : 'F']; }).filter(Boolean);
-  add(src, bucketise(used, items));
+  const names = pokemon.map(n => n.replace(/[♀♂]/g, '').trim()).filter(n => { const k = keyOf(n); if (seen.has(k)) return false; seen.add(k); return true; });
+  add(src, bucketRanked(used, names, false));
 }
 
 /* ───────── CITIES ───────── */
@@ -136,6 +154,7 @@ O: Mumbai/Bombay, Kolkata/Calcutta, Chennai/Madras, Bengaluru/Bangalore, Beijing
 R: St Davids/St David's, St Asaph, Vatican City, City of London
 X: Ushuaia`, fact: 'Usually called the southernmost city in the world, at the tip of Argentina\'s Tierra del Fuego.',
     no: 'Atlantis: Sunk, and fictional; Gotham/Gotham City: Fictional; Springfield: Which one? There are dozens — and it\'s fictional in The Simpsons; Narnia: Fictional; Hogwarts: A school, not a city; England: A country, not a city; Texas: A state, not a city; California: A state, not a city; Europe: A continent' };
+  { const wc = require('world-countries'); const cityKeys = new Set(cities.filter(c => c.population >= 10000).map(c => keyOf(c.name))); const extra = wc.filter(c => c.unMember).map(c => c.name.common).filter(n => !cityKeys.has(keyOf(n)) && !/^(Singapore|Monaco|Djibouti|Luxembourg|San Marino|Vatican City|Kuwait|Panama|Guatemala|Mexico)$/.test(n)).map(n => `${n.replace(/[,/;:]/g, ' ')}: That's a country — name a city in it`); src.no += '; ' + extra.join('; '); }
   const used = usedKeys(src.a, src.no);
   const best = new Map();
   for (const c of cities) {
@@ -144,7 +163,7 @@ X: Ushuaia`, fact: 'Usually called the southernmost city in the world, at the ti
     if (!best.has(k) || best.get(k).population < c.population) best.set(k, c);
   }
   const ranked = [...best.values()].sort((a, b) => b.population - a.population);
-  add(src, bucketise(used, ranked.map((c, i) => [c.name, i < 80 ? 'O' : i < 700 ? 'R' : 'F'])));
+  add(src, bucketRanked(used, ranked.map(c => c.name), false));
 }
 
 /* ───────── COMICS ───────── */
@@ -158,7 +177,7 @@ X: Squirrel Girl`, fact: 'Marvel\'s Unbeatable Squirrel Girl really is unbeatabl
   // Squirrel Girl appears twice above on purpose? keep the X only
   src.a = src.a.replace(', Squirrel Girl\nX:', '\nX:').replace(', Thanos, Hela', ', Hela');
   const used = usedKeys(src.a, src.no);
-  add(src, bucketise(used, [...heroes, ...villains].map(n => [n, 'F'])));
+  add(src, bucketise(used, [...heroes, ...villains].map(n => [n, 'R'])));
 }
 
 /* ───────── BIRDS ───────── */
@@ -172,7 +191,7 @@ X: Hoatzin`, fact: 'Its chicks have claws on their wings, so they can clamber ba
     no: 'Bat: A mammal, not a bird; Pterodactyl: A flying reptile; Butterfly: An insect; Bird: Name a kind!; Big Bird: Sesame Street doesn\'t count; Tweety: Name the species — he\'s a canary; Angry Birds: That\'s a game' };
   src.a = src.a.replace(', Puffin, Rook', ', Rook').replace(', Penguin, Emperor', ', Emperor').replace(', Spoonbill, Water rail', ', Water rail').replace(', Kiwi, Saker', ', Saker').replace(', Bearded tit/Bearded reedling, Firecrest', ', Bearded tit/Bearded reedling');
   const used = usedKeys(src.a, src.no);
-  add(src, bucketise(used, FD.animal.bird.map(n => [n, 'F'])));
+  add(src, bucketise(used, FD.animal.bird.map(n => [n, 'R'])));
 }
 
 /* ───────── MUSIC GENRES ───────── */
@@ -229,28 +248,61 @@ X: Peel/Peel P50`, fact: 'The Peel P50, built on the Isle of Man, is the smalles
 { const c = OUT.find(q => q.id === 'cars'); c.a = c.a.replace(', Daewoo, Ssangyong, Wolseley', ', Daewoo, Wolseley').replace(', Rochdale, Ginetta, DKW', ', Rochdale, DKW').replace(', Aurus, Dacia, Kaiser', ', Aurus, Kaiser').replace(', Ineos, Lotus Cars, Brabus', ', Ineos, Brabus').replace(', Elio, Aptera, Polestar, Ineos', ', Elio, Aptera, Ineos').replace(', Premier, Force Motors, Kia Motors, Sinclair', ', Premier, Force Motors, Sinclair'); }
 { const c = OUT.find(q => q.id === 'cars'); const used = usedKeys(c.a, c.no); const g = bucketise(used, FD.vehicle.manufacturer.map(n => [n, 'R'])); if (g) c.a += '\n' + g; }
 
-/* ───────── ASIA (hand-written, complete) ───────── */
-OUT.push({ id: 'asia', cat: 'geo', q: 'Name a country in Asia', a: `
-C: China, Japan, India, Thailand, South Korea/Korea/Republic of Korea, Vietnam/Viet Nam
-H: Bhutan, North Korea/DPRK, Mongolia
-O: Indonesia, Malaysia, Singapore, Philippines/The Philippines, Pakistan, Bangladesh, Sri Lanka, Nepal, Afghanistan, Iran, Iraq, Saudi Arabia, Israel, Turkey/Türkiye, United Arab Emirates/UAE/Emirates, Qatar, Kazakhstan, Cambodia, Laos, Myanmar/Burma, Syria, Jordan, Lebanon, Kuwait, Oman, Yemen, Maldives, Taiwan
-R: Uzbekistan, Kyrgyzstan, Tajikistan, Turkmenistan, Bahrain, Timor-Leste/East Timor, Palestine/State of Palestine, Russia, Georgia, Armenia, Azerbaijan, Cyprus
-X: Brunei/Brunei Darussalam`, fact: 'Its sultan lives in the world\'s largest residential palace, with 1,788 rooms.',
-  no: 'Hong Kong: A special region of China, not a country; Macau/Macao: A special region of China; Tibet: An autonomous region of China; Egypt: Mostly in Africa — only Sinai is in Asia; Australia: Its own continent; Dubai: A city in the UAE; Bali: An island in Indonesia; Siam: That\'s Thailand\'s old name; Persia: That\'s Iran\'s old name; Ceylon: That\'s Sri Lanka\'s old name; Asia: Name a country!' });
+/* ───────── CAPITAL CITIES (every country's capital, ranked by city population) ───────── */
+{
+  const wc = require('world-countries').filter(c => c.unMember || ['Vatican City', 'Palestine', 'Kosovo', 'Taiwan'].includes(c.name.common));
+  const pop = new Map(); for (const c of cities) { const k = keyOf(c.name) + ':' + c.country; if (!pop.has(k) || pop.get(k) < c.population) pop.set(k, c.population); }
+  const ALIAS = { 'Washington D.C.': 'Washington DC/Washington/DC/Washington D.C.', 'Ulan Bator': 'Ulaanbaatar/Ulan Bator', 'Saint John\'s': 'St John\'s/Saint John\'s', 'St. George\'s': 'St George\'s', 'Luxembourg': 'Luxembourg City/Luxembourg', 'City of San Marino': 'San Marino/City of San Marino', 'South Tarawa': 'South Tarawa/Tarawa', 'Brasília': 'Brasília/Brasilia', 'Bogotá': 'Bogotá/Bogota', 'Chișinău': 'Chișinău/Chisinau', 'Kyiv': 'Kyiv/Kiev', 'Beijing': 'Beijing/Peking', 'New Delhi': 'New Delhi/Delhi', 'Reykjavik': 'Reykjavik/Reykjavík', 'Sana\'a': 'Sana\'a/Sanaa', 'Yaoundé': 'Yaoundé/Yaounde', 'Asunción': 'Asunción/Asuncion', 'Lomé': 'Lomé/Lome', 'Malé': 'Malé/Male', 'San José': 'San José/San Jose', 'Naypyidaw': 'Naypyidaw/Nay Pyi Taw', 'N\'Djamena': 'N\'Djamena/Ndjamena', 'Nuku\'alofa': 'Nuku\'alofa/Nukualofa', 'Port of Spain': 'Port of Spain/Port-of-Spain', 'Astana': 'Astana/Nur-Sultan' };
+  const C = ['London', 'Paris', 'Rome', 'Tokyo', 'Berlin', 'Madrid'], H = ['Canberra', 'Ottawa', 'Brasília'];
+  const FAMOUS = ['Washington D.C.', 'Wellington', 'Bern', 'Amsterdam', 'Brussels', 'Vienna', 'Dublin', 'Lisbon', 'Athens', 'Oslo', 'Stockholm', 'Copenhagen', 'Helsinki', 'Warsaw', 'Prague', 'Budapest', 'Moscow', 'Kyiv', 'Ankara', 'Cairo', 'Nairobi', 'Pretoria', 'Cape Town', 'New Delhi', 'Beijing', 'Seoul', 'Bangkok', 'Hanoi', 'Manila', 'Jakarta', 'Kuala Lumpur', 'Singapore', 'Buenos Aires', 'Santiago', 'Lima', 'Bogotá', 'Mexico City', 'Havana', 'Kingston', 'Reykjavik', 'Jerusalem', 'Tehran', 'Baghdad', 'Kabul', 'Islamabad', 'Riyadh', 'Abu Dhabi', 'Doha', 'Monaco', 'Vatican City', 'Luxembourg', 'Valletta', 'Nicosia', 'Taipei', 'Pyongyang', 'Kathmandu', 'Damascus', 'Beirut', 'Rabat', 'Tunis', 'Algiers', 'Accra', 'Abuja', 'Addis Ababa', 'Caracas', 'Montevideo', 'Quito', 'Belgrade', 'Bucharest', 'Sofia', 'Zagreb', 'Tallinn', 'Riga', 'Vilnius', 'Minsk', 'Tbilisi', 'Yerevan', 'Baku', 'Astana', 'Ulan Bator', 'Dhaka', 'Colombo', 'Canberra'];
+  const rows = [];
+  for (const c of wc) for (const cap of c.capital || []) rows.push({ name: cap, pop: pop.get(keyOf(cap) + ':' + c.cca2) || 0 });
+  const used = new Set();
+  const head = { C: [], H: [], X: ['Ngerulmud'] };
+  for (const r of rows) { if (C.includes(r.name)) head.C.push(r.name); else if (H.includes(r.name)) head.H.push(ALIAS[r.name] || r.name); }
+  const rest = rows.filter(r => !C.includes(r.name) && !H.includes(r.name) && r.name !== 'Ngerulmud').sort((a, b) => (FAMOUS.includes(b.name) - FAMOUS.includes(a.name)) || b.pop - a.pop);
+  const src = { id: 'capital', cat: 'geo', q: 'Name a capital city', a: `C: ${C.join(', ')}\nH: ${head.H.join(', ')}\nX: Ngerulmud\nO: Edinburgh, Cardiff, Belfast`,
+    fact: 'Palau\'s capital has only a few hundred residents: the least populated national capital in the world.',
+    no: 'Sydney: Australia\'s capital is Canberra; Melbourne: Australia\'s capital is Canberra; Rio de Janeiro/Rio: Brazil\'s capital moved to Brasília in 1960; Istanbul: Turkey\'s capital is Ankara; Lagos: Nigeria\'s capital moved to Abuja in 1991; Toronto: Canada\'s capital is Ottawa; New York/New York City/NYC: The US capital is Washington, D.C.; Zurich/Zürich: Switzerland\'s capital is Bern; Geneva: Switzerland\'s capital is Bern; Auckland: New Zealand\'s capital is Wellington; Mumbai/Bombay: India\'s capital is New Delhi; Dubai: The UAE\'s capital is Abu Dhabi; Almaty: Kazakhstan\'s capital moved to Astana in 1997; Karachi: Pakistan\'s capital is Islamabad; Yangon/Rangoon: Myanmar\'s capital moved to Naypyidaw in 2006; Dar es Salaam: Tanzania\'s official capital is Dodoma; Casablanca: Morocco\'s capital is Rabat; Johannesburg: South Africa\'s capitals are Pretoria, Cape Town and Bloemfontein; Barcelona: Not a national capital; Milan: Not a capital; Munich: Not a capital; Saint Petersburg/St Petersburg: Russia\'s capital moved to Moscow in 1918; Ho Chi Minh City/Saigon: Vietnam\'s capital is Hanoi; Shanghai: China\'s capital is Beijing; Bonn: Germany\'s capital has been Berlin since reunification; The Hague: The seat of government — Amsterdam is the capital; Abidjan: Ivory Coast\'s capital is Yamoussoukro; Tel Aviv: Israel names Jerusalem as its capital, though most embassies are in Tel Aviv; Los Angeles/LA: Not a capital; Chicago: Not a capital; Manchester: Not a capital; Glasgow: Scotland\'s capital is Edinburgh' };
+  const u = usedKeys(src.a, src.no);
+  const extra = 'R: La Paz, Putrajaya, Sri Jayawardenepura Kotte/Kotte, Mbabane, Cotonou';
+  src.a += '\n' + extra; for (const k of usedKeys(extra, '')) u.add(k);
+  add(src, bucketRanked(u, rest.map(r => ALIAS[r.name] ? ALIAS[r.name].split('/')[0] : r.name), false));
+  // put the aliases back on the generated names
+  src.a = src.a.split('\n').map(line => line.replace(/^([ORF]):\s*(.*)$/, (m, t, items) => `${t}: ${items.split(', ').map(n => { const a = Object.values(ALIAS).find(v => v.split('/')[0] === n); return a || n; }).join(', ')}`)).join('\n');
+}
+
+/* ───────── ANY COUNTRY (all 193 UN members + Vatican, Palestine, Kosovo, Taiwan) ───────── */
+{
+  const wc = require('world-countries').filter(c => c.unMember || ['Vatican City', 'Palestine', 'Kosovo', 'Taiwan'].includes(c.name.common));
+  const ALIAS = { 'United States': 'United States/USA/US/America/United States of America', 'United Kingdom': 'United Kingdom/UK/Britain/Great Britain', 'Vatican City': 'Vatican City/Vatican/Holy See', 'Czechia': 'Czechia/Czech Republic', 'DR Congo': 'DR Congo/Democratic Republic of the Congo/DRC/Congo-Kinshasa', 'Republic of the Congo': 'Republic of the Congo/Congo-Brazzaville', 'Ivory Coast': "Ivory Coast/Côte d'Ivoire/Cote d Ivoire", 'Myanmar': 'Myanmar/Burma', 'Eswatini': 'Eswatini/Swaziland', 'Timor-Leste': 'Timor-Leste/East Timor', 'Türkiye': 'Turkey/Türkiye', 'Cape Verde': 'Cape Verde/Cabo Verde', 'Netherlands': 'Netherlands/Holland', 'North Macedonia': 'North Macedonia/Macedonia', 'South Korea': 'South Korea/Korea', 'North Korea': 'North Korea/DPRK', 'United Arab Emirates': 'United Arab Emirates/UAE/Emirates', 'Bosnia and Herzegovina': 'Bosnia and Herzegovina/Bosnia', 'Micronesia': 'Micronesia/Federated States of Micronesia', 'Gambia': 'Gambia/The Gambia', 'Bahamas': 'Bahamas/The Bahamas', 'Philippines': 'Philippines/The Philippines', 'São Tomé and Príncipe': 'São Tomé and Príncipe/Sao Tome and Principe/Sao Tome', 'Palestine': 'Palestine/State of Palestine', 'Trinidad and Tobago': 'Trinidad and Tobago/Trinidad', 'Antigua and Barbuda': 'Antigua and Barbuda/Antigua', 'Saint Kitts and Nevis': 'Saint Kitts and Nevis/St Kitts and Nevis/St Kitts', 'Saint Lucia': 'Saint Lucia/St Lucia', 'Saint Vincent and the Grenadines': 'Saint Vincent and the Grenadines/St Vincent' };
+  const C = ['United States', 'United Kingdom', 'France', 'China', 'Japan', 'Germany'];
+  const H = ['Vatican City', 'Liechtenstein', 'Kazakhstan'];
+  const O = ['Italy', 'Spain', 'Canada', 'Australia', 'Brazil', 'Mexico', 'India', 'Russia', 'Ireland', 'Portugal', 'Netherlands', 'Belgium', 'Switzerland', 'Austria', 'Sweden', 'Norway', 'Denmark', 'Finland', 'Iceland', 'Poland', 'Greece', 'Türkiye', 'Egypt', 'South Africa', 'Nigeria', 'Kenya', 'Morocco', 'Argentina', 'Chile', 'Peru', 'Colombia', 'Venezuela', 'Cuba', 'Jamaica', 'New Zealand', 'South Korea', 'North Korea', 'Thailand', 'Vietnam', 'Indonesia', 'Philippines', 'Malaysia', 'Singapore', 'Pakistan', 'Bangladesh', 'Sri Lanka', 'Nepal', 'Afghanistan', 'Iran', 'Iraq', 'Israel', 'Saudi Arabia', 'United Arab Emirates', 'Qatar', 'Ukraine', 'Czechia', 'Hungary', 'Romania', 'Bulgaria', 'Croatia', 'Serbia', 'Ethiopia', 'Ghana', 'Algeria', 'Tunisia', 'Libya', 'Sudan', 'Somalia', 'Uganda', 'Tanzania', 'Zimbabwe', 'Madagascar', 'Mongolia', 'Bolivia', 'Ecuador', 'Uruguay', 'Paraguay', 'Haiti', 'Dominican Republic', 'Monaco', 'Luxembourg', 'Malta', 'Cyprus', 'Taiwan', 'Jordan', 'Lebanon', 'Syria', 'Kuwait', 'Fiji', 'Bahamas', 'Barbados', 'Costa Rica', 'Panama', 'Maldives', 'Bhutan', 'Cambodia', 'Laos', 'Myanmar'];
+  const F = ['Nauru', 'Palau', 'Kiribati', 'Marshall Islands', 'Micronesia', 'Saint Vincent and the Grenadines', 'Saint Kitts and Nevis', 'Comoros', 'São Tomé and Príncipe', 'Vanuatu', 'Solomon Islands', 'Equatorial Guinea', 'Djibouti', 'Eritrea'];
+  const tierOf = (n) => (C.includes(n) ? 'C' : H.includes(n) ? 'H' : O.includes(n) ? 'O' : F.includes(n) ? 'F' : n === 'Tuvalu' ? 'X' : 'R');
+  const lines = { C: [], H: [], O: [], R: [], F: [], X: [] };
+  for (const c of wc) { const n = c.name.common; lines[tierOf(n)].push(ALIAS[n] || n); }
+  lines.O.push('England', 'Scotland', 'Wales', 'Northern Ireland');
+  for (const t of ['C', 'H', 'O', 'F']) { const want = { C, H, O, F }[t]; lines[t].sort((a, b) => want.indexOf(a.split('/')[0] === 'Turkey' ? 'Türkiye' : a.split('/')[0]) - want.indexOf(b.split('/')[0] === 'Turkey' ? 'Türkiye' : b.split('/')[0])); }
+  OUT.push({ id: 'country', cat: 'geo', q: 'Name a country', a: Object.entries(lines).filter(([, v]) => v.length).map(([t, v]) => `${t}: ${v.join(', ')}`).join('\n'),
+    fact: 'Its .tv internet domain brings in a big slice of the country\'s income.',
+    no: 'Puerto Rico: A US territory; Greenland: Part of the Kingdom of Denmark; Hong Kong: Part of China; Macau/Macao: Part of China; Tibet: Part of China; Western Sahara: A disputed territory; Somaliland: Self-declared, not recognised; Gibraltar: A British overseas territory; Bermuda: A British overseas territory; Guam: A US territory; Hawaii: A US state; Texas: A US state; Antarctica: A continent; Africa: A continent; Europe: A continent; Asia: A continent; Catalonia: Part of Spain; Siam: Thailand\'s old name; Persia: Iran\'s old name; Ceylon: Sri Lanka\'s old name; Zaire: The old name for DR Congo; Rhodesia: The old name for Zimbabwe; Yugoslavia: No longer exists; USSR/Soviet Union: No longer exists; Czechoslovakia: No longer exists' });
+}
 
 /* ───────── EXTEND existing questions with dataset answers ───────── */
 const src = (id) => ctx.BANK_SRC.find(q => q.id === id);
 function extend(id, items) { const s = src(id); const used = usedKeys(s.a, s.no); const g = bucketise(used, items); if (g) EXT[id] = g; }
-extend('dog', FD.animal.dog.map(n => [n, 'F']));
-extend('dino', dinos.map(n => [cap(n), 'F']));
-extend('proglang', linguist.filter(l => l.type === 'programming').map(l => [l.name, 'F']));
+extend('dog', FD.animal.dog.map(n => [n, 'R']));
+extend('dino', dinos.map(n => [cap(n), 'R']));
+extend('proglang', linguist.filter(l => l.type === 'programming').map(l => [l.name, 'R']));
 extend('typeface', gfonts.map(f => [f.family, 'R']));
 extend('element', FD.science.chemical_element.map(e => [e.name, 'R']));
 
 /* ───────── write ───────── */
 const esc = (s) => s.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
 let js = '/* GENERATED by tools/build-bank.mjs — do not edit by hand. Big answer lists so almost any real answer counts. */\n';
-js += 'BANK_SRC.push(\n' + OUT.map(q => `{id:${JSON.stringify(q.id)}, cat:${JSON.stringify(q.cat)}, q:${JSON.stringify(q.q)}, a:\`${esc(q.a.trim())}\`,\nfact:${JSON.stringify(q.fact)},\nno:${JSON.stringify(q.no || '')}}`).join(',\n') + '\n);\n';
+js += 'BANK_SRC.push(\n' + OUT.map(q => `{id:${JSON.stringify(q.id)}, cat:${JSON.stringify(q.cat)},${q.exact ? ' exact:1,' : ''} q:${JSON.stringify(q.q)}, a:\`${esc(q.a.trim())}\`,\nfact:${JSON.stringify(q.fact)},\nno:${JSON.stringify(q.no || '')}}`).join(',\n') + '\n);\n';
 js += 'const BANK_EXT = ' + JSON.stringify(EXT) + ';\nfor (const s of BANK_SRC) if (BANK_EXT[s.id]) s.a += "\\n" + BANK_EXT[s.id];\n';
 fs.writeFileSync(ROOT + 'bank-gen.js', js);
 

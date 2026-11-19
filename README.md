@@ -16,17 +16,23 @@ No codes. The home screen lists four public lobbies (Lobby 1–4) with live play
 
 ### Scoring
 - Tiers: Shallows 100 m · Fool's gold 150 m · Open sea 300 m · Deep water 600 m · The abyss 850 m · Kraken 1,000 m.
-- Shallows is only the handful of answers everyone says first. Almost everything else lands deep, so thinking past the obvious pays.
-- **Same answer as someone else: you split the depth** (2 people = half each).
-- **Deepest single dive of each prompt: +100 m** (not in Team; ties get nothing).
-- The last prompt counts double.
+- Shallows is only the handful of answers everyone says first. Rarer answers sink you deeper; Kraken is reserved for the genuinely obscure.
+- **Versus and Blitz:** nobody else gave your answer = +50 m; someone else did too = −50 m. Base rarity still matters most.
+- **Team:** depths add up, but matching a teammate sinks you both (0 m). Aliases count as the same answer (NYC = New York).
+- The last prompt counts double. Solo is just the base tiers.
 - Pace: once everyone else has answered, the last diver gets 15 s. After each reveal the game descends by itself after about 10 s (the host can tap Descend sooner).
 
 ## Answers
-`bank.js` holds 47 hand-written prompts. `bank-gen.js` is **generated** and adds 17 more prompts plus big extensions, about 45,000 accepted answers in total, so almost any real answer counts:
-- word games (rhymes, Q-words, -ology, double Z) tiered by word frequency (SCOWL), rhymes from the CMU dictionary, profanity filtered
-- cities (30k, tiered by population), any Pokémon (by generation), comic heroes and villains, birds, music genres, fruit, veg, tech companies, car brands, countries in Asia
-- extra dog breeds, dinosaurs, programming languages and Google Fonts typefaces added to the existing prompts
+58 prompts and about 49,000 accepted answers. `bank.js` is hand-written (40 prompts). `bank-gen.js` is **generated** by `tools/build-bank.mjs` from open datasets and adds 18 prompts plus extensions:
+- word games (rhymes, Q-words, -ology, double Z), ranked by word frequency (SCOWL), rhymes from the CMU dictionary, profanity filtered, exact spelling only
+- cities (about 30,000, ranked by population), capitals, every country, any Pokémon, comic heroes and villains, birds, music genres, fruit, veg, tech companies, car brands
+- extra dog breeds, dinosaurs, programming languages and Google Fonts added to hand-written prompts
+
+Ranked data is split about half Open sea, 30% Deep water, the rest Abyss; Kraken is hand-picked (plus the rarest ~3% of words in the word games). Unranked extras (an obscure dinosaur, a little-known font) go to Deep water.
+
+Matching forgives capitals, accents, punctuation, plurals (strawberries, tomatoes), common aliases and small typos. In very big lists only famous answers get full typo tolerance, typos must keep the first letter, and word games need the exact word.
+
+Questions are parsed the first time they are used and pre-parsed in idle time, so the big lists don't slow down loading.
 
 Rebuild after editing `tools/build-bank.mjs`:
 ```

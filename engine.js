@@ -27,6 +27,17 @@ function normText(s) {
     .replace(/\bmount\b/g, 'mt');
 }
 function keyOf(s) { return normText(s).replace(/[ *]/g, ''); }
+/* plural forms to try when an exact match fails: strawberries→strawberry, tomatoes→tomato, leaves→leaf/leafe, cats→cat */
+function pluralVariants(k) {
+  const v = [];
+  if (k.length > 4) {
+    if (k.endsWith('ies')) v.push(k.slice(0, -3) + 'y');
+    if (k.endsWith('ves')) v.push(k.slice(0, -3) + 'f', k.slice(0, -3) + 'fe');
+    if (k.endsWith('es')) v.push(k.slice(0, -2));
+    if (k.endsWith('s') && !k.endsWith('ss')) v.push(k.slice(0, -1));
+  }
+  return v;
+}
 function singular(k) {
   if (k.length > 4 && k.endsWith('es') && /(ch|sh|x|ss)es$/.test(k)) return k.slice(0, -2);
   if (k.length > 4 && k.endsWith('s') && !k.endsWith('ss')) return k.slice(0, -1);
@@ -34,7 +45,7 @@ function singular(k) {
 }
 
 function parseQuestion(src) {
-  const q = { id: src.id, cat: src.cat, prompt: src.q, fact: src.fact || '', answers: [], idx: new Map(), loose: new Map(), sur: new Map(), no: new Map(), counts: {} };
+  const q = { id: src.id, cat: src.cat, exact: !!src.exact, prompt: src.q, fact: src.fact || '', answers: [], idx: new Map(), loose: new Map(), sur: new Map(), no: new Map(), counts: {} };
   TORDER.forEach(t => (q.counts[t] = 0));
   const addIdx = (map, k, v) => { if (!k) return; if (!map.has(k)) map.set(k, new Set()); map.get(k).add(v); };
   for (const line of src.a.split('\n')) {
@@ -101,7 +112,7 @@ function dlDist(a, b, max) {
   }
   return prev[bl];
 }
-function fuzzBudget(len) { return len < 5 ? 0 : len < 8 ? 1 : len < 12 ? 2 : 3; }
+function fuzzBudget(len) { return len < 5 ? 0 : len < 9 ? 1 : len < 13 ? 2 : 3; }
 
 /* Returns {ok:true,id,tier,name,fuzzy} | {ok:false, kind:'empty'|'decoy'|'ambiguous'|'unknown', msg} */
 function matchAnswer(q, input) {
@@ -112,11 +123,12 @@ function matchAnswer(q, input) {
     return { ok: false, kind: 'ambiguous', msg: 'More than one answer fits that. Be more specific.' };
   };
   if (q.idx.has(k)) return hit(q.idx.get(k));
+  for (const pv of pluralVariants(k)) if (q.idx.has(pv)) return hit(q.idx.get(pv));
   const s = singular(k);
-  if (q.idx.has(s)) return hit(q.idx.get(s));
   if (q.loose.has(k)) return hit(q.loose.get(k));
   if (q.loose.has(s)) return hit(q.loose.get(s));
   if (q.no.has(k)) return { ok: false, kind: 'decoy', msg: q.no.get(k) };
+  for (const pv of pluralVariants(k)) if (q.no.has(pv)) return { ok: false, kind: 'decoy', msg: q.no.get(pv) };
   if (q.no.has(s)) return { ok: false, kind: 'decoy', msg: q.no.get(s) };
   const words = normText(input).split(' ');
   if (q.sur.size && words.length === 1 && q.sur.has(k)) {
@@ -124,22 +136,25 @@ function matchAnswer(q, input) {
     if (set.size === 1) return hit(set);
     return { ok: false, kind: 'ambiguous', msg: 'More than one answer has that name. Add a first name.' };
   }
-  const budget = fuzzBudget(k.length);
+  const budget = q.exact ? 0 : fuzzBudget(k.length);
   if (budget > 0) {
     const digits = (x) => x.replace(/[^0-9]/g, '');
     const kd = digits(k);
     let best = 99, found = [];
+    const big = q.answers.length > 1000;
     const consider = (cand, val) => {
-      const b = fuzzBudget(Math.min(k.length, cand.length));
+      const L = Math.min(k.length, cand.length);
+      const famous = val.type !== 'a' || [...val.set].some(i => q.answers[i].tier === 'c' || q.answers[i].tier === 'h');
+      const b = big && !famous ? (L < 9 ? 0 : L < 13 ? 1 : 2) : fuzzBudget(L);
       if (!b) return;
-      if (cand[0] !== k[0] && b < 2) return;
+      if (cand[0] !== k[0]) return;
       if (digits(cand) !== kd) return;
       const d = dlDist(k, cand, Math.min(b, best));
       if (d > b) return;
       if (d < best) { best = d; found = [val]; } else if (d === best) found.push(val);
     };
     for (const cand of q.keys) consider(cand, { type: 'a', set: q.idx.get(cand) });
-    for (const [cand, set] of q.sur) if (set.size === 1) consider(cand, { type: 'a', set });
+    for (const [cand, set] of q.sur) if (set.size === 1 && cand.length >= 7) consider(cand, { type: 'a', set });
     for (const cand of q.noKeys) consider(cand, { type: 'n', msg: q.no.get(cand) });
     if (found.length) {
       const ids = new Set(); let decoy = null;
@@ -191,11 +206,17 @@ function pickQuestions(bank, cats, n, mode, avoid, seed) {
   if (fresh.length >= n) pool = fresh;
   pool = pool.slice();
   for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+  /* variety: never the same topic twice in a row, and at most ~2 per topic in a game */
+  const nCats = new Set(pool.map(q => q.cat)).size || 1;
+  const cap = Math.max(2, Math.ceil(n / nCats));
+  const used = {};
   const out = [];
   while (out.length < n && pool.length) {
-    let idx = pool.findIndex(q => !out.length || q.cat !== out[out.length - 1].cat);
+    const prev = out.length ? out[out.length - 1].cat : null;
+    let idx = pool.findIndex(q => q.cat !== prev && (used[q.cat] || 0) < cap);
+    if (idx < 0) idx = pool.findIndex(q => q.cat !== prev);
     if (idx < 0) idx = 0;
-    out.push(pool.splice(idx, 1)[0]);
+    const q = pool.splice(idx, 1)[0]; used[q.cat] = (used[q.cat] || 0) + 1; out.push(q);
   }
   return out.map(q => q.id);
 }

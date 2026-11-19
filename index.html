@@ -1728,6 +1728,18 @@ html body #playScr .dvr.stag{margin-top:92px}
   html body #playScr .dv-land:has(.lboard) .lt-q{font-size:1.05rem !important;line-height:1.2 !important}
 }
 @media (max-height:700px){html body #playScr .dv-land:has(.lboard) .lt-k{display:none !important}html body #playScr .dv-land:has(.lboard) .lt-t{font-size:2rem !important}}
+html body #playScr .dvr .tag.sunk.sunk.sunk.sunk.sunk{background:#fff !important;color:#ff1e3c !important;-webkit-text-stroke:0 !important;text-shadow:none !important;text-decoration:line-through;text-decoration-thickness:3px;border:3px solid #000 !important;box-shadow:3px 3px 0 #000 !important;animation:none !important;filter:none !important}
+html body #playScr .dvr .tag.rdy.rdy.rdy.rdy.rdy{-webkit-text-stroke:0 !important;color:#000 !important;background:#fff !important;text-shadow:none !important}
+
+/* outlines scale with text size so big titles and small labels look equally bold */
+html body .scr .dv-land .lt-t,html body .mprail .dv-land .lt-t,html body .scr .dv-land .lt-a,html body .mprail .dv-land .lt-a,html body .scr .dv-land .lt-p,html body .mprail .dv-land .lt-p,html body .scr .dv-land .lt-q,html body .mprail .dv-land .lt-q,html body .scr .dv-land .lwait,html body .mprail .dv-land .lwait,html body .scr .dv-land .lwait *,html body .mprail .dv-land .lwait *,html body .scr .dv-land .lt-k span,html body .mprail .dv-land .lt-k span,html body .scr .dv-hud .pod.mid .label,html body .mprail .dv-hud .pod.mid .label,html body .scr .dv-hud .pod.r .label,html body .mprail .dv-hud .pod.r .label,html body .scr .dv-hud .pod.mid b,html body .mprail .dv-hud .pod.mid b,html body .scr .dv-hud .pod.r b,html body .mprail .dv-hud .pod.r b,html body .scr .dvr .tag:not(.lk):not(.ty):not(.none):not(.rdy):not(.sunk),html body .mprail .dvr .tag:not(.lk):not(.ty):not(.none):not(.rdy):not(.sunk),html body .scr .dvr.me .nm,html body .mprail .dvr.me .nm,html body .scr .lob-name,html body .mprail .lob-name,html body .scr .lob-cd,html body .mprail .lob-cd,html body .scr .lob-state,html body .mprail .lob-state,html body .scr .fn-big,html body .mprail .fn-big,html body .scr .fn-sub,html body .mprail .fn-sub,html body .scr .hm-logo,html body .mprail .hm-logo,html body .scr .dv-mp,html body .mprail .dv-mp,html body .scr .room:not(.live) .ra,html body .mprail .room:not(.live) .ra,html body .scr .lb-start,html body .mprail .lb-start,html body .scr .dv-in .btn,html body .mprail .dv-in .btn,html body .scr #ansB,html body .mprail #ansB,html body .scr .dv-tl span,html body .mprail .dv-tl span,html body .scr #num,html body .mprail #num{-webkit-text-stroke-width:.15em !important;paint-order:stroke fill !important}
+html body #playScr .dv-land .lt-t{-webkit-text-stroke-width:.12em !important}
+html body #playScr .dv-land.sunk .lt-t,html body #playScr .dv-land.sunk .lt-t.sunk{color:#ff1e3c !important;-webkit-text-stroke:.12em #000 !important;paint-order:stroke fill !important;text-shadow:4px 4px 0 #000 !important}
+html body #playScr .dv-land .lt-k span{font-size:1.15rem !important;-webkit-text-stroke:0 !important}
+html body #playScr .dv-land .lt-k b{font-size:2.1rem !important;line-height:1.1 !important}
+@media (max-width:700px){html body #playScr .dv-land .lt-k b{font-size:1.75rem !important}}
+html body #playScr .dv-land:has(.lboard li:nth-child(4)) .lt-k b{font-size:1.6rem !important}
+html body #playScr .dv-land.sunk .lt-q,html body #playScr .dv-land.sunk .lt-a,html body #playScr .dv-land.sunk .lt-p,html body #playScr .dv-land.none .lt-q,html body #playScr .dv-land.none .lt-p{-webkit-text-stroke:0 !important;color:#000 !important;text-shadow:none !important}
 </style>
 </head>
 <body data-scr="boot">
@@ -1813,11 +1825,10 @@ html body #playScr .dvr.stag{margin-top:92px}
     <div class="ladder" id="howLadder"></div>
     <h3>With friends</h3>
     <ul>
-      <li>Same answer as someone else? You split the depth.</li>
-      <li>Deepest dive of each prompt gets +100 m.</li>
+      <li>Nobody else said your answer? +50 m. Someone did? −50 m.</li>
       <li>The last prompt counts double.</li>
       <li><b>Versus</b>: 10 prompts. Deepest diver wins.</li>
-      <li><b>Team</b>: 10 prompts. Your depths add up, so don’t copy each other.</li>
+      <li><b>Team</b>: 10 prompts. Your depths add up. Match a teammate and you both sink.</li>
       <li><b>Blitz</b>: 12 prompts, 20 seconds each.</li>
     </ul>
     <div class="row"><button class="btn red" type="button" id="howX">Got it</button></div>
