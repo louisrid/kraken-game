@@ -112,15 +112,15 @@ function dlDist(a, b, max) {
   }
   return prev[bl];
 }
-function fuzzBudget(len) { return len < 4 ? 0 : len < 7 ? 1 : len < 11 ? 2 : 3; }
+function fuzzBudget(len) { return len < 4 ? 0 : len < 6 ? 1 : len < 9 ? 2 : 3; }
 
 /* Returns {ok:true,id,tier,name,fuzzy} | {ok:false, kind:'empty'|'decoy'|'ambiguous'|'unknown', msg} */
 function matchAnswer(q, input) {
   const k = keyOf(input);
   if (!k) return { ok: false, kind: 'empty', msg: '' };
   const hit = (set, fuzzy) => {
-    if (set.size === 1) { const a = q.answers[[...set][0]]; return { ok: true, id: a.id, tier: a.tier, name: a.name, fuzzy: !!fuzzy }; }
-    return { ok: false, kind: 'ambiguous', msg: 'More than one answer fits that. Be more specific.' };
+    const a = [...set].map(i => q.answers[i]).sort((x, y) => TIERS[x.tier].i - TIERS[y.tier].i || x.id - y.id)[0];
+    return { ok: true, id: a.id, tier: a.tier, name: a.name, fuzzy: !!fuzzy };
   };
   if (q.idx.has(k)) return hit(q.idx.get(k));
   for (const pv of pluralVariants(k)) if (q.idx.has(pv)) return hit(q.idx.get(pv));
@@ -133,8 +133,15 @@ function matchAnswer(q, input) {
   const words = normText(input).split(' ');
   if (q.sur.size && words.length === 1 && q.sur.has(k)) {
     const set = q.sur.get(k);
-    if (set.size === 1) return hit(set);
-    return { ok: false, kind: 'ambiguous', msg: 'More than one answer has that name. Add a first name.' };
+    return hit(set);
+  }
+  /* any one word of an answer is enough ("grudge" for The Grudge, a first name for a person) */
+  if (!q.exact && k.length >= 4) {
+    if (!q.wd) { q.wd = new Map(); for (const a of q.answers) for (const w of normText(a.name).split(' ')) if (w.length >= 4) { if (!q.wd.has(w)) q.wd.set(w, new Set()); q.wd.get(w).add(a.id); } }
+    for (const w of [k, s, ...words.filter(w => w.length >= 4)]) if (q.wd.has(w)) return hit(q.wd.get(w), true);
+    /* the start of an answer ("strawb"), or an answer inside a longer phrase ("a red apple") */
+    if (k.length >= 5) { const pre = new Set(); for (const cand of q.keys) if (cand.startsWith(k)) q.idx.get(cand).forEach(i => pre.add(i)); if (pre.size) return hit(pre, true); }
+    for (const w of words) if (w.length >= 3 && q.idx.has(w)) return hit(q.idx.get(w), true);
   }
   /* word games: one slip allowed in longer words, and the first two letters must match */
   const budget = q.exact ? (k.length >= 5 ? 1 : 0) : fuzzBudget(k.length);
@@ -146,21 +153,21 @@ function matchAnswer(q, input) {
     const consider = (cand, val) => {
       const L = Math.min(k.length, cand.length);
       const famous = val.type !== 'a' || [...val.set].some(i => q.answers[i].tier === 'c' || q.answers[i].tier === 'h');
-      const b = q.exact ? (L >= 5 ? 1 : 0) : big && !famous ? (L < 8 ? 0 : L < 12 ? 1 : 2) : fuzzBudget(L);
+      const b = q.exact ? (L >= 5 ? 1 : 0) : big && !famous ? (L < 6 ? 0 : L < 10 ? 1 : 2) : fuzzBudget(L);
       if (!b) return;
-      if (cand[0] !== k[0]) return;
+      if (cand[0] !== k[0] && (q.exact || big || L < 6)) return;
       if (digits(cand) !== kd) return;
       const d = dlDist(k, cand, Math.min(b, best));
       if (d > b) return;
       if (d < best) { best = d; found = [val]; } else if (d === best) found.push(val);
     };
     for (const cand of q.keys) consider(cand, { type: 'a', set: q.idx.get(cand) });
-    for (const [cand, set] of q.sur) if (set.size === 1 && cand.length >= 7) consider(cand, { type: 'a', set });
+    for (const [cand, set] of q.sur) if (cand.length >= 6) consider(cand, { type: 'a', set });
     for (const cand of q.noKeys) consider(cand, { type: 'n', msg: q.no.get(cand) });
     if (found.length) {
       const ids = new Set(); let decoy = null;
       for (const f of found) { if (f.type === 'a') f.set.forEach(i => ids.add(i)); else decoy = f.msg; }
-      if (ids.size === 1 && !decoy) return hit(ids, true);
+      if (ids.size && !decoy) return hit(ids, true);
       if (!ids.size && decoy) return { ok: false, kind: 'decoy', msg: decoy };
     }
   }

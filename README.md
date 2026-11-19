@@ -30,7 +30,7 @@ No codes. The home screen lists four public lobbies (Lobby 1–4) with live play
 
 Ranked data is split about half Decent, 30% Rare, the rest Hyper rare; Kraken is hand-picked (plus the rarest ~3% of words in the word games). Unranked extras (an obscure dinosaur, a little-known font) go to Rare.
 
-Matching forgives capitals, accents, punctuation, plurals (strawberries, tomatoes), common aliases and small typos. In very big lists only famous answers get full typo tolerance, typos must keep the first letter, and word games need the exact word.
+Matching is generous: capitals, accents, punctuation, plurals, aliases and typos are forgiven; one word of an answer ("grudge"), its first five letters ("strawb") or the answer inside a phrase all count. If several answers fit, the best-known one is taken. Word games still need the real word (one typo allowed).
 
 **Profile:** best dive, average, number of dives and Krakens are kept per player. They are tied to a hashed form of your public IP (the IP itself is never stored), so devices on the same connection share them; they are mirrored on the public relays. Changing networks (mobile data, VPN) starts a separate profile.
 
