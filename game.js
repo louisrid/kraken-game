@@ -19,6 +19,7 @@ const ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
 const MAXP = 8, GRACE = 30000, OFF_AFTER = 7000, PING_MS = 2500, HOST_SILENT = 9000, GIVEUP = 45000;
 const INTRO = 0, STRIKES = 3, MAXSUBS = 24;
 const SECS = [0, 30, 60], ROUNDS = [5, 7, 10];
+const BONUS = 10; /* +100 m for the single deepest dive of a round */
 const M = (pts) => (pts * 10).toLocaleString('en-GB') + ' m';
 const secLbl = (n) => (n ? n + 's' : 'Off');
 const EMOS = ['🔥', '😂', '😱', '🐙'];
@@ -28,7 +29,7 @@ const CATINFO = {
   screen: ['Film & TV', 'Oscars, Bond, Ghibli'], music: ['Music', 'Beatles, MJ, Eurovision'],
   sport: ['Sport', 'Football, F1, tennis'], games: ['Gaming', 'Pokémon, Zelda, Minecraft'],
   sci: ['Science & nature', 'Elements, bones, dinosaurs'], words: ['Words & culture', 'Fonts, gods, board games'],
-  sea: ['High seas', 'Pirates, seas, sea creatures'],
+  sea: ['High seas', 'Pirates, seas, sea creatures'], brands: ['Brands', 'Tech, cars'],
 };
 const THEMES = [{ id: 'light', bg: '#ffffff', n: 'Foam' }, { id: 'grey', bg: '#e4e4e4', n: 'Fog' }, { id: 'deep', bg: '#0f2230', n: 'Deep sea' }, { id: 'abyss', bg: '#07090c', n: 'Abyss' }];
 
@@ -222,12 +223,17 @@ function resolveVs() {
   const multi = act.length > 1, mult = multi && H.round === H.qs.length - 1 ? 2 : 1;
   H.res = act.map(p => {
     const a = H.answers[p.id];
-    if (!a) return [p.id, -1, 0, 0];
-    const sunk = multi && cnt[a.aid] > 1 ? 1 : 0;
-    const pts = sunk ? 0 : TIERS[q.answers[a.aid].tier].pts * mult;
-    p.pts += pts;
-    return [p.id, a.aid, pts, sunk];
+    if (!a) return [p.id, -1, 0, 0, 0];
+    const share = multi && cnt[a.aid] > 1 ? cnt[a.aid] : 0;
+    const base = TIERS[q.answers[a.aid].tier].pts * mult;
+    return [p.id, a.aid, share ? Math.round(base / share) : base, share, 0];
   });
+  if (multi && !H.set.team) {
+    const top = Math.max(0, ...H.res.map(r => r[2]));
+    const at = H.res.filter(r => r[1] >= 0 && r[2] === top);
+    if (top > 0 && at.length === 1) { at[0][2] += BONUS; at[0][4] = 1; }
+  }
+  for (const r of H.res) { const p = act.find(x => x.id === r[0]); if (p) p.pts += r[2]; }
   H.hist.push({ q: q.id, res: H.res });
   H.phase = 'reveal'; H.revealEnds = H.solo ? Infinity : now() + 14000; H.dirty = true;
 }
@@ -809,13 +815,13 @@ function startSink(v) {
   for (const p of v.pl) {
     const r = res.find(x => x[0] === p.id); const gain = r ? r[2] : 0;
     DV.sink.to[p.id] = p.pts * 10; DV.sink.from[p.id] = (p.pts - gain) * 10;
-    const tr = r && r[1] >= 0 && !r[3] ? QMAP[v.q].answers[r[1]].tier : null;
+    const tr = r && r[1] >= 0 ? QMAP[v.q].answers[r[1]].tier : null;
     DV.sink.dur[p.id] = tr ? [2100, 2600, 3300, 4200, 5300, 6800][TIERS[tr].i] : 700;
   }
   DV.landShown = '';
   const mine = res.find(r => r[0] === ME.id); const q = QMAP[v.q];
   C.myTiers = C.myTiers || {};
-  if (mine) C.myTiers[v.r] = mine[1] < 0 ? 'none' : mine[3] ? 'sunk' : q.answers[mine[1]].tier;
+  if (mine) C.myTiers[v.r] = mine[1] < 0 ? 'none' : q.answers[mine[1]].tier;
 }
 function dispDepth(p) {
   const s = DV.sink, v = C.view;
@@ -852,7 +858,7 @@ function renderDivers(v) {
     if (v.ph === 'lobby') { if (p.rdy) { txt = 'ready'; cls = 'rdy'; } }
     else if (rv && v.res && q) {
       const r = v.res.find(z => z[0] === p.id);
-      if (r) { if (r[1] < 0) { txt = 'no answer'; cls = 'none'; } else { txt = q.answers[r[1]].name; cls = r[3] ? 'sunk' : TCLS[q.answers[r[1]].tier]; } }
+      if (r) { if (r[1] < 0) { txt = 'no answer'; cls = 'none'; } else { txt = q.answers[r[1]].name; cls = TCLS[q.answers[r[1]].tier]; } }
     } else if (v.ph === 'play' && v.set.mode === 'vs' && q) {
       if (p.id === ME.id && C.myLock && q.answers[C.myLock.aid]) { txt = q.answers[C.myLock.aid].name; cls = 'mine'; }
       else if (p.lk) { txt = 'locked in'; cls = 'lk'; }
@@ -867,14 +873,17 @@ function landHTML(v) {
   let t1 = '', cls = '', a = '', gain = '', quip = '';
   if (!mine) { t1 = 'Watching'; }
   else if (mine[1] < 0) { t1 = 'No dive'; cls = 'none'; }
-  else if (mine[3]) {
-    const others = res.filter(r => r[0] !== ME.id && r[1] === mine[1]).map(r => pinfo(r[0], v).nm);
-    t1 = 'Sunk'; cls = 'sunk'; a = q.answers[mine[1]].name; gain = '+0 m'; quip = `Same as ${others.join(' & ') || 'someone'}`;
-  } else {
+  else {
     const tr = q.answers[mine[1]].tier; t1 = TIERS[tr].name; cls = TCLS[tr]; a = q.answers[mine[1]].name;
-    gain = `+${M(mine[2])}${mine[2] > TIERS[tr].pts ? ' · doubled' : ''}`; quip = '';
+    gain = `+${M(mine[2])}`;
+    const others = res.filter(r => r[0] !== ME.id && r[1] === mine[1]).map(r => pinfo(r[0], v).nm);
+    const notes = [];
+    if (mine[3]) notes.push(`Shared with ${others.join(' & ')}: depth split ${mine[3]} ways`);
+    if (res.length > 1 && v.r === v.n - 1) notes.push('Last prompt: double depth');
+    if (mine[4]) notes.push('Deepest dive: +100 m');
+    quip = notes.join(' · ');
   }
-  const board = res.length > 1 ? `<ol class="lboard">${res.slice().sort((x, y) => (pinfo(y[0], v).pts - pinfo(x[0], v).pts)).map(r => { const pl = pinfo(r[0], v); return `<li class="${r[0] === ME.id ? 'me' : ''}">${avatar(pl.av)}<span class="n">${esc(pl.nm)}<small>${r[1] < 0 ? 'no answer' : esc(q.answers[r[1]].name)} · ${r[3] ? 'sunk' : '+' + M(r[2])}</small></span><em>${M(pl.pts)}</em></li>`; }).join('')}</ol>` : '';
+  const board = res.length > 1 ? `<ol class="lboard">${res.slice().sort((x, y) => (pinfo(y[0], v).pts - pinfo(x[0], v).pts)).map(r => { const pl = pinfo(r[0], v); return `<li class="${r[0] === ME.id ? 'me' : ''}">${avatar(pl.av)}<span class="n">${esc(pl.nm)}<small>${r[1] < 0 ? 'no answer' : esc(q.answers[r[1]].name)} · +${M(r[2])}${r[3] ? ' · shared' : ''}${r[4] ? ' · deepest' : ''}</small></span><em>${M(pl.pts)}</em></li>`; }).join('')}</ol>` : '';
   const X = q.answers.find(z => z.tier === 'x');
   const said = new Set(res.filter(r => r[1] >= 0).map(r => r[1]));
   const deep = shuffled(q.answers.filter(z => z.tier === 'f' && !said.has(z.id)), v.q + v.r).slice(0, 4).map(z => z.name);
@@ -893,14 +902,14 @@ function crewLandHTML(v) {
 }
 function showLand(v) {
   $('land').innerHTML = v.set.mode === 'crew' ? crewLandHTML(v) : landHTML(v);
-  { const mm = v.res && v.res.find(r => r[0] === ME.id); const q = QMAP[v.q]; $('land').className = 'dv-land ' + (v.set.mode === 'crew' ? (v.cr && v.cr.out === 'clear' ? 't2' : 'sunk') : !mm ? '' : mm[1] < 0 ? 'none' : mm[3] ? 'sunk' : TCLS[q.answers[mm[1]].tier]); }
+  { const mm = v.res && v.res.find(r => r[0] === ME.id); const q = QMAP[v.q]; $('land').className = 'dv-land ' + (v.set.mode === 'crew' ? (v.cr && v.cr.out === 'clear' ? 't2' : 'sunk') : !mm ? '' : mm[1] < 0 ? 'none' : TCLS[q.answers[mm[1]].tier]); }
   $('land').hidden = false; $('playScr').classList.add('landed');
   { const top = Math.round((DV.landY || innerHeight * 0.25) + (innerWidth < 700 ? 96 : 104)); $('land').style.top = top + 'px'; $('land').style.maxHeight = `calc(100% - ${top + 14}px)`;
     DV.landMax = null; const L = $('land'); L.style.maxHeight = 'none'; const h = L.offsetHeight; const hudB = (document.querySelector('#playScr .dv-hud') || { getBoundingClientRect: () => ({ bottom: 120 }) }).getBoundingClientRect().bottom;
     if (top + h > innerHeight - 12) { const nt = Math.max(hudB + 84, innerHeight - 12 - h); L.style.top = nt + 'px'; DV.landMax = nt - (top - (DV.landY || innerHeight * 0.25)); }
     L.style.maxHeight = `calc(100% - ${parseFloat(L.style.top) + 12}px)`; }
   const me = meIn(v); const mine = v.res && v.res.find(r => r[0] === ME.id);
-  if (mine && mine[3]) vib([60, 40, 120]); else if (me) vib(30);
+  if (mine && mine[4]) vib([30, 40, 30]); else if (me) vib(30);
   const b = $('land').querySelector('.desc'); if (b && !matchMedia('(pointer: coarse)').matches) setTimeout(() => b.focus({ preventScroll: true }), 50);
 }
 function renderDive(v) {
@@ -1123,7 +1132,7 @@ function scoresHTML(v, withAns) {
   return rows.map((p, i) => {
     const r = withAns && v.res ? v.res.find(x => x[0] === p.id) : null;
     let ans = '';
-    if (r) ans = r[1] < 0 ? 'No answer' : (q.answers[r[1]].name + (r[3] ? ' · sunk' : ''));
+    if (r) ans = r[1] < 0 ? 'No answer' : (q.answers[r[1]].name + (r[3] ? ' · shared' : ''));
     return `<li class="${i === 0 && p.pts > 0 ? 'lead' : ''} out" data-at="${withAns ? 900 + rows.length * 650 + i * 120 : i * 120}"><span class="rk">${i + 1}</span>${avatar(p.av)}<span class="nm"><b>${esc(p.nm)}${p.id === ME.id && !v.solo ? ' (you)' : ''}</b>${ans ? `<small>${esc(ans)}</small>` : ''}</span><span class="meta">${[r && r[2] ? '+' + M(r[2]) : '', p.tot && !v.solo ? `${M(p.tot + (v.ph === 'final' ? 0 : p.pts))} all-time` : ''].filter(Boolean).join(' · ')}</span><span class="pts">${M(p.pts)}</span></li>`;
   }).join('');
 }

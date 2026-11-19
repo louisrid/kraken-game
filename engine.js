@@ -10,7 +10,7 @@ const TIERS = {
 const TORDER = ['c', 'h', 'o', 'r', 'f', 'x'];
 const CATS = {
   geo: 'Geography', food: 'Food & drink', screen: 'Film & TV', music: 'Music',
-  sport: 'Sport', games: 'Gaming', sci: 'Science & nature', words: 'Words & culture', sea: 'High seas',
+  sport: 'Sport', games: 'Gaming', sci: 'Science & nature', words: 'Words & culture', sea: 'High seas', brands: 'Brands',
 };
 
 function normText(s) {

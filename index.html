@@ -1723,6 +1723,11 @@ html body #playScr .dvr.stag{margin-top:92px}
   html body #playScr #ansF:has(#num:not([hidden])) .ansFx .ph{font-size:1.3rem !important}
 }
 @media (max-width:700px){html body #playScr .dvr:not(.me) .nm{max-width:100px;font-size:1.1rem !important;padding-left:8px !important;padding-right:8px !important}}
+@media (max-width:700px){
+  html body #playScr .dv-land:has(.lboard) .lt-a,html body #playScr .dv-land:has(.lboard) .lt-p{display:none !important}
+  html body #playScr .dv-land:has(.lboard) .lt-q{font-size:1.05rem !important;line-height:1.2 !important}
+}
+@media (max-height:700px){html body #playScr .dv-land:has(.lboard) .lt-k{display:none !important}html body #playScr .dv-land:has(.lboard) .lt-t{font-size:2rem !important}}
 </style>
 </head>
 <body data-scr="boot">
@@ -1804,15 +1809,15 @@ html body #playScr .dvr.stag{margin-top:92px}
 <div class="modal" id="howM" hidden>
   <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="howT">
     <h2 id="howT">How to play</h2>
-    <p>7 prompts. One answer each. Rarer answers sink you deeper.</p>
+    <p>One answer per prompt. The rarer your answer, the deeper you sink.</p>
     <div class="ladder" id="howLadder"></div>
     <h3>With friends</h3>
     <ul>
-      <li>Everyone gets the same prompt.</li>
-      <li>Same answer as someone else? You both sink nowhere.</li>
-      <li>Deepest diver wins. The last prompt counts double.</li>
+      <li>Same answer as someone else? You split the depth.</li>
+      <li>Deepest dive of each prompt gets +100 m.</li>
+      <li>The last prompt counts double.</li>
       <li><b>Versus</b>: 10 prompts. Deepest diver wins.</li>
-      <li><b>Team</b>: everyone’s depth adds up. Don’t say the same thing as a teammate.</li>
+      <li><b>Team</b>: 10 prompts. Your depths add up, so don’t copy each other.</li>
       <li><b>Blitz</b>: 12 prompts, 20 seconds each.</li>
     </ul>
     <div class="row"><button class="btn red" type="button" id="howX">Got it</button></div>
@@ -1843,6 +1848,7 @@ html body #playScr .dvr.stag{margin-top:92px}
 
 <script src="mqtt.min.js"></script>
 <script src="bank.js"></script>
+<script src="bank-gen.js"></script>
 <script src="engine.js"></script>
 <script src="art.js"></script>
 <script src="net.js"></script>

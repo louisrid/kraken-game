@@ -1,0 +1,26 @@
+{
+  "name": "kraken-bank-tools",
+  "version": "1.0.0",
+  "description": "Builds bank-gen.js (big answer lists) from open datasets",
+  "scripts": {
+    "build": "node build-bank.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@faker-js/faker": "^10.6.0",
+    "all-the-cities": "^3.1.0",
+    "cmu-pronouncing-dictionary": "^3.0.0",
+    "dinosaurs": "^1.2.1",
+    "google-font-metadata": "^6.0.8",
+    "linguist-languages": "^9.5.0",
+    "naughty-words": "^1.2.0",
+    "pokemon": "^3.3.1",
+    "superheroes": "^4.0.0",
+    "supervillains": "^4.0.0",
+    "wordlist-english": "^1.2.1",
+    "world-countries": "^5.1.0"
+  },
+  "private": true
+}

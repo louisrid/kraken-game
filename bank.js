@@ -196,10 +196,10 @@ X: Stylophone`,
 fact:"A pocket synth played by touching a metal stylus to its keyboard. David Bowie used one on 'Space Oddity'.",
 no:"Voice: Technically... no; Microphone: Not an instrument; Amplifier/Amp: Not an instrument; Speaker: Not an instrument; Turntable/Turntables/Decks: The DJs will argue. We won't; Metronome: It keeps time; it doesn't play"},
 
-{id:"eurovision", cat:"music", q:"Name a country that won Eurovision before 2026", a:`
+{id:"eurovision", cat:"music", q:"Name a country that has won Eurovision", a:`
 C: Sweden, Ireland, United Kingdom/UK/Britain, Ukraine, Italy
 H: Finland, Yugoslavia
-O: Netherlands/Holland, France, Norway, Denmark, Germany, Israel, Spain, Austria, Greece, Russia, Portugal, Switzerland
+O: Netherlands/Holland, France, Norway, Denmark, Germany, Israel, Spain, Austria, Greece, Russia, Portugal, Switzerland, Bulgaria
 R: Estonia, Latvia, Turkey/Türkiye, Serbia, Azerbaijan, Belgium, Luxembourg
 X: Monaco`,
 fact:"Won in 1971 but had no suitable venue to host, so the 1972 contest was held in Edinburgh.",
@@ -216,7 +216,7 @@ fact:"His first solo US No.1 (1972): a tender love song to a pet rat, from a hor
 no:"Say Say Say: Paul McCartney's single, with Michael as guest; ABC: That's The Jackson 5; I Want You Back: That's The Jackson 5; I'll Be There: That's The Jackson 5; Blame It on the Boogie: That's The Jacksons; Can You Feel It: That's The Jacksons; Shake Your Body (Down to the Ground)/Shake Your Body: That's The Jacksons; State of Shock: That's The Jacksons (with Mick Jagger); We Are the World: A charity single by USA for Africa; Smooth Operator: That's Sade; Moonwalk: That's a dance move; Uptown Funk: Bruno Mars and Mark Ronson"},
 
 /* ───────── SPORT ───────── */
-{id:"plclubs", cat:"sport", q:"Name a club that played in the Premier League up to 2025–26", a:`
+{id:"plclubs", cat:"sport", q:"Name a club that has played in the Premier League", a:`
 C: Manchester United/Man United/Man Utd/Man U, Liverpool, Arsenal, Chelsea, Manchester City/Man City, Tottenham Hotspur/Tottenham/Spurs, Everton, Newcastle United/Newcastle
 H: Wimbledon/Wimbledon FC
 O: Aston Villa/Villa, West Ham United/West Ham, Leicester City/Leicester, Leeds United/Leeds, Southampton, Wolverhampton Wanderers/Wolves, Crystal Palace/Palace, Fulham, Brighton & Hove Albion/Brighton, Brentford, AFC Bournemouth/Bournemouth, Nottingham Forest/Forest/Nottm Forest, Burnley, Sunderland, Middlesbrough/Boro, Norwich City/Norwich, Watford, Stoke City/Stoke, Sheffield United/Sheff Utd, West Bromwich Albion/West Brom/WBA, Blackburn Rovers/Blackburn, Ipswich Town/Ipswich, Luton Town/Luton
@@ -224,37 +224,37 @@ R: Bolton Wanderers/Bolton, Wigan Athletic/Wigan, Swansea City/Swansea, Portsmou
 F: Barnsley, Blackpool, Bradford City/Bradford, Oldham Athletic/Oldham
 X: Swindon Town/Swindon`,
 fact:"Their only Premier League season (1993–94) ended with 100 goals conceded in 42 games.",
-no:"Millwall: Never in the Premier League up to 2025–26; Wrexham: Never in the Premier League up to 2025–26; Bristol City: Never in the Premier League; Preston/Preston North End: Never in the Premier League; Rotherham/Rotherham United: Never in the Premier League; Plymouth/Plymouth Argyle: Never in the Premier League; Notts County: Never in the Premier League; Bristol Rovers: Never in the Premier League; Celtic: Scottish — wrong league; Rangers: Scottish — wrong league; MK Dons/Milton Keynes Dons: Never in the Premier League (Wimbledon were, though)"},
+no:"Millwall: Never in the Premier League; Wrexham: Never in the Premier League (yet); Bristol City: Never in the Premier League; Preston/Preston North End: Never in the Premier League; Rotherham/Rotherham United: Never in the Premier League; Plymouth/Plymouth Argyle: Never in the Premier League; Notts County: Never in the Premier League; Bristol Rovers: Never in the Premier League; Celtic: Scottish — wrong league; Rangers: Scottish — wrong league; MK Dons/Milton Keynes Dons: Never in the Premier League (Wimbledon were, though)"},
 
 {id:"f1", cat:"sport", ppl:1, q:"Name a Formula 1 World Drivers' Champion", a:`
 C: Lewis Hamilton, Michael Schumacher, Ayrton Senna, Max Verstappen, Sebastian Vettel, Fernando Alonso
 H: James Hunt, Niki Lauda
-O: Alain Prost, Nigel Mansell, Jenson Button, Kimi Räikkönen/Kimi Raikkonen/Kimi, Damon Hill, Mika Häkkinen/Mika Hakkinen, Nico Rosberg, Jackie Stewart, Lando Norris, Juan Manuel Fangio/Fangio, Jim Clark, Jacques Villeneuve, Graham Hill
+O: Alain Prost, Nigel Mansell, Jenson Button, Kimi Räikkönen/Kimi Raikkonen/Kimi, Kimi Antonelli/Andrea Kimi Antonelli/Antonelli/Kimi, Damon Hill, Mika Häkkinen/Mika Hakkinen, Nico Rosberg, Jackie Stewart, Lando Norris, Juan Manuel Fangio/Fangio, Jim Clark, Jacques Villeneuve, Graham Hill
 R: Emerson Fittipaldi, Nelson Piquet, Mario Andretti, Jack Brabham, Keke Rosberg, Alberto Ascari, Jody Scheckter, John Surtees, Alan Jones, Phil Hill
 F: Denny Hulme, Mike Hawthorn, Giuseppe Farina/Nino Farina
 X: Jochen Rindt`,
 fact:"The only driver crowned champion after his death, in 1970.",
 no:"Stirling Moss/Moss: Never won the title — four times the runner-up; Gilles Villeneuve: Never champion — his son Jacques was; Ralf Schumacher: Never champion — his brother Michael was; David Coulthard/Coulthard: Never champion; Rubens Barrichello/Barrichello: Never champion; Mark Webber/Webber: Never champion; Felipe Massa/Massa: Lost the 2008 title by a single point; Charles Leclerc/Leclerc: Not a champion yet; Oscar Piastri/Piastri: Not a champion yet; George Russell: Not a champion yet; Daniel Ricciardo/Ricciardo: Never champion; Valtteri Bottas/Bottas: Never champion; Lewis: First names won't do here"},
 
-{id:"ballondor", cat:"sport", ppl:1, q:"Name a men's Ballon d'Or winner (up to 2025)", a:`
+{id:"ballondor", cat:"sport", ppl:1, q:"Name a men's Ballon d'Or winner", a:`
 C: Lionel Messi, Cristiano Ronaldo/CR7/Cristiano, Ronaldinho, Zinedine Zidane/Zidane, Kaká/Kaka, Luka Modrić/Luka Modric
 H: Lev Yashin, George Weah
-O: Ronaldo Nazário/Ronaldo Nazario/R9/Brazilian Ronaldo, Karim Benzema, Rivaldo, Luís Figo/Luis Figo, Michael Owen, Andriy Shevchenko, Pavel Nedvěd/Pavel Nedved, Fabio Cannavaro, Marco van Basten/Van Basten, Johan Cruyff/Cruyff, Franz Beckenbauer, Michel Platini, Ruud Gullit, Roberto Baggio, Ousmane Dembélé/Ousmane Dembele, Rodri, Lothar Matthäus/Lothar Matthaus, Eusébio/Eusebio, Alfredo Di Stéfano/Alfredo Di Stefano/Di Stefano, Bobby Charlton, George Best, Kevin Keegan, Gerd Müller/Gerd Muller
+O: Ronaldo Nazário/Ronaldo Nazario/R9/Brazilian Ronaldo, Karim Benzema, Rivaldo, Luís Figo/Luis Figo, Michael Owen, Andriy Shevchenko, Pavel Nedvěd/Pavel Nedved, Fabio Cannavaro, Marco van Basten/Van Basten, Johan Cruyff/Cruyff, Franz Beckenbauer, Michel Platini, Ruud Gullit, Roberto Baggio, Ousmane Dembélé/Ousmane Dembele, Rodri, Harry Kane/Kane, Lothar Matthäus/Lothar Matthaus, Eusébio/Eusebio, Alfredo Di Stéfano/Alfredo Di Stefano/Di Stefano, Bobby Charlton, George Best, Kevin Keegan, Gerd Müller/Gerd Muller
 R: Stanley Matthews, Raymond Kopa, Denis Law, Matthias Sammer, Hristo Stoichkov, Jean-Pierre Papin, Karl-Heinz Rummenigge, Paolo Rossi, Omar Sívori/Omar Sivori, Gianni Rivera, Oleg Blokhin, Allan Simonsen
 F: Josef Masopust, Flórián Albert/Florian Albert, Igor Belanov
 X: Luis Suárez/Luis Suarez`,
 fact:"Not that one! Spain's Luis Suárez Miramontes won it in 1960, long before the Uruguayan striker was born.",
-no:"Ronaldo: Two Ronaldos have won it — be specific; Thierry Henry/Henry: Never won it; Xavi: Never won it; Andrés Iniesta/Iniesta: Never won it — runner-up in 2010; Neymar: Never won it; Robert Lewandowski/Lewandowski: Never won it — the 2020 award was cancelled; Diego Maradona/Maradona: Never won it — only Europeans were eligible until 1995; Pelé/Pele: Never eligible — only Europeans could win until 1995; Kylian Mbappé/Mbappe: Not up to 2025; Erling Haaland/Haaland: Not up to 2025; Mohamed Salah/Salah: Never won it; Paolo Maldini/Maldini: Never won it; Gianluigi Buffon/Buffon: Never won it; Andrea Pirlo/Pirlo: Never won it; Steven Gerrard/Gerrard: Never won it; Frank Lampard/Lampard: Never won it; David Beckham/Beckham: Never won it — runner-up in 1999; Raúl/Raul: Never won it; Gareth Bale/Bale: Never won it; Virgil van Dijk/Van Dijk: Runner-up in 2019; Vinícius Júnior/Vinicius Junior/Vinicius: Runner-up in 2024; Toni Kroos/Kroos: Never won it"},
+no:"Ronaldo: Two Ronaldos have won it — be specific; Thierry Henry/Henry: Never won it; Xavi: Never won it; Andrés Iniesta/Iniesta: Never won it — runner-up in 2010; Neymar: Never won it; Robert Lewandowski/Lewandowski: Never won it — the 2020 award was cancelled; Diego Maradona/Maradona: Never won it — only Europeans were eligible until 1995; Pelé/Pele: Never eligible — only Europeans could win until 1995; Kylian Mbappé/Mbappe: Never won it (yet); Erling Haaland/Haaland: Never won it; Mohamed Salah/Salah: Never won it; Paolo Maldini/Maldini: Never won it; Gianluigi Buffon/Buffon: Never won it; Andrea Pirlo/Pirlo: Never won it; Steven Gerrard/Gerrard: Never won it; Frank Lampard/Lampard: Never won it; David Beckham/Beckham: Never won it — runner-up in 1999; Raúl/Raul: Never won it; Gareth Bale/Bale: Never won it; Virgil van Dijk/Van Dijk: Runner-up in 2019; Vinícius Júnior/Vinicius Junior/Vinicius: Runner-up in 2024; Toni Kroos/Kroos: Never won it"},
 
-{id:"wimbledon", cat:"sport", ppl:1, q:"Name a Wimbledon singles champion (1968–2025)", a:`
+{id:"wimbledon", cat:"sport", ppl:1, q:"Name a Wimbledon singles champion since 1968", a:`
 C: Roger Federer, Novak Djokovic, Andy Murray, Rafael Nadal/Rafa Nadal, Serena Williams, Venus Williams, Björn Borg/Bjorn Borg, Carlos Alcaraz
 H: Virginia Wade, Marion Bartoli
 O: John McEnroe, Pete Sampras, Boris Becker, Andre Agassi, Jimmy Connors, Steffi Graf, Martina Navratilova, Maria Sharapova, Jannik Sinner, Lleyton Hewitt, Billie Jean King, Chris Evert, Stefan Edberg, Iga Świątek/Iga Swiatek, Ash Barty/Ashleigh Barty, Petra Kvitová/Petra Kvitova, Arthur Ashe, Rod Laver
-R: Pat Cash, Michael Stich, Richard Krajicek, Martina Hingis, Lindsay Davenport, Amélie Mauresmo/Amelie Mauresmo, Garbiñe Muguruza/Garbine Muguruza, Angelique Kerber, Simona Halep, Elena Rybakina, Markéta Vondroušová/Marketa Vondrousova, Barbora Krejčíková/Barbora Krejcikova, John Newcombe, Evonne Goolagong/Evonne Goolagong Cawley, Margaret Court, Jana Novotná/Jana Novotna, Conchita Martínez/Conchita Martinez, Stan Smith
+R: Pat Cash, Michael Stich, Richard Krajicek, Martina Hingis, Lindsay Davenport, Amélie Mauresmo/Amelie Mauresmo, Garbiñe Muguruza/Garbine Muguruza, Angelique Kerber, Simona Halep, Elena Rybakina, Markéta Vondroušová/Marketa Vondrousova, Barbora Krejčíková/Barbora Krejcikova, Linda Nosková/Linda Noskova, John Newcombe, Evonne Goolagong/Evonne Goolagong Cawley, Margaret Court, Jana Novotná/Jana Novotna, Conchita Martínez/Conchita Martinez, Stan Smith
 F: Jan Kodeš/Jan Kodes, Ann Jones
 X: Goran Ivanišević/Goran Ivanisevic`,
 fact:"Won in 2001 as a wildcard ranked 125th in the world.",
-no:"Tim Henman/Henman: Four semi-finals, never a title; Ivan Lendl/Lendl: Twice a finalist, never the champion; Andy Roddick/Roddick: Three finals, three losses to Federer; Ken Rosewall/Rosewall: Four finals, never won; Tracy Austin: Never won Wimbledon; Monica Seles/Seles: Never won Wimbledon; Kim Clijsters/Clijsters: Never won Wimbledon; Justine Henin/Henin: Twice a finalist, never won; Emma Raducanu/Raducanu: Won the US Open, not Wimbledon; Nick Kyrgios/Kyrgios: Runner-up in 2022; Aryna Sabalenka/Sabalenka: Not a Wimbledon champion up to 2025; Coco Gauff/Gauff: Not a Wimbledon champion up to 2025; Daniil Medvedev/Medvedev: Never won Wimbledon; Fred Perry/Perry: Won three times — but in the 1930s; Williams: Which Williams? There are two"},
+no:"Tim Henman/Henman: Four semi-finals, never a title; Ivan Lendl/Lendl: Twice a finalist, never the champion; Andy Roddick/Roddick: Three finals, three losses to Federer; Ken Rosewall/Rosewall: Four finals, never won; Tracy Austin: Never won Wimbledon; Monica Seles/Seles: Never won Wimbledon; Kim Clijsters/Clijsters: Never won Wimbledon; Justine Henin/Henin: Twice a finalist, never won; Emma Raducanu/Raducanu: Won the US Open, not Wimbledon; Nick Kyrgios/Kyrgios: Runner-up in 2022; Aryna Sabalenka/Sabalenka: Never won Wimbledon (yet); Coco Gauff/Gauff: Never won Wimbledon (yet); Daniil Medvedev/Medvedev: Never won Wimbledon; Fred Perry/Perry: Won three times — but in the 1930s; Williams: Which Williams? There are two"},
 
 {id:"wchosts", cat:"sport", q:"Name a country that has hosted the men's FIFA World Cup", a:`
 C: Brazil, Qatar, Russia, England, Germany/West Germany, France, United States/USA/US/America
