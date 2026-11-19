@@ -1747,6 +1747,25 @@ html body #playScr .dv-land.sunk .lt-q,html body #playScr .dv-land.none .lt-q{co
 .hm-stats span{display:block;font:italic 800 .85rem/1.1 'Barlow Condensed',sans-serif;color:#000;text-transform:uppercase;margin-top:3px}
 .hm-stats div.kr{background:#ffd400}
 html body .scr .hm-stats *{-webkit-text-stroke:0 !important;text-shadow:none !important;color:#000 !important}
+html body .scr .lob-state,html body .scr .lob-state *{-webkit-text-stroke:0 !important;text-shadow:none !important;color:#000 !important}
+html body #playScr .lob-info{margin:0 auto 12px;max-width:560px;text-align:center;font:italic 800 1.15rem/1.25 'Barlow Condensed',sans-serif;text-transform:uppercase;color:#fff !important;-webkit-text-stroke:.16em #000 !important;paint-order:stroke fill !important;letter-spacing:.02em}
+html body #playScr .lob-info[hidden]{display:none}
+@media (max-width:700px){html body #playScr .lob-info{font-size:1rem;padding:0 8px}}
+html body #playScr #divers .dvr{pointer-events:auto;cursor:pointer}
+html body #playScr .dvr .sc{order:3;background:#000;color:#fff !important;-webkit-text-stroke:0 !important;font:italic 900 1rem/1 'Barlow Condensed',sans-serif;padding:3px 8px;border-radius:99px;border:2px solid #fff;white-space:nowrap}
+html body #playScr .dvr .sc[hidden]{display:none}
+html body #playScr .lboard li[data-pid]{cursor:pointer}
+#pM .dlg{max-height:86vh;overflow:auto}
+.pm-head{display:flex;align-items:center;gap:12px;margin-bottom:10px}.pm-head .av{width:56px;height:56px;flex:none}
+.pm-head h2{margin:0;font-size:2.2rem !important}.pm-head p{margin:2px 0 0;font:italic 900 1.3rem/1 'Barlow Condensed',sans-serif;text-transform:uppercase}
+.pm-rounds{list-style:none;margin:0 0 14px;padding:0;display:grid;gap:6px}
+.pm-rounds li{display:flex;justify-content:space-between;gap:10px;align-items:center;border:3px solid #000;border-radius:12px;padding:8px 12px;background:#fff}
+.pm-rounds .n{font:italic 900 1rem/1.15 'Barlow Condensed',sans-serif;text-transform:uppercase;min-width:0}
+.pm-rounds .n small{display:block;font:italic 800 .95rem/1.2 'Barlow Condensed',sans-serif;margin-top:2px}
+.pm-rounds b{font:italic 900 1.25rem/1 'Barlow Condensed',sans-serif;white-space:nowrap}
+.pm-none{font:italic 800 1.1rem/1.2 'Barlow Condensed',sans-serif;text-transform:uppercase}
+html body #pM .dlg *:not(.btn):not(.btn *){-webkit-text-stroke:0 !important;text-shadow:none !important;color:#000 !important}
+html body #playScr .dvr .sc{position:absolute;left:50%;bottom:calc(100% + 4px);transform:translateX(-50%);z-index:4;font-size:1.1rem !important;padding:4px 10px !important;box-shadow:3px 3px 0 rgba(0,0,0,.5)}
 </style>
 </head>
 <body data-scr="boot">
@@ -1804,7 +1823,7 @@ html body .scr .hm-stats *{-webkit-text-stroke:0 !important;text-shadow:none !im
     <div class="dv-lobby" id="lobBox">
       <div class="lob-top"><h1 class="lob-name" id="lcode">Lobby</h1><div class="lob-state" id="lobState"></div></div>
       <div class="lob-cd" id="lobCd" hidden></div>
-      <div class="lob-bot"><div class="lob-modes" id="setup" role="group" aria-label="Mode"></div><button class="lob-ready" id="start" type="button">Ready</button></div>
+      <div class="lob-bot"><div class="lob-modes" id="setup" role="group" aria-label="Mode"></div><p class="lob-info" id="modeInfo"></p><button class="lob-ready" id="start" type="button">Ready</button></div>
     </div>
     <footer class="dv-bar">
       <div class="fb" id="fb" aria-live="polite"></div>
@@ -1826,6 +1845,9 @@ html body .scr .hm-stats *{-webkit-text-stroke:0 !important;text-shadow:none !im
   <section class="scr final" aria-label="Final results" id="finalScr"></section>
 </main>
 
+<div class="modal" id="pM" hidden>
+  <div class="dlg" role="dialog" aria-modal="true"><div id="pmBody"></div><button class="btn red" id="pmX" type="button">Close</button></div>
+</div>
 <div class="modal" id="howM" hidden>
   <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="howT">
     <h2 id="howT">How to play</h2>

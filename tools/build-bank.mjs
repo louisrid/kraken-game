@@ -60,7 +60,7 @@ function bucketRanked(used, names, allowX) {
 const WL = require('wordlist-english');
 const LEVEL = new Map();
 for (const lv of [10, 20, 35, 40, 50, 55, 60, 70]) for (const v of ['english', 'english/british', 'english/american']) {
-  for (const w of WL[`${v}/${lv}`] || []) if (/^[a-z]+$/.test(w) && !LEVEL.has(w)) LEVEL.set(w, lv);
+  for (const w0 of WL[`${v}/${lv}`] || []) { if (!/^[A-Za-z]+$/.test(w0) || /[A-Z].*[A-Z]/.test(w0)) continue; const w = w0.toLowerCase(); if (!LEVEL.has(w)) LEVEL.set(w, lv); }
 }
 /* party-safe: drop profanity and slurs from the word games */
 const BAD = new Set([...require('naughty-words').en.map(w => w.toLowerCase()), 'crap', 'crappy', 'crappie', 'shitty', 'jizz', 'jew', 'homo', 'queer', 'quim', 'quickie', 'id', 'twat', 'gay']);
@@ -89,21 +89,25 @@ const OUT = []; const EXT = {};
 const add = (src, gen) => { src.a = src.a.trim() + '\n' + gen; OUT.push(src); };
 
 /* ───────── WORD GAMES ───────── */
+let LOOSE_IY = false;
 function rhymeQ(id, word, part, head, xName, fact, no) {
   const src = { id, cat: 'words', exact: 1, q: `Name a word that rhymes with ${word.toUpperCase()}`, a: head, fact, no: `${cap(word)}: That's the word itself!; ${no || ''}`.replace(/;\s*$/, '') };
   const used = usedKeys(src.a, src.no);
-  const list = rhymesOf(part, word);
+  let list = rhymesOf(part, word);
+  if (LOOSE_IY && part === 'IY') { const extra = [...LEVEL.keys()].filter(w => w !== word && /y$/.test(w) && w.length > 3 && CMU[w] && /IY\d$/.test(CMU[w])); list = [...new Set([...list, ...extra])].sort(byFamiliar); LOOSE_IY = false; }
   // the featured Kraken word is hand-checked; some aren't in the CMU dictionary
   add(src, bucketRanked(used, list.map(cap), true));
 }
 rhymeQ('rh_day', 'day', 'EY', `
 C: Play, Say, Way, May, Stay, Pay
 H: Ballet, Bouquet, Hooray
+O: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday, Norway, Broadway, Santa Fe, Bombay, Malay, Mandalay, Chevrolet, Beyoncé/Beyonce, Doris Day
 X: Sobriquet`, 'Sobriquet', 'A nickname. It comes from French, where it once meant a chuck under the chin.');
+LOOSE_IY = true;
 rhymeQ('rh_bee', 'bee', 'IY', `
 C: See, Tree, Me, Sea, Free, Key
 H: Referee, Guarantee, Chimpanzee
-X: Jamboree`, 'Jamboree', 'Nobody knows where the word comes from, but the 1920 World Scout Jamboree made it famous.', 'Happy: Close, but the stress is in the wrong place; Honey: Close, but the stress is in the wrong place');
+X: Jamboree`, 'Jamboree', 'Nobody knows where the word comes from, but the 1920 World Scout Jamboree made it famous.');
 rhymeQ('rh_night', 'night', 'AY T', `
 C: Light, Bite, Kite, Right, White, Fight
 H: Dynamite, Satellite, Parasite

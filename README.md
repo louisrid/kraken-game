@@ -15,8 +15,8 @@ No codes. The home screen lists four public lobbies (Lobby 1–4) with live play
 | Blitz | 12 | 20 s each | deepest diver |
 
 ### Scoring
-- Tiers: Shallows 100 m · Fool's gold 150 m · Open sea 300 m · Deep water 600 m · The abyss 850 m · Kraken 1,000 m.
-- Shallows is only the handful of answers everyone says first. Rarer answers sink you deeper; Kraken is reserved for the genuinely obscure.
+- Tiers: Common 100 m · Uncommon 200 m · Decent 400 m · Rare 800 m · Hyper rare 1,500 m · 1 in a Kraken 2,500 m.
+- Common is only the handful of answers everyone says first. Rarer answers sink you deeper; Kraken is reserved for the genuinely obscure.
 - **Versus and Blitz:** nobody else gave your answer = +50 m; someone else did too = −50 m. Base rarity still matters most.
 - **Team:** depths add up, but matching a teammate sinks you both (0 m). Aliases count as the same answer (NYC = New York).
 - The last prompt counts double. Solo is just the base tiers.
@@ -28,7 +28,7 @@ No codes. The home screen lists four public lobbies (Lobby 1–4) with live play
 - cities (about 30,000, ranked by population), capitals, every country, any Pokémon, comic heroes and villains, birds, music genres, fruit, veg, tech companies, car brands
 - extra dog breeds, dinosaurs, programming languages and Google Fonts added to hand-written prompts
 
-Ranked data is split about half Open sea, 30% Deep water, the rest Abyss; Kraken is hand-picked (plus the rarest ~3% of words in the word games). Unranked extras (an obscure dinosaur, a little-known font) go to Deep water.
+Ranked data is split about half Decent, 30% Rare, the rest Hyper rare; Kraken is hand-picked (plus the rarest ~3% of words in the word games). Unranked extras (an obscure dinosaur, a little-known font) go to Rare.
 
 Matching forgives capitals, accents, punctuation, plurals (strawberries, tomatoes), common aliases and small typos. In very big lists only famous answers get full typo tolerance, typos must keep the first letter, and word games need the exact word.
 

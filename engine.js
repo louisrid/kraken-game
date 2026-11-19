@@ -1,11 +1,11 @@
 /* ───────── Outlier engine: tiers, parsing, matching, orders (pure; runs in browser and node) ───────── */
 const TIERS = {
-  c: { key: 'c', name: 'Shallows',    pts: 10,  i: 0, line: 'Everyone’s first thought.' },
-  h: { key: 'h', name: 'Fool’s gold', pts: 15,  i: 1, line: 'Looks rare. Everyone picks it.' },
-  o: { key: 'o', name: 'Open sea',    pts: 30,  i: 2, line: 'A step off the beaten path.' },
-  r: { key: 'r', name: 'Deep water',  pts: 60,  i: 3, line: 'Few people get down here.' },
-  f: { key: 'f', name: 'The abyss',   pts: 85,  i: 4, line: 'Proper deep knowledge.' },
-  x: { key: 'x', name: 'Kraken',      pts: 100, i: 5, line: 'The one the kraken wanted.' },
+  c: { key: 'c', name: 'Common',      pts: 10,  i: 0, line: 'Everyone’s first thought.' },
+  h: { key: 'h', name: 'Uncommon', pts: 20,  i: 1, line: 'Looks rare. Everyone picks it.' },
+  o: { key: 'o', name: 'Decent',      pts: 40,  i: 2, line: 'A step off the beaten path.' },
+  r: { key: 'r', name: 'Rare',        pts: 80,  i: 3, line: 'Few people get down here.' },
+  f: { key: 'f', name: 'Hyper rare',  pts: 150,  i: 4, line: 'Proper deep knowledge.' },
+  x: { key: 'x', name: '1 in a Kraken',      pts: 250, i: 5, line: 'The one the kraken wanted.' },
 };
 const TORDER = ['c', 'h', 'o', 'r', 'f', 'x'];
 const CATS = {
@@ -136,7 +136,8 @@ function matchAnswer(q, input) {
     if (set.size === 1) return hit(set);
     return { ok: false, kind: 'ambiguous', msg: 'More than one answer has that name. Add a first name.' };
   }
-  const budget = q.exact ? 0 : fuzzBudget(k.length);
+  /* word games: one slip allowed in longer words, and the first two letters must match */
+  const budget = q.exact ? (k.length >= 7 ? 1 : 0) : fuzzBudget(k.length);
   if (budget > 0) {
     const digits = (x) => x.replace(/[^0-9]/g, '');
     const kd = digits(k);
@@ -145,9 +146,10 @@ function matchAnswer(q, input) {
     const consider = (cand, val) => {
       const L = Math.min(k.length, cand.length);
       const famous = val.type !== 'a' || [...val.set].some(i => q.answers[i].tier === 'c' || q.answers[i].tier === 'h');
-      const b = big && !famous ? (L < 9 ? 0 : L < 13 ? 1 : 2) : fuzzBudget(L);
+      const b = q.exact ? (L >= 7 ? 1 : 0) : big && !famous ? (L < 9 ? 0 : L < 13 ? 1 : 2) : fuzzBudget(L);
       if (!b) return;
       if (cand[0] !== k[0]) return;
+      if (q.exact && (cand[1] !== k[1] || b > 1)) return;
       if (digits(cand) !== kd) return;
       const d = dlDist(k, cand, Math.min(b, best));
       if (d > b) return;

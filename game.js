@@ -316,7 +316,7 @@ function view() {
     dur: H.phase === 'play' && isFinite(H.endsAt) ? (H.slowDur || H.endsAt - H.introEnd) : 0,
     re: H.phase === 'reveal' && isFinite(H.revealEnds) ? Math.max(0, H.revealEnds - t) : -1,
     res: (H.phase === 'reveal' || H.phase === 'final') && H.set.mode === 'vs' ? H.res : null,
-    hist: H.phase === 'final' || H.phase === 'reveal' ? H.hist : null,
+    hist: H.phase === 'lobby' ? null : H.hist,
     cd: H.phase === 'lobby' && H.cdAt ? Math.max(0, H.cdAt - t) : -1,
     cr: H.set.mode === 'crew' && cr && H.phase !== 'lobby' ? cr : null,
   };
@@ -496,7 +496,7 @@ function buildQ(code) { const p = new URLSearchParams(); const ri = ROOMS.findIn
 function setUrl(code) { try { history.replaceState(history.state, '', location.pathname + buildQ(code)); } catch {} }
 function pushNav() { try { if (!history.state || !history.state.kr) history.pushState({ kr: 1 }, ''); } catch {} }
 function doBack() {
-  for (const id of ['meM', 'howM', 'leaveM']) if (!$(id).hidden) { $(id).hidden = true; return; }
+  for (const id of ['meM', 'howM', 'leaveM', 'pM']) if (!$(id).hidden) { $(id).hidden = true; return; }
   if (!C.role || C.peek) return;
   const v = C.view;
   if (C.role === 'solo' && v && v.ph !== 'final') { C.peek = true; render(); return; }
@@ -504,7 +504,7 @@ function doBack() {
   if (C.role === 'host' && v && v.ph === 'lobby' && v.pl.filter(p => !p.gone).length <= 1) { leave(); return; }
   confirmLeave();
 }
-window.addEventListener('popstate', () => { if (C.peek) return; if (C.role || ['meM', 'howM', 'leaveM'].some(id => !$(id).hidden)) { doBack(); if (C.role && !C.peek) pushNav(); } });
+window.addEventListener('popstate', () => { if (C.peek) return; if (C.role || ['meM', 'howM', 'leaveM', 'pM'].some(id => !$(id).hidden)) { doBack(); if (C.role && !C.peek) pushNav(); } });
 const ICON = {
   down: '<svg class="ico" viewBox="-3 -3 30 30" aria-hidden="true"><path d="M12 3.5V19.5M4.5 12.5 12 20l7.5-7.5" fill="none" stroke="#000" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 3.5V19.5M4.5 12.5 12 20l7.5-7.5" fill="none" stroke="currentColor" stroke-width="6.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   check: '<svg class="ico" viewBox="-3 -3 30 30" aria-hidden="true"><path d="M4 12.5l5.2 5.2L20 6.8" fill="none" stroke="#000" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 12.5l5.2 5.2L20 6.8" fill="none" stroke="currentColor" stroke-width="6.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
@@ -513,7 +513,7 @@ const ICON = {
 const NAV_R = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 12H19.5M12.5 4.5 20 12l-7.5 7.5" fill="none" stroke="#000" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const NAV_L = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 12H4.5M11.5 4.5 4 12l7.5 7.5" fill="none" stroke="#000" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 function navAct() {
-  for (const id of ['meM', 'howM', 'leaveM']) if (!$(id).hidden) { $(id).hidden = true; return; }
+  for (const id of ['meM', 'howM', 'leaveM', 'pM']) if (!$(id).hidden) { $(id).hidden = true; return; }
   if (document.body.dataset.scr === 'home') {
     if (C.role === 'solo' && C.peek) { C.peek = false; pushNav(); render(); } else practice();
     return;
@@ -776,7 +776,7 @@ function renderGauge(v) {
 
 /* ═════════════════ THE DIVE: one continuous descent ═════════════════ */
 const DV = { S: 1.6, SKY: 500, built: false, anchor: 0.6, lastT: 0, sink: null, landShown: '', tlKey: '' };
-const DV_MAX = 8200, DV_OFF = 64;
+const DV_MAX = 40000, DV_OFF = 64;
 const DV_MARKS = [
   [200, 'z', 'Twilight zone', ''],
   [332, 'r', 'Scuba record · 332 m'],
@@ -805,14 +805,14 @@ function buildWorld() {
   w.style.setProperty('--S', DV.S + 'px'); w.style.setProperty('--sky', DV.SKY + 'px');
   w.style.height = Math.round(yOf(DV_MAX) + 500) + 'px';
   let ruler = '';
-  for (let m = 100; m <= 8000; m += 100) ruler += `<i style="top:${(m * DV.S).toFixed(1)}px"${m % 500 ? '' : ' class="big"'}></i>`;
+  for (let m = 100; m <= DV_MAX - 200; m += 100) ruler += `<i style="top:${(m * DV.S).toFixed(1)}px"${m % 500 ? '' : ' class="big"'}></i>`;
   const marks = '' && DV_MARKS.map(([m, side, a, b]) => side === 'z'
     ? `<div class="dv-mk z" style="top:${yOf(m).toFixed(0)}px"><b>${esc(a)}</b></div>`
     : `<div class="dv-mk ${side}" style="top:${yOf(m).toFixed(0)}px">${esc(a)}</div>`).join('');
   w.innerHTML = `<div class="dv-sun"></div><i class="dv-cloud c1"></i><i class="dv-cloud c2"></i><i class="dv-cloud c3"></i>
     <div class="dv-ship">${SHIP}</div><div class="dv-surf"></div><div class="dv-rays"></div>
     <div class="dv-ruler">${ruler}</div>${marks}${lifeHTML()}
-    <div class="dv-kraken" style="top:${yOf(7600).toFixed(0)}px">${ART.kraken()}</div>
+    <div class="dv-kraken" style="top:${yOf(DV_MAX - 600).toFixed(0)}px">${ART.kraken()}</div>
     <div class="dv-dye" id="dye"><canvas id="dyeTv" width="128" height="80"></canvas></div><div id="tlines"></div><div id="divers"></div>`;
   try { ART.suckers(w.querySelector('.dv-kraken svg')); } catch {}
   DV.built = true; DV.tlKey = '';
@@ -856,12 +856,13 @@ function renderDivers(v) {
   const key = act.map(p => p.id + p.av + p.nm).join('|');
   if (box._key !== key) {
     box._key = key;
-    box.innerHTML = act.map(p => `<div class="dvr ${p.id === ME.id ? 'me' : ''}" data-pid="${esc(p.id)}"><span class="bb"><i></i><i></i><i></i><i></i><i></i><i></i></span>${avatar(p.av)}<span class="nm">${esc(p.nm)}</span>${p.id === ME.id ? '<span class="meflag" aria-hidden="true"><svg viewBox="-3 -3 30 30"><path d="M12 20.5V4.5M4.5 11.5 12 4l7.5 7.5" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 20.5V4.5M4.5 11.5 12 4l7.5 7.5" fill="none" stroke="#000" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg><b>ME</b></span>' : ''}<span class="tag" hidden></span></div>`).join('');
+    box.innerHTML = act.map(p => `<div class="dvr ${p.id === ME.id ? 'me' : ''}" data-pid="${esc(p.id)}"><span class="bb"><i></i><i></i><i></i><i></i><i></i><i></i></span>${avatar(p.av)}<span class="nm">${esc(p.nm)}</span>${p.id === ME.id ? '<span class="meflag" aria-hidden="true"><svg viewBox="-3 -3 30 30"><path d="M12 20.5V4.5M4.5 11.5 12 4l7.5 7.5" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 20.5V4.5M4.5 11.5 12 4l7.5 7.5" fill="none" stroke="#000" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg><b>ME</b></span>' : ''}<span class="sc"></span><span class="tag" hidden></span></div>`).join('');
   }
   act.forEach((p, i) => {
     const el = box.querySelector(`[data-pid="${CSS.escape(p.id)}"]`); if (!el) return;
     const narrow = innerWidth < 700 && n >= 4;
     const x = n === 1 ? 50 : narrow ? 13 + (i / (n - 1)) * 74 : 20 + (i / (n - 1)) * 60;
+    { const sc = el.querySelector('.sc'); const t = n > 1 && v.ph !== 'lobby' ? M(p.pts) : ''; if (sc.textContent !== t) sc.textContent = t; sc.hidden = !t; }
     el.style.left = x + '%'; el.classList.toggle('stag', narrow && i % 2 === 1); el.classList.toggle('lt', x > 62); el.classList.toggle('dim', !!p.off);
     let txt = '', cls = '';
     if (v.ph === 'lobby') { if (p.rdy) { txt = 'ready'; cls = 'rdy'; } }
@@ -896,7 +897,7 @@ function landHTML(v) {
       quip = notes.join(' · ');
     }
   }
-  const board = res.length > 1 ? `<ol class="lboard">${res.slice().sort((x, y) => (pinfo(y[0], v).pts - pinfo(x[0], v).pts)).map(r => { const pl = pinfo(r[0], v); return `<li class="${r[0] === ME.id ? 'me' : ''}">${avatar(pl.av)}<span class="n">${esc(pl.nm)}<small>${r[1] < 0 ? 'no answer' : esc(q.answers[r[1]].name)} · +${M(r[2])}${r[4] === 's' ? ' · shared' : r[4] === 'k' ? ' · sunk' : ''}</small></span><em>${M(pl.pts)}</em></li>`; }).join('')}</ol>` : '';
+  const board = res.length > 1 ? `<ol class="lboard">${res.slice().sort((x, y) => (pinfo(y[0], v).pts - pinfo(x[0], v).pts)).map(r => { const pl = pinfo(r[0], v); return `<li class="${r[0] === ME.id ? 'me' : ''}" data-pid="${esc(r[0])}">${avatar(pl.av)}<span class="n">${esc(pl.nm)}<small>${r[1] < 0 ? 'no answer' : esc(q.answers[r[1]].name)} · +${M(r[2])}${r[4] === 's' ? ' · shared' : r[4] === 'k' ? ' · sunk' : ''}</small></span><em>${M(pl.pts)}</em></li>`; }).join('')}</ol>` : '';
   const X = q.answers.find(z => z.tier === 'x');
   const said = new Set(res.filter(r => r[1] >= 0).map(r => r[1]));
   const deep = shuffled(q.answers.filter(z => z.tier === 'f' && !said.has(z.id)), v.q + v.r).slice(0, 4).map(z => z.name);
@@ -1058,6 +1059,18 @@ function render() {
 
 /* home */
 let homeBuilt = false;
+function playerCard(pid) {
+  const v = C.view; if (!v) return; const p = v.pl.find(x => x.id === pid); if (!p) return;
+  const act = v.pl.filter(x => !x.spec); const rank = act.slice().sort((a, b) => b.pts - a.pts).findIndex(x => x.id === pid) + 1;
+  const rows = (v.hist || []).map((h, i) => {
+    const q = QMAP[h.q]; const r = (h.res || []).find(x => x[0] === pid); const a = r && r[1] >= 0 ? q.answers[r[1]] : null;
+    const flag = !r ? '' : r[4] === 'u' ? ' · unique +50 m' : r[4] === 's' ? ' · shared −50 m' : r[4] === 'k' ? ' · sunk' : '';
+    return `<li><span class="n">${i + 1}. ${esc(q.prompt)}<small>${a ? esc(a.name) + ' · ' + esc(TIERS[a.tier].name) : 'No answer'}${flag}</small></span><b>+${M(r ? r[2] : 0)}</b></li>`;
+  }).join('');
+  $('pmBody').innerHTML = `<div class="pm-head">${avatar(p.av)}<div><h2>${esc(p.nm)}${p.id === ME.id ? ' (you)' : ''}</h2><p>${act.length > 1 ? `Rank ${rank} of ${act.length} · ` : ''}${M(p.pts)} total</p></div></div>` +
+    (rows ? `<ol class="pm-rounds">${rows}</ol>` : '<p class="pm-none">No rounds finished yet.</p>');
+  $('pM').hidden = false;
+}
 function renderStats() {
   const st = PROFILE.get(); const el = $('hmStats'); if (!el) return;
   const html = `<div><b>${M(st.best)}</b><span>Best dive</span></div><div><b>${M(PROFILE.avg())}</b><span>Average</span></div><div><b>${st.games}</b><span>Dives</span></div><div class="kr"><b>${st.krakens}</b><span>Krakens</span></div>`;
@@ -1095,6 +1108,8 @@ function renderLobby(v) {
   $('start').classList.toggle('on', mine);
   $('start').hidden = !me || !!me.spec;
   $('setup').hidden = !!cd;
+  { const st = v.set; const info = st.team ? 'Team: 10 prompts. Your depths add up. Say the same as a teammate and you both sink.' : st.rounds === 12 ? 'Blitz: 12 prompts, 20 seconds each. Unique answer +50 m, shared answer −50 m.' : 'Versus: 10 prompts. Deepest diver wins. Unique answer +50 m, shared answer −50 m.';
+    $('modeInfo').hidden = !!cd; if ($('modeInfo').textContent !== info) $('modeInfo').textContent = info; }
   const s = v.set; const sig = s.mode + s.rounds + (s.team ? 't' : '') + host;
   if ($('setup')._sig !== sig) {
     $('setup')._sig = sig;
@@ -1261,7 +1276,7 @@ function awardsHTML(v) {
   if (st) cards.push(['Most sunk', pinfo(st[0], v).nm, `${st[1]} answer${st[1] > 1 ? 's' : ''} matched someone else’s`]);
   const sh = {}; all.filter(x => x.a.tier === 'c' || x.a.tier === 'h').forEach(x => (sh[x.pid] = (sh[x.pid] || 0) + 1));
   const s2 = Object.entries(sh).sort((a, b) => b[1] - a[1])[0];
-  if (s2 && s2[1] >= 2) cards.push(['Stayed shallow', pinfo(s2[0], v).nm, `${s2[1]} Shallows or Fool’s gold answers`]);
+  if (s2 && s2[1] >= 2) cards.push(['Stayed shallow', pinfo(s2[0], v).nm, `${s2[1]} Common or Uncommon answers`]);
   const kr = all.filter(x => x.a.tier === 'x' && !x.sunk);
   if (kr.length && cards.length < 3) cards.push(['Kraken spotter', pinfo(kr[0].pid, v).nm, `Found ${kr[0].a.name}`]);
   return `<div class="fn-awards">${cards.slice(0, 3).map(c => `<div><span>${esc(c[0])}</span><b>${esc(c[1])}</b><small>${esc(c[2])}</small></div>`).join('')}</div>`;
@@ -1367,7 +1382,8 @@ function bind() {
   });
   window.addEventListener('resize', () => { DV.built = false; });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { doBack(); } });
-  ['howM', 'leaveM', 'meM'].forEach(id => $(id).addEventListener('click', (e) => { if (e.target.id === id) $(id).hidden = true; }));
+  $('pmX').addEventListener('click', () => ($('pM').hidden = true));
+  ['howM', 'leaveM', 'meM', 'pM'].forEach(id => $(id).addEventListener('click', (e) => { if (e.target.id === id) $(id).hidden = true; }));
   $('setup').addEventListener('click', (e) => {
     if (!H) return;
     const mb = e.target.closest('[data-mode]'); if (mb) { if (!H || mb.disabled) return; H.set.mode = mb.dataset.mode; H.set.rounds = +mb.dataset.r || 7; H.set.secs = +mb.dataset.s || 0; H.set.team = mb.dataset.t === '1'; for (const p of H.players) p.rdy = 0; H.cdAt = 0; H.dirty = true; broadcast(); return; }
@@ -1385,6 +1401,7 @@ function bind() {
   $('ans').addEventListener('input', () => { if (C.fb && C.fb.kind === 'no') { C.fb = null; renderFb(); } onTyping(); });
   $('orders').addEventListener('click', (e) => { const b = e.target.closest('button.slot'); if (!b) return; const i = +b.dataset.slot; const v = C.view; const cur = v && v.cr && v.cr.calls ? v.cr.calls[ME.id] : null; send('call', { slot: cur === i ? null : i }); });
   document.addEventListener('click', (e) => {
+    const pc = e.target.closest('#divers .dvr[data-pid], .lboard li[data-pid]'); if (pc && C.view && C.view.ph !== 'lobby') { playerCard(pc.dataset.pid); return; }
     const rb = e.target.closest('[data-room]'); if (rb) { enterRoom(rb.dataset.room); return; }
     const em = e.target.closest('[data-emo]'); if (em) { if (C.role && C.role !== 'solo') { send('emo', { e: em.dataset.emo }); } return; }
     const sb = e.target.closest('#nextBox .seg button'); if (sb && H) { H.set.secs = +sb.dataset.v; H.dirty = true; broadcast(); $('nextBox')._sig = ''; renderReveal(C.view); return; }
