@@ -1772,6 +1772,31 @@ html body #playScr .dvr.far-up, html body #playScr .dvr.far-dn{transform:transla
 html body #playScr .dvr.far-up .tag, html body #playScr .dvr.far-dn .tag{display:none}
 html body #playScr .dvr.far-up .sc::before{content:"▲ "}
 html body #playScr .dvr.far-dn .sc::before{content:"▼ "}
+
+/* rarity zones: the water between two lines is fully dyed in that rarity's colour */
+#tlines .dv-band{position:absolute;left:0;right:0;z-index:1;pointer-events:none;border-top:4px solid #000}
+#tlines .dv-band.t0{background:rgba(20,70,255,.82)}
+#tlines .dv-band.t1{background:rgba(140,30,230,.84)}
+#tlines .dv-band.t2{background:rgba(255,130,0,.84)}
+#tlines .dv-band.t3{background:rgba(225,20,30,.86)}
+#tlines .dv-band.t4{background:var(--galaxy);animation:guessHue 7s linear infinite}
+#tlines .dv-band.t5{background:#000 repeating-conic-gradient(#fff 0 9deg,#000 0 18deg,#ff1e3c 0 27deg,#000 0 36deg) 0 0/7px 7px}
+html body #playScr .dv-tl,html body #playScr .dv-tl:not(.hit){border-top-color:transparent !important}
+html body #playScr.landed .dv-tl:not(.hit){opacity:1 !important}
+html body #playScr.landed .dv-tl span{visibility:hidden !important}
+html body #playScr .dv-tl span{top:10px !important;-webkit-text-stroke:.15em #000;paint-order:stroke fill}
+html body #playScr{touch-action:none;overscroll-behavior:none}
+/* notices: white box, black text, easy to read */
+html body #playScr .dv-bar .fb:not(:empty){background:#fff;color:#000 !important;border:4px solid #000;border-radius:14px;padding:10px 14px;box-shadow:4px 4px 0 #000;-webkit-text-stroke:0;text-shadow:none;font-size:1.25rem !important;margin-bottom:8px}
+html body #playScr .status:not(:empty){display:inline-block;background:#fff;color:#000 !important;border:3px solid #000;border-radius:999px;padding:6px 14px;-webkit-text-stroke:0;text-shadow:none;align-self:center;justify-self:center}
+html body #playScr #force .lnk{background:#fff;color:#000 !important;border:3px solid #000;border-radius:999px;padding:8px 16px;-webkit-text-stroke:0;text-shadow:none}
+html body .toast{background:#fff !important;color:#000 !important;border:4px solid #000 !important;border-radius:14px;box-shadow:4px 4px 0 #000;-webkit-text-stroke:0 !important;text-shadow:none !important;font-size:1.2rem !important}
+html body .dv-land .lb-h{display:flex;justify-content:space-between;margin:10px 6px 4px;font:italic 900 1rem/1 var(--cond);text-transform:uppercase;color:#fff;-webkit-text-stroke:.15em #000;paint-order:stroke fill}
+
+html body #playScr .dv-bar .fb:not(:empty),html body #playScr .dv-bar .fb:not(:empty) *,html body #playScr .status:not(:empty),html body #playScr #force .lnk,html body .toast{-webkit-text-stroke:0 !important;text-shadow:none !important;paint-order:normal !important}
+html body #start[hidden]{display:none !important}
+html body .dv-land .lb-h{display:flex !important;justify-content:space-between !important;gap:12px}
+html body .dv-land .lb-h{width:100%;box-sizing:border-box;padding:0 8px}
 </style>
 </head>
 <body data-scr="boot">
@@ -1895,6 +1920,7 @@ html body #playScr .dvr.far-dn .sc::before{content:"▼ "}
 <script src="mqtt.min.js"></script>
 <script src="bank.js"></script>
 <script src="bank-gen.js"></script>
+<script src="bank-fun.js"></script>
 <script src="engine.js"></script>
 <script src="art.js"></script>
 <script src="net.js"></script>

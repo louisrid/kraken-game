@@ -171,7 +171,7 @@ function matchAnswer(q, input) {
       if (!ids.size && decoy) return { ok: false, kind: 'decoy', msg: decoy };
     }
   }
-  return { ok: false, kind: 'unknown', msg: 'Not on our list. Check the spelling or try another.' };
+  return { ok: false, kind: 'unknown', msg: 'Not accepted. Try a different answer.' };
 }
 
 /* Seeded RNG for deterministic choices */

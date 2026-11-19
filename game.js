@@ -200,7 +200,7 @@ function hostCrewSub(p, text) {
 function activePlayers() { return H.players.filter(p => !p.spec && !p.gone); }
 function startGame() {
   for (const p of H.players) { p.spec = p.gone ? p.spec : 0; p.pts = 0; p.rdy = 0; }
-  H.cdAt = 0;
+  H.cdAt = 0; H.go = false;
   H.players = H.players.filter(p => !p.gone);
   H.seed = rid(6);
   const mode = H.set.mode === 'crew' ? 'coop' : 'vs';
@@ -240,7 +240,7 @@ function resolveVs() {
   });
   for (const r of H.res) { const p = act.find(x => x.id === r[0]); if (p) p.pts += r[2]; }
   H.hist.push({ q: q.id, res: H.res });
-  H.phase = 'reveal'; H.revealEnds = Infinity; H.dirty = true;
+  H.phase = 'reveal'; H.revealEnds = now() + 13000; H.dirty = true;
 }
 function crewResolve(full) {
   const cr = H.crew;
@@ -272,7 +272,7 @@ function finishGame() {
 function backToLobby() {
   H.phase = 'lobby'; H.players = H.players.filter(p => !p.gone);
   for (const p of H.players) { p.pts = 0; p.spec = 0; p.rdy = 0; }
-  H.cdAt = 0;
+  H.cdAt = 0; H.go = false;
   H.crew = null; H.res = null; H.hist = []; H.dirty = true; broadcast();
 }
 function hostTick() {
@@ -287,7 +287,7 @@ function hostTick() {
   }
   if (H.phase === 'lobby' && !H.solo) {
     const live = H.players.filter(p => !p.gone);
-    const all = live.length >= 2 && live.every(p => p.rdy);
+    const all = live.length >= 2 && !!H.go;
     if (all && !H.cdAt) { H.cdAt = t + 3200; H.dirty = true; }
     if (!all && H.cdAt) { H.cdAt = 0; H.dirty = true; }
     if (H.cdAt && t >= H.cdAt) { H.cdAt = 0; startGame(); return; }
@@ -845,7 +845,9 @@ function renderTierLines(v) {
   if (v.set.mode === 'crew') { $('tlines').innerHTML = ''; DV.tlKey = ''; return; }
   const base = myBase(v); const key = base + ':' + DV.S + ':' + v.r;
   if (DV.tlKey === key) return; DV.tlKey = key;
-  $('tlines').innerHTML = TORDER.map(t => { const m = base + TIERS[t].pts * 10; return `<div class="dv-tl ${TCLS[t]}" data-m="${m}" style="top:${(yOf(m) + DV_OFF).toFixed(1)}px"><span>${esc(TIERS[t].name)} · +${(TIERS[t].pts * 10).toLocaleString('en-GB')} m</span></div>`; }).join('');
+  const PAD = 46; const ms = TORDER.map(t => base + TIERS[t].pts * 10);
+  const bands = TORDER.map((t, i) => { const y0 = yOf(ms[i]) + DV_OFF - PAD; const y1 = i + 1 < ms.length ? yOf(ms[i + 1]) + DV_OFF - PAD : y0 + 1000 * DV.S; return `<i class="dv-band ${TCLS[t]}" style="top:${y0.toFixed(1)}px;height:${(y1 - y0).toFixed(1)}px"></i>`; }).join('');
+  $('tlines').innerHTML = bands + TORDER.map(t => { const m = base + TIERS[t].pts * 10; return `<div class="dv-tl ${TCLS[t]}" data-m="${m}" style="top:${(yOf(m) + DV_OFF).toFixed(1)}px"><span>${esc(TIERS[t].name)} · +${(TIERS[t].pts * 10).toLocaleString('en-GB')} m</span></div>`; }).join('');
 }
 function renderDivers(v) {
   const q = v.q ? QMAP[v.q] : null; const rv = v.ph === 'reveal';
@@ -859,8 +861,8 @@ function renderDivers(v) {
   act.forEach((p, i) => {
     const el = box.querySelector(`[data-pid="${CSS.escape(p.id)}"]`); if (!el) return;
     const narrow = innerWidth < 700 && n >= 4;
-    const x = n === 1 ? 50 : narrow ? 13 + (i / (n - 1)) * 74 : 20 + (i / (n - 1)) * 60;
-    { const sc = el.querySelector('.sc'); const t = n > 1 && v.ph !== 'lobby' ? M(p.pts) : ''; if (sc.textContent !== t) sc.textContent = t; sc.hidden = !t; }
+    const x = n === 1 ? 50 : narrow ? 13 + (i / (n - 1)) * 74 : innerWidth < 700 ? 54 + (i / (n - 1)) * 32 : 42 + (i / (n - 1)) * 40;
+    { const sc = el.querySelector('.sc'); const t = n > 1 && v.ph !== 'lobby' && p.pts > 0 ? M(p.pts) : ''; if (sc.textContent !== t) sc.textContent = t; sc.hidden = !t; }
     el.style.left = x + '%'; el.classList.toggle('stag', narrow && i % 2 === 1); el.classList.toggle('lt', x > 62); el.classList.toggle('dim', !!p.off);
     let txt = '', cls = '';
     if (v.ph === 'lobby') { if (p.rdy) { txt = 'ready'; cls = 'rdy'; } }
@@ -869,8 +871,8 @@ function renderDivers(v) {
       if (r) { if (r[1] < 0) { txt = 'no answer'; cls = 'none'; } else { txt = q.answers[r[1]].name; cls = r[4] === 'k' ? 'sunk' : TCLS[q.answers[r[1]].tier]; } }
     } else if (v.ph === 'play' && v.set.mode === 'vs' && q) {
       if (p.id === ME.id && C.myLock && q.answers[C.myLock.aid]) { txt = q.answers[C.myLock.aid].name; cls = 'mine'; }
-      else if (p.lk) { txt = 'locked in'; cls = 'lk'; }
-      else if (p.ty) { txt = '…'; cls = 'ty'; }
+      else if (p.lk) { txt = 'answered'; cls = 'lk'; }
+      else if (p.ty) { txt = 'typing…'; cls = 'ty'; }
     }
     const tag = el.querySelector('.tag');
     if (tag._t !== txt + cls) { tag._t = txt + cls; tag.hidden = !txt; tag.textContent = txt; tag.className = 'tag ' + cls; }
@@ -884,22 +886,23 @@ function landHTML(v) {
   else {
     const others = res.filter(r => r[0] !== ME.id && r[1] === mine[1]).map(r => pinfo(r[0], v).nm).join(' & ');
     a = q.answers[mine[1]].name;
-    if (mine[4] === 'k') { t1 = 'Sunk'; cls = 'sunk'; gain = '+0 m'; quip = `Same answer as ${others}: you both sink`; }
+    if (mine[4] === 'k') { t1 = 'Sunk'; cls = 'sunk'; gain = '+0 m'; quip = `You and ${others} gave the same answer, so you both get nothing`; }
     else {
       const tr = q.answers[mine[1]].tier; t1 = TIERS[tr].name; cls = TCLS[tr];
-      gain = `+${M(mine[2])}`;
+      gain = `+${M(mine[2])} deeper`;
       const notes = [];
       if (mine[4] === 's') notes.push(`${others} said it too`);
-      if (res.length > 1 && v.r === v.n - 1) notes.push('Last prompt: double depth');
+      if (me && res.length < 2) notes.unshift(`You are now ${M(me.pts)} deep`);
+      if (res.length > 1 && v.r === v.n - 1) notes.push('Last prompt counts double');
       quip = notes.join(' · ');
     }
   }
-  const board = res.length > 1 ? `<ol class="lboard">${res.slice().sort((x, y) => (pinfo(y[0], v).pts - pinfo(x[0], v).pts)).map(r => { const pl = pinfo(r[0], v); return `<li class="${r[0] === ME.id ? 'me' : ''}" data-pid="${esc(r[0])}">${avatar(pl.av)}<span class="n">${esc(pl.nm)}<small>${r[1] < 0 ? 'no answer' : esc(q.answers[r[1]].name)} · +${M(r[2])}${r[4] === 's' ? ' · shared' : r[4] === 'k' ? ' · sunk' : ''}</small></span><em>${M(pl.pts)}</em></li>`; }).join('')}</ol>` : '';
+  const board = res.length > 1 ? `<p class="lb-h"><span>This round</span><span>Total depth</span></p><ol class="lboard">${res.slice().sort((x, y) => (pinfo(y[0], v).pts - pinfo(x[0], v).pts)).map(r => { const pl = pinfo(r[0], v); return `<li class="${r[0] === ME.id ? 'me' : ''}" data-pid="${esc(r[0])}">${avatar(pl.av)}<span class="n">${esc(pl.nm)}<small>${r[1] < 0 ? 'No answer' : '“' + esc(q.answers[r[1]].name) + '” · ' + (r[4] === 'k' ? 'same answer, 0 m' : esc(TIERS[q.answers[r[1]].tier].name) + ' · +' + M(r[2]))}</small></span><em>${M(pl.pts)}</em></li>`; }).join('')}</ol>` : '';
   const X = q.answers.find(z => z.tier === 'x');
   const said = new Set(res.filter(r => r[1] >= 0).map(r => r[1]));
   const deep = shuffled(q.answers.filter(z => z.tier === 'f' && !said.has(z.id)), v.q + v.r).slice(0, 4).map(z => z.name);
   const last = v.r >= v.n - 1; const host = C.role === 'host' || C.role === 'solo';
-  const btn = host ? `<button class="btn desc" type="button" data-act="next">${last ? `Results ${ICON.up}` : `Descend ${ICON.down}`}<i class="acd"></i></button>` : `<p class="lwait">Waiting for the host</p>`;
+  const btn = host ? `<button class="btn desc" type="button" data-act="next">${last ? `See results ${ICON.up}` : `Next prompt ${ICON.down}`}</button>` : `<p class="lwait">${last ? 'Results coming up' : 'Next prompt coming up'}</p>`;
   return `<div class="lt-t ${cls}">${esc(t1)}</div>${a ? `<div class="lt-a">“${esc(a)}”</div>` : ''}${gain ? `<div class="lt-p">${esc(gain)}</div>` : ''}${quip ? `<p class="lt-q">${esc(quip)}</p>` : ''}${board}${btn}`;
 }
 function crewLandHTML(v) {
@@ -944,11 +947,11 @@ function renderDive(v) {
   const waitFor = act.filter(p => !p.lk && p.id !== ME.id && !p.gone).map(p => p.nm);
   const sealed = $('sealed');
   sealed.hidden = !(C.myLock && !crew && !watching) || rv;
-  if (!sealed.hidden) sealed.innerHTML = `<span>Locked in</span><b>${esc((q.answers[C.myLock.aid] || {}).name || '')}</b><span>${waitFor.length ? 'waiting for ' + esc(waitFor.slice(0, 3).join(', ')) + (waitFor.length > 3 ? '…' : '') : 'diving…'}</span>`;
-  $('status').textContent = crew ? `${v.cr.sl.filter(Boolean).length} of ${v.cr.ord.length} slots filled · strikes ${v.cr.miss}/${STRIKES}` : act.length > 1 && !C.myLock ? `${locked} of ${act.length} locked in` : '';
+  if (!sealed.hidden) sealed.innerHTML = `<span>Your answer</span><b>${esc((q.answers[C.myLock.aid] || {}).name || '')}</b><span>${waitFor.length ? 'Waiting for ' + esc(waitFor.slice(0, 3).join(', ')) + (waitFor.length > 3 ? '…' : '') + ' to answer' : 'Diving…'}</span>`;
+  $('status').textContent = crew ? `${v.cr.sl.filter(Boolean).length} of ${v.cr.ord.length} slots filled · strikes ${v.cr.miss}/${STRIKES}` : act.length > 1 && !C.myLock ? `${locked} of ${act.length} have answered` : '';
   const fz = $('force'); const isHost = C.role === 'host';
   const showF = !rv && isHost && act.length > 1 && (crew || (locked > 0 && locked < act.length));
-  fz.hidden = !showF; if (showF) fz.innerHTML = `<button class="lnk" type="button" data-act="force">${crew ? 'Give up this order' : 'Reveal now'}</button>`;
+  fz.hidden = !showF; if (showF) fz.innerHTML = `<button class="lnk" type="button" data-act="force">${crew ? 'Give up this order' : 'Stop waiting, show answers'}</button>`;
   $('crewBox').hidden = !crew || rv;
   if (crew && !rv) { renderOrders(v, q); renderFeed(v, q); $('hull').innerHTML = `<span class="lbl">Planks</span>` + [...Array(Math.max(3, v.cr.lives)).keys()].map(i => `<i class="${i < v.cr.lives ? '' : 'off'}"></i>`).join(''); }
   $('dvMp').hidden = C.role !== 'solo';
@@ -975,7 +978,7 @@ function dvFrame(v, t) {
     if (el) { el.style.top = (yOf(d) + DV_OFF).toFixed(1) + 'px'; el.classList.toggle('sinking', rv && !!DV.sink && pnow() >= DV.sink.t0 && d < DV.sink.to[p.id] - 0.5); }
     if (follow && p.id === follow.id) camD = d;
   }
-  { const narrow = innerWidth < 700; for (const tl of $('tlines').children) { const y = parseFloat(tl.style.top); tl.classList.toggle('near', narrow && ys.some(d => Math.abs(d - y) < 70)); } }
+  { const narrow = innerWidth < 700; for (const tl of $('tlines').querySelectorAll('.dv-tl')) { const y = parseFloat(tl.style.top); tl.classList.toggle('near', narrow && ys.some(d => Math.abs(d - y) < 70)); } }
   const ps = $('playScr'); if (ps.scrollTop || ps.scrollLeft) { ps.scrollTop = 0; ps.scrollLeft = 0; }
   const dt = DV.lastT ? Math.min(100, t - DV.lastT) : 16; DV.lastT = t;
   const hudB = (document.querySelector('#playScr .dv-hud') || { getBoundingClientRect: () => ({ bottom: 120 }) }).getBoundingClientRect().bottom;
@@ -983,7 +986,10 @@ function dvFrame(v, t) {
   const landed = rv && DV.landShown === C.timeKey;
   const want = rv ? (landed ? DV.landY / innerHeight : 0.56) : v.ph === 'lobby' ? 0.56 : v.set.mode === 'crew' ? 0.76 : Math.max(0.6, Math.min(0.72, ((DV.qB || 0) + 72) / innerHeight));
   DV.anchor += (want - DV.anchor) * Math.min(1, dt / 1000 * (landed ? 2.4 : 1.6));
-  const camY = innerHeight * DV.anchor - (yOf(camD) + DV_OFF);
+  { const pk = v.ph + ':' + v.r; if (DV.panKey !== pk) { DV.panKey = pk; DV.panHold = false; }
+    if (!DV.panHold && !DV.dragging) DV.pan = Math.abs(DV.pan || 0) < 1 ? 0 : DV.pan * Math.pow(0.002, dt / 1000);
+    DV.pan = Math.max(-(2600 * DV.S), Math.min(yOf(camD) - innerHeight * 0.2, DV.pan || 0)); }
+  const camY = innerHeight * DV.anchor - (yOf(camD) + DV_OFF) + DV.pan;
   $('world').style.transform = `translate3d(0,${camY.toFixed(1)}px,0)`;
   /* divers far above or below stay pinned at the screen edge with their depth, so you always see everyone */
   { const lo = hudB + 70, hi = innerHeight - 96; let iu = 0, idn = 0;
@@ -1067,9 +1073,9 @@ function playerCard(pid) {
   const rows = (v.hist || []).map((h, i) => {
     const q = QMAP[h.q]; const r = (h.res || []).find(x => x[0] === pid); const a = r && r[1] >= 0 ? q.answers[r[1]] : null;
     const flag = !r ? '' : r[4] === 's' ? ' · shared' : r[4] === 'k' ? ' · sunk' : '';
-    return `<li><span class="n">${i + 1}. ${esc(q.prompt)}<small>${a ? esc(a.name) + ' · ' + esc(TIERS[a.tier].name) : 'No answer'}${flag}</small></span><b>+${M(r ? r[2] : 0)}</b></li>`;
+    return `<li><span class="n">${i + 1}. ${esc(q.prompt)}<small>${a ? '“' + esc(a.name) + '” · ' + (r[4] === 'k' ? 'same answer as a teammate' : esc(TIERS[a.tier].name)) : 'No answer'}</small></span><b>+${M(r ? r[2] : 0)}</b></li>`;
   }).join('');
-  $('pmBody').innerHTML = `<div class="pm-head">${avatar(p.av)}<div><h2>${esc(p.nm)}${p.id === ME.id ? ' (you)' : ''}</h2><p>${act.length > 1 ? `Rank ${rank} of ${act.length} · ` : ''}${M(p.pts)} total</p></div></div>` +
+  $('pmBody').innerHTML = `<div class="pm-head">${avatar(p.av)}<div><h2>${esc(p.nm)}${p.id === ME.id ? ' (you)' : ''}</h2><p>${act.length > 1 ? `Place ${rank} of ${act.length} · ` : ''}${M(p.pts)} deep in total</p></div></div>` +
     (rows ? `<ol class="pm-rounds">${rows}</ol>` : '<p class="pm-none">No rounds finished yet.</p>');
   $('pM').hidden = false;
 }
@@ -1104,11 +1110,11 @@ function renderLobby(v) {
   const host = C.role === 'host'; const live = v.pl.filter(p => !p.gone); const me = meIn(v);
   $('lcode').textContent = roomName(v.code);
   const nR = live.filter(p => p.rdy).length; const cd = v.cd >= 0;
-  $('lobState').textContent = cd ? 'Diving in' : live.length < 2 ? 'Waiting for divers' : `${nR} of ${live.length} ready`;
-  const mine = !!(me && me.rdy);
-  $('start').innerHTML = mine ? `Ready ${ICON.check}` : 'Ready';
-  $('start').classList.toggle('on', mine);
-  $('start').hidden = !me || !!me.spec;
+  const isH = C.role === 'host';
+  $('lobState').textContent = cd ? 'Starting…' : live.length < 2 ? 'Waiting for a second player' : isH ? `${live.length} players here` : 'Waiting for the host to start';
+  $('start').innerHTML = cd ? 'Cancel' : 'Start game';
+  $('start').classList.toggle('on', cd);
+  $('start').hidden = !isH;
   $('setup').hidden = !!cd;
   { const st = v.set; const info = st.team ? 'Team: 10 prompts. Your depths add up. Say the same as a teammate and you both sink.' : st.rounds === 12 ? 'Blitz: 12 prompts. Rarer answers sink you deeper. Deepest diver wins.' : 'Versus: 10 prompts. Rarer answers sink you deeper. Deepest diver wins.';
     $('modeInfo').hidden = !!cd; if ($('modeInfo').textContent !== info) $('modeInfo').textContent = info; }
@@ -1253,16 +1259,16 @@ function renderFinal(v) {
   const acts = v.solo
     ? `<button class="lb-start" type="button" data-act="again">Dive again ${ICON.down}</button><div class="fn-links"><button class="fn-b" type="button" data-act="friends">Play with friends</button><button class="fn-b" type="button" data-act="share">Copy result</button></div>`
     : host
-      ? `<button class="lb-start" type="button" data-act="rematch">Dive again ${ICON.down}</button><div class="fn-links"><button class="fn-b" type="button" data-act="lobby">Back to lobby</button><button class="fn-b" type="button" data-act="share">Copy results</button></div>`
-      : `<p class="lb-wait">Waiting for the host…</p><div class="fn-links"><button class="fn-b" type="button" data-act="share">Copy results</button></div>`;
+      ? `<button class="lb-start" type="button" data-act="rematch">Play again ${ICON.down}</button><div class="fn-links"><button class="fn-b" type="button" data-act="lobby">Back to lobby</button><button class="fn-b" type="button" data-act="share">Copy results</button></div>`
+      : `<p class="lb-wait">Waiting for the host to start the next game</p><div class="fn-links"><button class="fn-b" type="button" data-act="share">Copy results</button></div>`;
   box.innerHTML = `<div class="lb-col fn-col">${body}${acts}</div>`;
 }
 const fnHead = (eye, big, sub, sm) => `<div class="fn-big${sm ? ' sm' : ''}">${esc(big)}</div><div class="fn-sub">${sub}</div>`;
 function vsFinal(v) {
   const rows = v.pl.filter(p => !p.spec).slice().sort((a, b) => b.pts - a.pts);
   const tie = rows[1] && rows[1].pts === rows[0].pts;
-  if (v.set.team) { const tot = rows.reduce((a, p) => a + p.pts, 0); const bt = Math.max(LS.get('teamBest', 0), tot); LS.set('teamBest', bt); return fnHead('Team dive', M(tot), tot >= bt ? 'new team best' : `team best ${esc(M(bt))}`, true) + `<ol class="fn-board">${rows.map((p, i) => `<li class="${p.id === ME.id ? 'me' : ''}"><span class="rk">${i + 1}</span>${avatar(p.av)}<span class="n">${esc(p.nm)}</span><b>${esc(M(p.pts))}</b></li>`).join('')}</ol>`; }
-  const head = tie ? fnHead('Dive complete', 'It’s a tie', 'Same depth at the top', true) : fnHead('Dive complete', rows[0].nm, `went deepest · ${esc(M(rows[0].pts))}`, true);
+  if (v.set.team) { const tot = rows.reduce((a, p) => a + p.pts, 0); const bt = Math.max(LS.get('teamBest', 0), tot); LS.set('teamBest', bt); return fnHead('Team dive', M(tot), tot >= bt ? 'Team total · new team best' : `Team total · your best is ${esc(M(bt))}`, true) + `<ol class="fn-board">${rows.map((p, i) => `<li class="${p.id === ME.id ? 'me' : ''}"><span class="rk">${i + 1}</span>${avatar(p.av)}<span class="n">${esc(p.nm)}</span><b>${esc(M(p.pts))}</b></li>`).join('')}</ol>`; }
+  const head = tie ? fnHead('Dive complete', 'It’s a tie', 'Same depth at the top', true) : fnHead('Dive complete', rows[0].nm + ' wins', `Deepest diver · ${esc(M(rows[0].pts))}`, true);
   const board = `<ol class="fn-board">${rows.map((p, i) => `<li class="${p.id === ME.id ? 'me' : ''}"><span class="rk">${i + 1}</span>${avatar(p.av)}<span class="n">${esc(p.nm)}</span><b>${esc(M(p.pts))}</b></li>`).join('')}</ol>`;
   return head + board;
 }
@@ -1388,7 +1394,7 @@ function bind() {
   ['howM', 'leaveM', 'meM', 'pM'].forEach(id => $(id).addEventListener('click', (e) => { if (e.target.id === id) $(id).hidden = true; }));
   $('setup').addEventListener('click', (e) => {
     if (!H) return;
-    const mb = e.target.closest('[data-mode]'); if (mb) { if (!H || mb.disabled) return; H.set.mode = mb.dataset.mode; H.set.rounds = +mb.dataset.r || 7; H.set.secs = 0; H.set.team = mb.dataset.t === '1'; for (const p of H.players) p.rdy = 0; H.cdAt = 0; H.dirty = true; broadcast(); return; }
+    const mb = e.target.closest('[data-mode]'); if (mb) { if (!H || mb.disabled) return; H.set.mode = mb.dataset.mode; H.set.rounds = +mb.dataset.r || 7; H.set.secs = 0; H.set.team = mb.dataset.t === '1'; H.go = false; H.cdAt = 0; H.dirty = true; broadcast(); return; }
     const sb = e.target.closest('.seg button'); if (sb) { const k = sb.parentElement.dataset.set; H.set[k] = +sb.dataset.v; H.dirty = true; broadcast(); return; }
     const tb = e.target.closest('[data-topic]');
     if (tb) {
@@ -1398,11 +1404,22 @@ function bind() {
       H.dirty = true; broadcast();
     }
   });
-  $('start').addEventListener('click', () => { const v = C.view; if (!v || v.ph !== 'lobby') return; const me = meIn(v); send('rdy', { on: !(me && me.rdy) }); vib(20); });
+/* drag (or wheel) the water to look at every rarity zone; it eases back on the next prompt */
+(() => {
+  const ps = $('playScr'); let y0 = 0, p0 = 0, on = false;
+  const ok = (e) => !e.target.closest('button, input, a, textarea') && !(e.target.closest('.dv-land') && $('land').scrollHeight > $('land').clientHeight + 2) && C.view && C.view.ph !== 'lobby';
+  ps.addEventListener('pointerdown', (e) => { if (!ok(e)) return; on = true; y0 = e.clientY; p0 = DV.pan || 0; DV.dragged = false; });
+  addEventListener('pointermove', (e) => { if (!on) return; const d = e.clientY - y0; if (!DV.dragging && Math.abs(d) < 8) return; DV.dragging = true; DV.panHold = true; DV.dragged = true; DV.pan = p0 + d; });
+  const end = () => { on = false; DV.dragging = false; setTimeout(() => (DV.dragged = false), 60); };
+  addEventListener('pointerup', end); addEventListener('pointercancel', end);
+  ps.addEventListener('wheel', (e) => { if (!C.view || C.view.ph === 'lobby' || e.target.closest('.dv-land')) return; DV.panHold = true; DV.pan = (DV.pan || 0) - e.deltaY; }, { passive: true });
+})();
+  $('start').addEventListener('click', () => { const v = C.view; if (!v || v.ph !== 'lobby' || C.role !== 'host' || !H) return; if (v.pl.filter(p => !p.gone && !p.off).length < 2) { toast('You need at least 2 players to start.'); return; } H.go = !H.go; H.dirty = true; broadcast(); vib(20); });
   $('ansF').addEventListener('submit', (e) => { e.preventDefault(); submit(); });
   $('ans').addEventListener('input', () => { if (C.fb && C.fb.kind === 'no') { C.fb = null; renderFb(); } onTyping(); });
   $('orders').addEventListener('click', (e) => { const b = e.target.closest('button.slot'); if (!b) return; const i = +b.dataset.slot; const v = C.view; const cur = v && v.cr && v.cr.calls ? v.cr.calls[ME.id] : null; send('call', { slot: cur === i ? null : i }); });
   document.addEventListener('click', (e) => {
+    if (DV.dragged) { DV.dragged = false; return; }
     const pc = e.target.closest('#divers .dvr[data-pid], .lboard li[data-pid]'); if (pc && C.view && C.view.ph !== 'lobby') { playerCard(pc.dataset.pid); return; }
     const rb = e.target.closest('[data-room]'); if (rb) { enterRoom(rb.dataset.room); return; }
     const em = e.target.closest('[data-emo]'); if (em) { if (C.role && C.role !== 'solo') { send('emo', { e: em.dataset.emo }); } return; }
@@ -1451,3 +1468,4 @@ function buildOcean() {
 }
 boot();
 })();
+
