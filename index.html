@@ -1797,6 +1797,18 @@ html body #playScr .dv-bar .fb:not(:empty),html body #playScr .dv-bar .fb:not(:e
 html body #start[hidden]{display:none !important}
 html body .dv-land .lb-h{display:flex !important;justify-content:space-between !important;gap:12px}
 html body .dv-land .lb-h{width:100%;box-sizing:border-box;padding:0 8px}
+
+/* reveal card on short phones with many players: drop extras so the list and button fit */
+@media (max-height:700px){
+  html body #playScr .dv-land:has(.lboard li:nth-child(4)) .lt-q,html body #playScr .dv-land:has(.lboard li:nth-child(4)) .lb-h{display:none !important}
+  html body #playScr .dv-land:has(.lboard li:nth-child(4)) .lt-t{font-size:1.7rem !important}
+  html body #playScr .lboard:has(li:nth-child(4)) .n{font-size:1.05rem !important}
+  html body #playScr .lboard:has(li:nth-child(4)) .n small{font-size:.85rem !important}
+  html body #playScr .lboard:has(li:nth-child(4)) .av{width:24px !important;height:24px !important}
+  html body #playScr .dv-land:has(.lboard li:nth-child(4)) .btn.desc{font-size:1.4rem !important;padding:8px 18px !important}
+}
+html body #playScr #land{touch-action:pan-y}
+html body #playScr #world,html body #playScr #world *,html body #playScr .dv-hud,html body #playScr .dv-hud *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 </style>
 </head>
 <body data-scr="boot">
@@ -1886,10 +1898,11 @@ html body .dv-land .lb-h{width:100%;box-sizing:border-box;padding:0 8px}
     <div class="ladder" id="howLadder"></div>
     <h3>With friends</h3>
     <ul>
-      <li>The last prompt counts double.</li>
       <li><b>Versus</b>: 10 prompts. Deepest diver wins.</li>
-      <li><b>Team</b>: 10 prompts. Your depths add up. Match a teammate and you both sink.</li>
-      <li><b>Blitz</b>: 12 prompts.</li>
+      <li><b>Team</b>: 10 prompts. Your depths add up. Give the same answer as a teammate and you both get nothing.</li>
+      <li><b>Blitz</b>: a quick 5-prompt game.</li>
+      <li>The last prompt counts double. The host taps Start game; the next prompt starts by itself.</li>
+      <li>Drag the water up and down to see every rarity zone.</li>
     </ul>
     <div class="row"><button class="btn red" type="button" id="howX">Got it</button></div>
   </div>

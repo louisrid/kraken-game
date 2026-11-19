@@ -1116,12 +1116,12 @@ function renderLobby(v) {
   $('start').classList.toggle('on', cd);
   $('start').hidden = !isH;
   $('setup').hidden = !!cd;
-  { const st = v.set; const info = st.team ? 'Team: 10 prompts. Your depths add up. Say the same as a teammate and you both sink.' : st.rounds === 12 ? 'Blitz: 12 prompts. Rarer answers sink you deeper. Deepest diver wins.' : 'Versus: 10 prompts. Rarer answers sink you deeper. Deepest diver wins.';
+  { const st = v.set; const info = st.team ? 'Team: 10 prompts. Your depths add up. Say the same as a teammate and you both sink.' : st.rounds === 5 ? 'Blitz: a quick 5-prompt game. Rarer answers sink you deeper. Deepest diver wins.' : 'Versus: 10 prompts. Rarer answers sink you deeper. Deepest diver wins.';
     $('modeInfo').hidden = !!cd; if ($('modeInfo').textContent !== info) $('modeInfo').textContent = info; }
   const s = v.set; const sig = s.mode + s.rounds + (s.team ? 't' : '') + host;
   if ($('setup')._sig !== sig) {
     $('setup')._sig = sig;
-    $('setup').innerHTML = [['vs', 10, 0, 0, 'Versus'], ['vs', 10, 0, 1, 'Team'], ['vs', 12, 0, 0, 'Blitz']].map(([k, r, sc, tm, n]) => `<button type="button" data-mode="${k}" data-r="${r}" data-s="${sc}" data-t="${tm}" aria-pressed="${s.rounds === r && !!s.team === !!tm}" ${host ? '' : 'disabled'}>${n}</button>`).join('');
+    $('setup').innerHTML = [['vs', 10, 0, 0, 'Versus'], ['vs', 10, 0, 1, 'Team'], ['vs', 5, 0, 0, 'Blitz']].map(([k, r, sc, tm, n]) => `<button type="button" data-mode="${k}" data-r="${r}" data-s="${sc}" data-t="${tm}" aria-pressed="${s.rounds === r && !!s.team === !!tm}" ${host ? '' : 'disabled'}>${n}</button>`).join('');
   }
   $('dvMp').hidden = true;
   renderDivers(v);
