@@ -2,7 +2,7 @@
 <html lang="en-GB" data-theme="light">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
 <meta name="theme-color" content="#ffffff">
 <meta name="description" content="Kraken: a fast online trivia game for 2 to 8 friends. Every prompt has dozens of right answers. The rarer yours, the deeper it sinks.">
 <title>Kraken</title>
@@ -1810,12 +1810,148 @@ html body .dv-land .lb-h{width:100%;box-sizing:border-box;padding:0 8px}
 }
 html body #playScr #land{touch-action:pan-y}
 html body #playScr #world,html body #playScr #world *,html body #playScr .dv-hud,html body #playScr .dv-hud *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+/* The fixed arrow switches between solo (left) and multiplayer (right). */
+.nav svg{transition:transform .24s cubic-bezier(.2,.9,.3,1)}
+.nav.to-solo svg{transform:rotate(180deg)}
+html body .nav:focus-visible{outline:3px solid #ffd400 !important;outline-offset:6px}
+html body .hm-stats[hidden]{display:none}
+html body .scr.hm .hm-logo{font-size:clamp(3.2rem,12vw,5.6rem) !important}
+.hm-help{max-width:400px;text-align:center;margin:0 0 20px;line-height:1.4}
+@media (prefers-reduced-motion:reduce){.nav svg{transition:none}}
+/* Lobby controls live on the sea, within the visible viewport. */
+html,body{height:100%;overscroll-behavior:none}
+body{overflow:hidden}
+html body #playScr{height:100dvh;max-height:100dvh;overflow:hidden !important}
+html body #playScr .lob-top{top:max(12px,env(safe-area-inset-top));gap:10px;padding:0 88px 0 16px;justify-items:center}
+html body #playScr .lob-name{font-size:clamp(2rem,7vw,3.6rem) !important;margin:0}
+html body #playScr .lob-state{font-size:clamp(.9rem,3.2vw,1.2rem);padding:6px 10px;max-width:100%}
+.lobby-rooms{display:flex;gap:8px;pointer-events:auto}
+html body #playScr .lobby-rooms button,html body #playScr .lob-profile{font:italic 800 1rem/1.1 var(--cond);text-transform:uppercase;background:#fff;color:#000;border:3px solid #000;border-radius:12px;padding:10px 14px;cursor:pointer;-webkit-text-stroke:0 !important;text-shadow:none !important}
+html body #playScr .lobby-rooms button[aria-pressed=true]{background:#ffd400}
+html body #playScr .lob-bot{gap:8px;padding:12px 12px max(12px,env(safe-area-inset-bottom))}
+html body #playScr .lob-modes{gap:8px;margin:0}
+html body #playScr .lob-modes button{font-size:clamp(1rem,4vw,1.4rem) !important;padding:10px 14px !important}
+html body #playScr .lob-info{max-width:480px;font-size:.95rem;margin:0;line-height:1.15}
+html body #playScr .lob-ready{font-size:clamp(1.3rem,4vw,2rem) !important;padding:12px !important;width:min(420px,100%)}
+html body #playScr .lob-ready:disabled{opacity:.65;cursor:default}
+@media(max-height:580px){
+  html body #playScr .lob-top{gap:5px}
+  html body #playScr .lob-name{display:none}
+  html body #playScr .lob-bot{gap:5px}
+  html body #playScr .lob-info{display:none}
+  html body #playScr .lob-profile{position:absolute;left:12px;bottom:12px;padding:8px;font-size:.85rem}
+  html body #playScr .lob-ready{width:min(300px,55%)}
+}
+/* Shared viewport scale: keep the HUD, prompt and controls out of the water. */
+:root{--ui-gap:clamp(8px,1.6dvh,16px);--hud-height:58px}
+html body .nav{width:50px;height:50px;right:max(12px,env(safe-area-inset-right));top:max(12px,env(safe-area-inset-top))}
+html body .nav svg{width:28px;height:28px}
+html body #playScr .dv-hud{height:var(--hud-height);padding:0 76px 0 12px !important;gap:8px !important;justify-content:center !important;align-items:stretch}
+html body #playScr .dv-hud .pod{min-width:0 !important;max-width:180px;flex:1;padding:6px 10px !important;border-radius:12px}
+html body #playScr .dv-hud .pod .label{display:block;font-size:.7rem !important;line-height:1.1;white-space:nowrap;margin:0}
+html body #playScr .dv-hud .pod b{font-size:clamp(1.2rem,3.5vw,1.65rem) !important;line-height:1;margin-top:4px}
+html body #playScr .hdots{display:none}
+html body #playScr .dv-q{top:calc(max(12px,env(safe-area-inset-top)) + var(--hud-height) + var(--ui-gap)) !important;width:min(580px,calc(100% - 32px));padding:10px 16px !important;border-radius:14px !important}
+html body #playScr .dv-q .qn{font-size:.85rem !important;line-height:1;padding:4px 8px !important;margin:0 !important}
+html body #playScr .dv-q h2{font-size:clamp(1.3rem,4.5vw,2rem) !important;line-height:1.08 !important;margin:8px 0 2px !important;overflow-wrap:anywhere}
+html body #playScr .dv-bar{gap:6px;padding:16px 16px max(12px,env(safe-area-inset-bottom)) !important}
+html body #playScr .dv-in{width:min(580px,100%);gap:10px}
+html body #playScr .dv-in .field,html body #playScr .dv-in .btn{height:54px !important;min-height:44px;font-size:1.4rem !important;border-radius:12px !important}
+html body #playScr .dv-in .btn{padding:0 20px !important;flex:none}
+html body #playScr .ansFx,html body #playScr .ansFx *{font-size:1.35rem !important}
+html body #playScr .ansFx{inset:4px 12px}
+html body #playScr .fb:empty,html body #playScr .status:empty{display:none}
+html body #playScr .dv-bar .fb:not(:empty){font-size:1rem !important;padding:6px 10px;margin:0;max-width:580px}
+html body #playScr .status:not(:empty),html body #playScr .dv-sealed,html body #playScr .dv-watch{font-size:1rem !important;padding:8px 12px !important;max-width:min(580px,100%);overflow-wrap:anywhere}
+html body #playScr .dvr .nm{max-width:130px;overflow:hidden;text-overflow:ellipsis;font-size:1rem !important;padding:4px 8px !important}
+html body #playScr .dvr.me .av{width:64px !important;height:64px !important}
+html body #playScr .dvr:not(.me) .av{width:52px !important;height:52px !important}
+html body #playScr .dvr .tag{font-size:1rem !important;max-width:min(220px,38vw)}
+html body #playScr .meflag{font-size:.75rem !important}
+html body #playScr .lob-top{right:0;padding-right:76px;gap:8px}
+html body #playScr .lob-state{font-size:1rem !important;line-height:1.15}
+html body #playScr .lob-bot{gap:8px}
+html body #playScr .lob-info{font-size:.9rem !important;max-width:440px}
+html body #playScr .lob-ready{min-height:44px}
+html body #playScr .lob-modes button{min-height:44px}
+/* Results keep their actions visible; only the detailed list can scroll. */
+html body .scr.final{height:100dvh;padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom));overflow:hidden}
+html body #finalScr .fn-col{height:100%;max-height:100%;width:min(620px,100%);min-height:0;padding:0;display:flex;flex-direction:column;gap:10px}
+html body #finalScr .fn-big{font-size:clamp(2.4rem,9vw,4.5rem) !important;line-height:1.05;padding:4px 60px;max-width:100%;overflow-wrap:anywhere;flex:none}
+html body #finalScr .fn-sub{font-size:clamp(1rem,3vw,1.3rem) !important;line-height:1.2;max-width:100%}
+html body #finalScr .fn-cells{flex:none;flex-wrap:wrap;justify-content:center;gap:5px;margin:0}
+html body #finalScr .fn-cells i{width:20px;height:20px}
+html body #finalScr .fn-log,html body #finalScr .fn-board{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;align-content:start;margin:0}
+html body #finalScr .fn-log li,html body #finalScr .fn-board li{padding:8px;gap:8px}
+html body #finalScr .fn-board .av{width:36px;height:36px}
+html body #finalScr .fn-board b{font-size:1.3rem !important;white-space:nowrap}
+html body #finalScr .lb-start{width:100%;min-height:48px;padding:12px !important;font-size:1.6rem !important;flex:none;margin:0}
+html body #finalScr .fn-links{flex:none;gap:8px}
+html body #finalScr .fn-b{min-height:44px;font-size:1rem !important;padding:10px !important}
+/* Dialogs fit inside the viewport and retain reachable actions. */
+html body .modal{padding:12px;overflow:hidden}
+html body .modal .dlg{max-height:calc(100dvh - 24px);max-width:520px;padding:16px;gap:10px;overscroll-behavior:contain;scrollbar-width:thin}
+html body .modal .dlg h2{font-size:1.8rem !important;line-height:1.1;margin:0}
+html body .modal .dlg .btn{min-height:44px;font-size:1.1rem !important;padding:10px 14px !important}
+html body .modal .dlg .field{min-height:44px;font-size:1.1rem !important}
+html body #meM .dlg{display:flex;flex-direction:column;overflow:hidden}
+html body #meM .dlg>*{flex-shrink:0}
+html body #meM #avs2{flex:1;min-height:48px;overflow:auto;grid-template-columns:repeat(auto-fit,minmax(44px,1fr));gap:8px;padding:4px}
+html body #meM .avb{width:44px;height:44px;padding:4px}
+html body #pM .dlg{display:flex;flex-direction:column;overflow:hidden}
+html body #pmBody{overflow:auto;min-height:0}
+html body #pmX{flex:none}
+html body .toast{top:auto;bottom:max(84px,env(safe-area-inset-bottom));font-size:1rem !important;width:max-content;max-width:calc(100% - 32px)}
+html body button:focus-visible,html body input:focus-visible{outline:3px solid #ffd400 !important;outline-offset:3px}
+@media(max-width:360px){
+  html body #playScr .dv-hud{gap:5px !important;padding-right:72px !important}
+  html body #playScr .dv-hud .pod{padding:6px !important}
+  html body #playScr .dv-hud .pod .label{font-size:.6rem !important}
+  html body #playScr .lob-top{padding-right:72px}
+  html body #playScr .lob-state{font-size:.85rem !important}
+}
+@media(max-height:500px){
+  :root{--hud-height:44px;--ui-gap:6px}
+  html body #playScr .dv-hud .pod{padding:4px 8px !important}
+  html body #playScr .dv-hud .pod b{font-size:1.2rem !important;margin-top:2px}
+  html body #playScr .dv-q{padding:6px 12px !important;width:min(520px,calc(100% - 32px))}
+  html body #playScr .dv-q .qn{font-size:.7rem !important;padding:2px 6px !important}
+  html body #playScr .dv-q h2{font-size:1.15rem !important;margin:4px 0 0 !important}
+  html body #playScr .dv-bar{padding:8px 16px max(8px,env(safe-area-inset-bottom)) !important;gap:4px}
+  html body #playScr .dv-in .field,html body #playScr .dv-in .btn{height:44px !important}
+  html body #playScr .dvr.me .av{width:48px !important;height:48px !important}
+  html body #playScr .dvr:not(.me) .av{width:40px !important;height:40px !important}
+  html body #playScr .meflag{display:none}
+  html body #playScr .lob-top{gap:4px}
+  html body #playScr .lob-bot{gap:4px}
+  html body #playScr .lob-profile{left:12px;bottom:12px}
+  html body #finalScr .fn-col{gap:6px}
+  html body #finalScr .fn-big{font-size:2rem !important}
+  html body #finalScr .fn-sub{font-size:1rem !important}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;scroll-behavior:auto !important}}
+
+/* Keep primary actions outside scrollable details on short screens. */
+html body #playScr .dv-land{display:flex;flex-direction:column;align-items:center;overflow:hidden;padding:12px !important;gap:8px !important}
+html body #playScr .dv-land[hidden]{display:none}
+html body #playScr .land-details{width:100%;min-height:0;overflow:auto;overscroll-behavior:contain;display:grid;gap:6px;flex:1}
+html body #playScr .dv-land>.desc,html body #playScr .dv-land>.lwait{flex:none;margin:0;font-size:1.3rem !important;min-height:44px;padding:10px 16px !important}
+html body #howM .dlg{display:flex;flex-direction:column;overflow:hidden}
+html body #howM .dialog-body{overflow:auto;min-height:0;display:grid;gap:10px}
+html body #howM .row{flex:none}
+html body #playScr.lob .dvr .meflag{display:none}
+html body #playScr.lob .dvr .nm{max-width:calc(25vw - 10px);font-size:.9rem !important}
+html body #playScr.lob.crowded .dvr .av{width:44px !important;height:44px !important}
+@media(max-height:500px){html body #playScr.lob .dvr .av{width:36px !important;height:36px !important}html body #playScr.lob .dvr .nm{font-size:.75rem !important;padding:2px 6px !important}}
+@media(max-width:500px){html body #playScr.lob .lob-profile{position:static}html body #playScr.lob .lob-bot{padding-top:6px}html body #playScr.lob .lob-profile{padding:6px 12px;min-height:32px}html body #playScr.lob .lob-info{display:none}}
+html body #playScr.lob .dvr{margin-top:0 !important;transform:translate(-50%,-50%) !important}
+html body .scr button:focus-visible,html body .dlg button:focus-visible,html body .scr input:focus-visible,html body .dlg input:focus-visible{outline:3px solid #ffd400 !important;outline-offset:3px}
 </style>
 </head>
 <body data-scr="boot">
 <noscript>Kraken needs JavaScript turned on.</noscript>
 <div class="themes" id="themes" role="group" aria-label="Theme"></div>
-<button class="nav" type="button" data-act="back" aria-label="Home" id="tbX"></button>
+<button class="nav" type="button" data-act="back" aria-label="Switch to multiplayer lobby" id="tbX"></button>
 <div class="ocean" aria-hidden="true">
   <div class="o-rays"><i></i><i></i><i></i><i></i></div>
   <div class="o-snow"></div>
@@ -1833,13 +1969,14 @@ html body #playScr #world,html body #playScr #world *,html body #playScr .dv-hud
 
 <main>
   <!-- HOME -->
-  <section class="scr home hm" aria-label="Home">
+  <section class="scr home hm" aria-label="Multiplayer lobby">
     <div class="lb-col hm-col">
       <div class="hm-kraken" id="homeKraken"></div>
-      <h1 class="hm-logo">Kraken</h1>
-      <div class="hm-stats" id="hmStats"></div>
-      <button class="lb-start" id="practice" type="button">Solo dive <svg class="ico" viewBox="-3 -3 30 30" aria-hidden="true"><path d="M12 3.5V19.5M4.5 12.5 12 20l7.5-7.5" fill="none" stroke="#000" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 3.5V19.5M4.5 12.5 12 20l7.5-7.5" fill="none" stroke="currentColor" stroke-width="6.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-      <div class="lb-eye hm-eye">Play with friends</div>
+      <h1 class="hm-logo">Multiplayer</h1>
+      <div class="hm-stats" id="hmStats" hidden></div>
+      <button id="practice" type="button" hidden>Solo dive</button>
+      <div class="lb-eye hm-eye">Choose a lobby</div>
+      <p class="hm-help">Host an empty lobby or join your friends. The host chooses the mode and starts the game.</p>
       <div class="rooms" id="hmRooms"></div>
       <button class="hm-rejoin" id="rejoin" type="button" hidden>Rejoin</button>
       <button class="lb-me hm-me" type="button" data-act="me"><span id="hmAv"></span>You’re <b id="hmMe"></b> · change</button>
@@ -1865,9 +2002,9 @@ html body #playScr #world,html body #playScr #world *,html body #playScr .dv-hud
     <div class="dv-crew" id="crewBox" hidden><div class="card orders" id="orders"></div><div class="hull" id="hull"></div><ul class="feed" id="feed"></ul></div>
     <div class="dv-land" id="land" hidden></div>
     <div class="dv-lobby" id="lobBox">
-      <div class="lob-top"><h1 class="lob-name" id="lcode">Lobby</h1><div class="lob-state" id="lobState"></div></div>
+      <div class="lob-top"><div class="lobby-rooms" id="lobbyRooms" role="group" aria-label="Multiplayer lobby"></div><h1 class="lob-name" id="lcode">Lobby</h1><div class="lob-state" id="lobState"></div></div>
       <div class="lob-cd" id="lobCd" hidden></div>
-      <div class="lob-bot"><div class="lob-modes" id="setup" role="group" aria-label="Mode"></div><p class="lob-info" id="modeInfo"></p><button class="lob-ready" id="start" type="button">Ready</button></div>
+      <div class="lob-bot"><button class="lob-profile" type="button" data-act="me">Change diver</button><div class="lob-modes" id="setup" role="group" aria-label="Mode"></div><p class="lob-info" id="modeInfo"></p><button class="lob-ready" id="start" type="button">Ready</button></div>
     </div>
     <footer class="dv-bar">
       <div class="fb" id="fb" aria-live="polite"></div>
@@ -1894,7 +2031,7 @@ html body #playScr #world,html body #playScr #world *,html body #playScr .dv-hud
 </div>
 <div class="modal" id="howM" hidden>
   <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="howT">
-    <h2 id="howT">How to play</h2>
+    <div class="dialog-body"><h2 id="howT">How to play</h2>
     <p>One answer per prompt. The rarer your answer, the deeper you sink.</p>
     <div class="ladder" id="howLadder"></div>
     <h3>With friends</h3>
@@ -1905,7 +2042,7 @@ html body #playScr #world,html body #playScr #world *,html body #playScr .dv-hud
       <li>The last prompt counts double. The host taps Start game; the next prompt starts by itself.</li>
       <li>Drag the water up and down to see every rarity zone.</li>
     </ul>
-    <div class="row"><button class="btn red" type="button" id="howX">Got it</button></div>
+    </div><div class="row"><button class="btn red" type="button" id="howX">Got it</button></div>
   </div>
 </div>
 <div class="modal" id="meM" hidden>
