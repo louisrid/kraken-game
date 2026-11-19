@@ -139,9 +139,5 @@ no:"iPhone: A phone; Android: An operating system; Apple: A company; Microsoft: 
   merge('musician', [], L.musician);
   merge('book', [], L.book);
   merge('tvshow', []); merge('app', ['defunct']); merge('candy', []); merge('fastfood', []); merge('toy', []); merge('yt2010', []); merge('yt2020', []);
-  const DROP = new Set(['animated', 'horror', 'bestpicture', 'nintendo', 'bond', 'mj', 'eurovision', 'beatles', 'genre', 'island',
-    'f1', 'ballsport', 'olysport', 'tennis',
-    'typeface', 'proglang', 'blue', 'element', 'body', 'bread', 'spice', 'veg', 'japanese', 'seas', 'solar', 'bird', 'capital', 'airline', 'instrument',
-    'rh_day', 'rh_bee', 'rh_night', 'rh_blue', 'w_q', 'w_ology', 'w_zz']);
-  for (let i = BANK_SRC.length - 1; i >= 0; i--) if (DROP.has(BANK_SRC[i].id)) BANK_SRC.splice(i, 1);
+  // Keep specific topics alongside broad prompts for a varied question pool.
 })();
