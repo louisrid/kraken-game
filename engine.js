@@ -133,15 +133,23 @@ function matchAnswer(q, input) {
   const words = normText(input).split(' ');
   if (q.sur.size && words.length === 1 && q.sur.has(k)) {
     const set = q.sur.get(k);
-    return hit(set);
+    if (set.size === 1) return hit(set);
+    return { ok: false, kind: 'ambiguous', msg: 'More than one answer fits. Use the full name.' };
   }
-  /* any one word of an answer is enough ("grudge" for The Grudge, a first name for a person) */
-  if (!q.exact && k.length >= 4) {
+  /* Shortened names are accepted only when they identify a single answer.
+     Shared words and prefixes must never silently choose a different answer. */
+  const ambiguous = () => ({ ok: false, kind: 'ambiguous', msg: 'More than one answer fits. Be more specific.' });
+  if (!q.exact && words.length === 1 && k.length >= 4) {
     if (!q.wd) { q.wd = new Map(); for (const a of q.answers) for (const w of normText(a.name).split(' ')) if (w.length >= 4) { if (!q.wd.has(w)) q.wd.set(w, new Set()); q.wd.get(w).add(a.id); } }
-    for (const w of [k, s, ...words.filter(w => w.length >= 4)]) if (q.wd.has(w)) return hit(q.wd.get(w), true);
-    /* the start of an answer ("strawb"), or an answer inside a longer phrase ("a red apple") */
-    if (k.length >= 5) { const pre = new Set(); for (const cand of q.keys) if (cand.startsWith(k)) q.idx.get(cand).forEach(i => pre.add(i)); if (pre.size) return hit(pre, true); }
-    for (const w of words) if (w.length >= 3 && q.idx.has(w)) return hit(q.idx.get(w), true);
+    for (const w of [k, s]) if (q.wd.has(w)) {
+      const ids = q.wd.get(w);
+      return ids.size === 1 ? hit(ids, true) : ambiguous();
+    }
+    if (k.length >= 5) {
+      const pre = new Set();
+      for (const cand of q.keys) if (cand.startsWith(k)) q.idx.get(cand).forEach(i => pre.add(i));
+      if (pre.size) return pre.size === 1 ? hit(pre, true) : ambiguous();
+    }
   }
   /* word games: one slip allowed in longer words, and the first two letters must match */
   const budget = q.exact ? (k.length >= 5 ? 1 : 0) : fuzzBudget(k.length);
@@ -167,7 +175,7 @@ function matchAnswer(q, input) {
     if (found.length) {
       const ids = new Set(); let decoy = null;
       for (const f of found) { if (f.type === 'a') f.set.forEach(i => ids.add(i)); else decoy = f.msg; }
-      if (ids.size && !decoy) return hit(ids, true);
+      if (ids.size && !decoy) return ids.size === 1 ? hit(ids, true) : ambiguous();
       if (!ids.size && decoy) return { ok: false, kind: 'decoy', msg: decoy };
     }
   }

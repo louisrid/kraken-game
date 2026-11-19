@@ -155,7 +155,7 @@ function hostHandle(m) {
       if (m.sid && p.sid && m.sid !== p.sid) break;
       if (H.phase === 'lobby') H.players = H.players.filter(x => x !== p); else p.gone = 1;
       H.dirty = true; break;
-    case 'ans': hostAnswer(p, m.text); break;
+    case 'ans': if (m.r === H.round) hostAnswer(p, m.text); break;
     case 'sub': hostCrewSub(p, m.text); break;
     case 'call': if (H.crew && H.phase === 'play') { H.crew.calls[p.id] = Number.isInteger(m.slot) ? m.slot : null; H.dirty = true; } break;
     case 'draft': if (H.crew && H.phase === 'play') { H.crew.drafts[p.id] = String(m.text || '').slice(0, 24); H.dirty = true; } break;
@@ -167,7 +167,13 @@ function hostHandle(m) {
 const curQH = () => QMAP[H.qs[H.round]];
 function hostAnswer(p, text) {
   if (H.phase !== 'play' || H.set.mode !== 'vs' || p.spec) return;
-  if (H.answers[p.id]) { direct(p.id, { t: 'fb', kind: 'locked', aid: H.answers[p.id].aid, r: H.round }); return; }
+  // A saved answer can be replaced only while another active diver is still choosing.
+  const t = now();
+  const act = activePlayers().filter(x => x.id === ME.id || t - x.seen < OFF_AFTER);
+  if (t >= H.endsAt || (H.answers[p.id] && act.every(x => H.answers[x.id]))) {
+    if (H.answers[p.id]) direct(p.id, { t: 'fb', kind: 'locked', aid: H.answers[p.id].aid, r: H.round });
+    return;
+  }
   if (now() < H.introEnd - 300) return;
   const r = matchAnswer(curQH(), String(text || '').slice(0, 80));
   if (!r.ok) { direct(p.id, { t: 'fb', kind: r.kind, msg: r.msg, text: String(text || '').slice(0, 40), r: H.round }); return; }
@@ -599,7 +605,7 @@ function onState(v) {
 }
 function onPhase(v, prev) {
   if (v.ph === 'play') {
-    C.myLock = null; C.mySubs = []; C.fb = null; C.lastTickSec = -1;
+    C.myLock = null; C.pendingLock = null; C.editing = false; C.mySubs = []; C.fb = null; C.lastTickSec = -1;
     $('ans').value = '';
     vib(40); wakeLock(true);
     if (v.r === 0 || !C.myTiers) C.myTiers = {};
@@ -622,7 +628,7 @@ function onDirect(m) {
   if (m.t === 'rejoin') { send('join', { name: ME.name, av: ME.av, historyId: ME.historyId }); return; }
   if (m.t !== 'fb' || !v || m.r !== v.r) return;
   const q = QMAP[v.q];
-  if (m.kind === 'locked') { C.myLock = { aid: m.aid }; render(); return; }
+  if (m.kind === 'locked') { C.myLock = { aid: m.aid }; C.pendingLock = null; C.editing = false; C.fb = null; render(); return; }
   if (m.kind === 'crew') {
     const a = q.answers[m.aid];
     const txt = { fill: 'Filled a slot!', miss: 'Wrong depth. That’s a strike.', gem: 'The kraken’s pick! +1 plank', dup: 'Already in this order' }[m.res];
@@ -630,9 +636,9 @@ function onDirect(m) {
     if (m.res === 'miss') { SFX.bad(); vib([30, 40, 30]); } else if (m.res === 'gem') { SFX.roar(); vib([60, 40, 120]); } else if (m.res === 'dup') SFX.dup(); else SFX.lock();
     renderFb(); return;
   }
-  C.myLock = null;
+  if (C.myLock?.pending) { C.myLock = C.pendingLock || null; C.pendingLock = null; C.editing = !!C.myLock; }
   C.fb = { kind: 'no', html: m.kind === 'decoy' ? `<span class="tag no">${esc(m.text)}</span> ${esc(m.msg)}` : esc(m.msg) };
-  renderFb(); shake(); SFX.bad();
+  render(); shake(); SFX.bad();
 }
 function shake() { const i = $('ansWrap') || $('ans'); i.classList.remove('shk'); void i.offsetWidth; i.classList.add('shk'); }
 let ansFxLast = null;
@@ -658,9 +664,11 @@ function submit() {
     renderFb(); shake(); SFX.bad(); vib(30); return;
   }
   if (v.set.mode === 'vs') {
-    if (C.myLock) return;
+    if (C.myLock && !C.editing) return;
+    C.editing = false;
+    C.pendingLock = C.myLock;
     C.myLock = { aid: r.id, pending: true }; C.fb = null;
-    send('ans', { text }); inp.value = ''; SFX.lock(); vib(30);
+    send('ans', { text, r: v.r }); inp.value = ''; SFX.lock(); vib(30);
   } else {
     if ((v.cr.used || []).includes(r.id) || C.mySubs.includes(r.id)) { C.fb = { kind: 'no', html: `<span class="tag no">${esc(r.name)}</span> Already in this order.` }; renderFb(); SFX.dup(); inp.value = ''; return; }
     if (C.mySubs.length >= MAXSUBS) return;
@@ -1027,13 +1035,13 @@ function renderDive(v) {
   $('qT').textContent = q.prompt;
   const watching = !me || me.spec;
   $('watching').hidden = !watching;
-  $('ansF').hidden = watching || (!crew && !!C.myLock);
-  $('ansB').textContent = crew ? 'Send' : 'Dive';
+  $('ansF').hidden = rv || watching || (!crew && !!C.myLock && !C.editing);
+  $('ansB').textContent = crew ? 'Send' : C.editing ? 'Save answer' : 'Dive';
   const locked = act.filter(p => p.lk).length;
   const waitFor = act.filter(p => !p.lk && p.id !== ME.id && !p.gone).map(p => p.nm);
   const sealed = $('sealed');
   sealed.hidden = !(C.myLock && !crew && !watching) || rv;
-  if (!sealed.hidden) sealed.innerHTML = `<span>Your answer</span><b>${esc((q.answers[C.myLock.aid] || {}).name || '')}</b><span>${waitFor.length ? 'Waiting for ' + esc(waitFor.slice(0, 3).join(', ')) + (waitFor.length > 3 ? '…' : '') + ' to answer' : 'Diving…'}</span>`;
+  if (!sealed.hidden) sealed.innerHTML = `<span>Your answer</span><b>${esc((q.answers[C.myLock.aid] || {}).name || '')}</b><span>${waitFor.length ? 'Waiting for ' + esc(waitFor.slice(0, 3).join(', ')) + (waitFor.length > 3 ? '…' : '') + ' to answer' : 'Diving…'}</span>${waitFor.length && !C.myLock.pending ? `<button class="revise-answer" type="button" data-act="${C.editing ? 'cancel-revise' : 'revise'}">${C.editing ? 'Keep saved answer' : 'Change answer'}</button>` : ''}${C.editing ? '<span>Your saved answer counts until you save a replacement.</span>' : ''}`;
   $('status').textContent = crew ? `${v.cr.sl.filter(Boolean).length} of ${v.cr.ord.length} slots filled · strikes ${v.cr.miss}/${STRIKES}` : act.length > 1 && !C.myLock ? `${locked} of ${act.length} have answered` : '';
   const fz = $('force'); const isHost = C.role === 'host';
   const showF = !rv && isHost && act.length > 1 && (crew || (locked > 0 && locked < act.length));
@@ -1433,7 +1441,7 @@ function live() {
     document.body.classList.toggle('panic', panic);
     if (timed && !inIntro && sec <= 5 && sec > 0 && sec !== C.lastTickSec) { C.lastTickSec = sec; if (sec <= 3) vib(25); }
     const me = meIn(v);
-    const can = !inIntro && left > 0 && me && !me.spec && (v.set.mode === 'crew' || !C.myLock);
+    const can = !inIntro && left > 0 && me && !me.spec && (v.set.mode === 'crew' || !C.myLock || C.editing);
     const inp = $('ans');
     if (inp.disabled === !!can) { inp.disabled = !can; $('ansB').disabled = !can; if (can && !matchMedia('(pointer: coarse)').matches) inp.focus({ preventScroll: true }); }
     if (inIntro) inp.placeholder = 'Get ready'; else inp.placeholder = v.set.mode === 'crew' ? 'Crew answer' : 'Your answer';
@@ -1543,6 +1551,12 @@ function bind() {
     if (act === 'menu') { $('menuM').hidden = !$('menuM').hidden; if (!$('menuM').hidden) $('menuClose').focus(); return; }
     if (act === 'menu-close') { $('menuM').hidden = true; $('menuButton').focus(); return; }
     $('menuM').hidden = true;
+    if (act === 'revise' && C.myLock && C.view?.ph === 'play') {
+      C.editing = true; C.fb = null;
+      $('ans').value = QMAP[C.view.q].answers[C.myLock.aid]?.name || '';
+      render(); $('ans').focus({ preventScroll: true }); $('ans').select();
+    }
+    if (act === 'cancel-revise') { C.editing = false; C.fb = null; $('ans').value = ''; render(); }
     if (act === 'solo') practice();
     if (act === 'multiplayer') { if (C.role === 'host' || C.role === 'guest') render(); else navAct(); }
     if (act === 'leave') confirmLeave();
