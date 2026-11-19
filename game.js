@@ -339,16 +339,19 @@ function createLobby(fixed) {
   const code = typeof fixed === 'string' ? fixed : makeCode();
   H = newHost(code, false); H.since = Date.now();
   C.role = 'host'; C.code = code;
-  busy('Opening lobby…');
+  C.connecting = true;
   let opened = false;
   H.hub = new NET.Hub([NET.NS + code + '/h'], (topic, m) => hostHandle(m));
+  const hub = H.hub;
   H.hub.onUp = () => {
-    if (opened || !H) return; opened = true; busy(null);
+    if (opened || !H || H.hub !== hub) return; opened = true; C.connecting = false; busy(null);
     hostHandle({ t: 'join', from: ME.id, name: ME.name, av: ME.av });
     startHostLoop(); broadcast(); publishInfo();
   };
+  hostHandle({ t: 'join', from: ME.id, name: ME.name, av: ME.av });
+  startHostLoop(); broadcast();
   H.hub.connect(); pushNav();
-  setTimeout(() => { if (!opened && C.role === 'host') { busy(null); toast('Couldn’t reach the game servers. Check your connection and try again.'); teardown(); render(); } }, 15000);
+  setTimeout(() => { if (!opened && H && H.hub === hub && C.role === 'host') { busy(null); toast('Couldn’t reach the game servers. Check your connection and try again.'); teardown(); render(); } }, 15000);
 }
 function practice() {
   if (!needName()) return;
@@ -361,8 +364,8 @@ function practice() {
 }
 
 
-/* ═════════════════ PUBLIC LOBBIES: Lobby 1–4, no codes ═════════════════ */
-const ROOMS = [['LOBA', 'Lobby 1'], ['LOBB', 'Lobby 2'], ['LOBC', 'Lobby 3'], ['LOBD', 'Lobby 4']];
+/* ═════════════════ PUBLIC LOBBIES: two rooms, no codes ═════════════════ */
+const ROOMS = [['LOBA', 'Lobby 1'], ['LOBB', 'Lobby 2']];
 const isRoom = (code) => ROOMS.some(r => r[0] === code);
 const roomName = (code) => (ROOMS.find(r => r[0] === code) || [code, 'Lobby ' + code])[1];
 const ROOM_FRESH = 16000;
@@ -418,10 +421,15 @@ function roomsHTML() {
   return ROOMS.map(([code, name]) => {
     const info = (C.rooms || {})[code]; const live = roomFresh(info);
     const busyR = live && info.ph !== 'lobby';
-    const status = !live ? 'Empty' : busyR ? `${info.n} diving` : `${info.n} waiting`;
-    const act = !live ? 'Open' : busyR ? 'Watch' : 'Join';
+    const status = !live ? 'Choose to host' : `${info.host} hosting · ${info.n} ${busyR ? 'diving' : 'waiting'}`;
+    const act = !live ? 'Host' : busyR ? 'Watch' : 'Join';
     return `<button class="room ${live ? 'live' : ''} ${busyR ? 'busy' : ''}" type="button" data-room="${code}"><span class="rt"><b>${esc(name)}</b><small>${esc(status)}</small></span><span class="ravs">${live ? info.avs.map(a => avatar(a)).join('') : ''}</span><span class="ra">${act}</span></button>`;
   }).join('');
+}
+function renderLobbyRooms(code) {
+  const el = $('lobbyRooms');
+  const html = ROOMS.map(([id, name]) => `<button type="button" data-lobby-room="${id}" aria-pressed="${id === code}">${name}</button>`).join('');
+  if (el._html !== html) { el._html = html; el.innerHTML = html; }
 }
 function renderRooms() { const h = roomsHTML(); for (const id of ['hmRooms', 'mrRooms']) { const el = $(id); if (el && el._h !== h) { el._h = h; el.innerHTML = h; } } }
 
@@ -497,7 +505,7 @@ function doBack() {
   for (const id of ['meM', 'howM', 'leaveM', 'pM']) if (!$(id).hidden) { $(id).hidden = true; return; }
   if (!C.role || C.peek) return;
   const v = C.view;
-  if (C.role === 'solo' && v && v.ph !== 'final') { C.peek = true; render(); return; }
+  if (C.role === 'solo') { navAct(); return; }
   if (C.role === 'guest' && v && v.ph === 'lobby') { leave(); return; }
   if (C.role === 'host' && v && v.ph === 'lobby' && v.pl.filter(p => !p.gone).length <= 1) { leave(); return; }
   confirmLeave();
@@ -509,20 +517,19 @@ const ICON = {
   up: '<svg class="ico" viewBox="-3 -3 30 30" aria-hidden="true"><path d="M12 20.5V4.5M4.5 11.5 12 4l7.5 7.5" fill="none" stroke="#000" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 20.5V4.5M4.5 11.5 12 4l7.5 7.5" fill="none" stroke="currentColor" stroke-width="6.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
 };
 const NAV_R = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 12H19.5M12.5 4.5 20 12l-7.5 7.5" fill="none" stroke="#000" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-const NAV_L = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 12H4.5M11.5 4.5 4 12l7.5 7.5" fill="none" stroke="#000" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 function navAct() {
-  for (const id of ['meM', 'howM', 'leaveM', 'pM']) if (!$(id).hidden) { $(id).hidden = true; return; }
-  if (document.body.dataset.scr === 'home') {
-    if (C.role === 'solo' && C.peek) { C.peek = false; pushNav(); render(); } else practice();
-    return;
-  }
-  doBack();
+  for (const id of ['meM', 'howM', 'leaveM', 'pM']) $(id).hidden = true;
+  if (C.role === 'solo' || !C.role) enterRoom(ROOMS[0][0]);
+  else leave(true);
 }
 function renderNav() {
   const b = $('tbX'); if (!b) return;
-  const home = document.body.dataset.scr === 'home';
-  const k = home ? 'L' : 'R';
-  if (b._k !== k) { b._k = k; b.innerHTML = home ? NAV_L : NAV_R; b.setAttribute('aria-label', home ? 'Back to the dive' : 'Home'); b.classList.toggle('home', home); }
+  const multiplayer = document.body.dataset.scr === 'home' || (C.role && C.role !== 'solo');
+  const label = multiplayer ? 'Switch to single player' : 'Switch to multiplayer lobby';
+  if (!b.firstChild) b.innerHTML = NAV_R;
+  b.classList.toggle('to-solo', !!multiplayer);
+  b.setAttribute('aria-label', label);
+  b.title = label;
 }
 const BACK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5 7.5 12l7 7"/><path d="M8 12h11"/></svg>';
 
@@ -532,16 +539,16 @@ function teardown() {
   if (H) { clearInterval(H.loop); if (H.hub) H.hub.end(); }
   if (C.hub) C.hub.end();
   H = null;
-  Object.assign(C, { peek: false, role: null, code: null, hub: null, link: null, view: null, joined: false, recovering: 0, myLock: null, mySubs: [], fb: null, timeKey: '', revealKey: '', finalSig: '' });
+  Object.assign(C, { connecting: false, peek: false, role: null, code: null, hub: null, link: null, view: null, joined: false, recovering: 0, myLock: null, mySubs: [], fb: null, timeKey: '', revealKey: '', finalSig: '' });
   busy(null); wakeLock(false);
 }
-function leave() {
+function leave(toSolo = false, nextRoom = '') {
   if (C.role === 'host' && H && H.hub) { publishInfo(true); H.hub.pub(NET.NS + H.code + '/s', { t: 'end', msg: 'The host closed the game.' }, 1); }
   if (C.role === 'guest') send('bye');
   clearRejoin();
   const hub = (H && H.hub) || C.hub;
   if (hub) { const keep = hub; setTimeout(() => keep.end(), 400); if (H) H.hub = null; C.hub = null; }
-  C.booting = false; teardown(); setUrl(''); render();
+  C.booting = false; teardown(); setUrl(''); if (nextRoom) enterRoom(nextRoom); else if (toSolo) practice(); else render();
 }
 window.addEventListener('pagehide', () => {
   if (C.role === 'host' && H && H.hub) { publishInfo(true); H.hub.pub(NET.NS + H.code + '/s', { t: 'end', msg: 'The host closed the game.' }, 0); }
@@ -964,6 +971,9 @@ function crewLandHTML(v) {
 function showLand(v) {
   $('land').innerHTML = v.set.mode === 'crew' ? crewLandHTML(v) : landHTML(v);
   { const mm = v.res && v.res.find(r => r[0] === ME.id); const q = QMAP[v.q]; $('land').className = 'dv-land ' + (v.set.mode === 'crew' ? (v.cr && v.cr.out === 'clear' ? 't2' : 'sunk') : !mm ? '' : mm[1] < 0 ? 'none' : mm[4] === 'k' ? 'sunk' : TCLS[q.answers[mm[1]].tier]); }
+  const details = document.createElement('div'); details.className = 'land-details';
+  for (const child of [...$('land').children]) if (!child.matches('.desc, .lwait')) details.appendChild(child);
+  $('land').prepend(details);
   $('land').hidden = false; $('playScr').classList.add('landed');
   { const top = Math.round((DV.landY || innerHeight * 0.25) + (innerWidth < 700 ? 96 : 104)); $('land').style.top = top + 'px'; $('land').style.maxHeight = `calc(100% - ${top + 14}px)`;
     DV.landMax = null; const L = $('land'); L.style.maxHeight = 'none'; const h = L.offsetHeight; const hudB = (document.querySelector('#playScr .dv-hud') || { getBoundingClientRect: () => ({ bottom: 120 }) }).getBoundingClientRect().bottom;
@@ -1003,7 +1013,7 @@ function renderDive(v) {
   fz.hidden = !showF; if (showF) fz.innerHTML = `<button class="lnk" type="button" data-act="force">${crew ? 'Give up this order' : 'Stop waiting, show answers'}</button>`;
   $('crewBox').hidden = !crew || rv;
   if (crew && !rv) { renderOrders(v, q); renderFeed(v, q); $('hull').innerHTML = `<span class="lbl">Planks</span>` + [...Array(Math.max(3, v.cr.lives)).keys()].map(i => `<i class="${i < v.cr.lives ? '' : 'off'}"></i>`).join(''); }
-  $('dvMp').hidden = C.role !== 'solo';
+  $('dvMp').hidden = true;
   renderDivers(v); renderTierLines(v);
   if (!rv) $('land').hidden = true;
   else if (DV.landShown === C.timeKey && !$('land').hidden) {
@@ -1034,16 +1044,32 @@ function dvFrame(v, t) {
   const hudB = (document.querySelector('#playScr .dv-hud') || { getBoundingClientRect: () => ({ bottom: 120 }) }).getBoundingClientRect().bottom;
   DV.landY = Math.min(innerHeight * 0.42, hudB + (innerWidth < 700 ? 96 : 104)); if (DV.landMax != null && v.ph === 'reveal') DV.landY = Math.max(hudB + 44, Math.min(DV.landY, DV.landMax)); else if (v.ph !== 'reveal') DV.landMax = null;
   const landed = rv && DV.landShown === C.timeKey;
-  const want = rv ? (landed ? DV.landY / innerHeight : 0.56) : v.ph === 'lobby' ? 0.56 : v.set.mode === 'crew' ? 0.76 : Math.max(0.6, Math.min(0.72, ((DV.qB || 0) + 72) / innerHeight));
+  const promptBottom = $('pCard').getBoundingClientRect().bottom;
+  const controlsTop = $('playScr').classList.contains('lob') ? innerHeight : $('playScr').querySelector('.dv-bar').getBoundingClientRect().top;
+  const halfDiver = innerHeight < 500 ? 48 : 82;
+  const playAnchor = Math.max(promptBottom + halfDiver + 12, Math.min(innerHeight * 0.58, controlsTop - halfDiver - 12)) / innerHeight;
+  const want = rv ? (landed ? DV.landY / innerHeight : 0.56) : v.ph === 'lobby' ? 0.56 : v.set.mode === 'crew' ? 0.76 : playAnchor;
   DV.anchor += (want - DV.anchor) * Math.min(1, dt / 1000 * (landed ? 2.4 : 1.6));
   { const pk = v.ph + ':' + v.r; if (DV.panKey !== pk) { DV.panKey = pk; DV.panHold = false; }
     if (!DV.panHold && !DV.dragging) DV.pan = Math.abs(DV.pan || 0) < 1 ? 0 : DV.pan * Math.pow(0.002, dt / 1000);
     DV.pan = Math.max(-(DV.W ? DV.W.H0 + DV.W.H * 6.2 : 2600 * DV.S), Math.min(yW(camD) - innerHeight * 0.2, DV.pan || 0)); }
   const camY = innerHeight * DV.anchor - (yW(camD) + DV_OFF) + DV.pan;
   $('world').style.transform = `translate3d(0,${camY.toFixed(1)}px,0)`;
+  if (v.ph === 'lobby') {
+    const top = $('playScr').querySelector('.lob-top').getBoundingClientRect().bottom + 12;
+    const bottom = $('playScr').querySelector('.lob-bot').getBoundingClientRect().top - 12;
+    const cols = Math.min(4, act.length), rows = Math.ceil(act.length / cols);
+    act.forEach((p, i) => {
+      const el = box.querySelector(`[data-pid="${CSS.escape(p.id)}"]`); if (!el) return;
+      const inRow = Math.min(cols, act.length - Math.floor(i / cols) * cols);
+      el.classList.remove('far-up', 'far-dn');
+      el.style.left = ((i % cols + 0.5) / inRow * 100) + '%';
+      el.style.top = (top + (Math.floor(i / cols) + 0.5) / rows * Math.max(0, bottom - top) - camY) + 'px';
+    });
+  }
   /* divers far above or below stay pinned at the screen edge with their depth, so you always see everyone */
   { const lo = hudB + 70, hi = innerHeight - 96; let iu = 0, idn = 0;
-    for (const p of act) { if (follow && p.id === follow.id) continue;
+    for (const p of act) { if (v.ph === 'lobby' || (follow && p.id === follow.id)) continue;
       const el = box.querySelector(`[data-pid="${CSS.escape(p.id)}"]`); if (!el) continue;
       const wy = yW(dispDepth(p)) + DV_OFF, sy = wy + camY; const up = sy < lo, dn = sy > hi;
       if (up || dn) el.style.top = ((up ? lo : hi) - camY).toFixed(1) + 'px';
@@ -1084,11 +1110,8 @@ function bubbles(n) {
 
 /* ═════════════════ RENDER ═════════════════ */
 function renderRail() {
-  const on = C.role === 'solo' && !C.peek;
-  document.body.classList.toggle('solo', on);
-  $('mprail').hidden = !on; if (!on) return;
-  if ($('mrAv')._av !== ME.av) { $('mrAv')._av = ME.av; $('mrAv').innerHTML = avatar(ME.av); }
-  $('mrNm').textContent = ME.name;
+  document.body.classList.remove('solo');
+  $('mprail').hidden = true;
 }
 function renderMe() {
   if (!$('avs2').firstChild) $('avs2').innerHTML = ART.AV_IDS.map(id => `<button type="button" class="avb" data-av="${id}" aria-label="${id}">${ART.avatar(id)}</button>`).join('');
@@ -1105,9 +1128,8 @@ function setMe(nm, av) {
 function openMe() { renderMe(); $('nm2').value = ME.name; $('meM').hidden = false; }
 function render() {
   renderRail();
-  if (C.peek && C.role === 'solo') { scr('home'); renderHome(); return; }
   const v = C.view;
-  if (!C.role || !v) { if (!C.role && !C.booting) { scr('home'); renderHome(); } return; }
+  if (!C.role || !v) { if (!C.role && !C.booting) practice(); return; }
   const map = { lobby: 'play', play: 'play', reveal: 'play', final: 'final' };
   scr(map[v.ph] || 'home');
   if (v.ph === 'lobby') renderLobby(v);
@@ -1157,14 +1179,17 @@ function ladderHTML() { return TORDER.map(t => `<div class="${TCLS[t]}"><b>${esc
 function renderLobby(v) {
   if (!DV.built) buildWorld();
   const sec = $('playScr'); sec.classList.add('lob'); sec.classList.remove('rv', 'landed');
+  sec.classList.toggle('crowded', v.pl.filter(p => !p.gone).length > 4);
   const host = C.role === 'host'; const live = v.pl.filter(p => !p.gone); const me = meIn(v);
   $('lcode').textContent = roomName(v.code);
+  renderLobbyRooms(v.code);
   const nR = live.filter(p => p.rdy).length; const cd = v.cd >= 0;
   const isH = C.role === 'host';
-  $('lobState').textContent = cd ? 'Starting…' : live.length < 2 ? 'Waiting for a second player' : isH ? `${live.length} players here` : 'Waiting for the host to start';
+  $('lobState').textContent = C.connecting ? 'Connecting…' : cd ? 'Starting…' : live.length < 2 ? 'Waiting for a second player' : isH ? `${live.length} players here` : 'Waiting for the host to start';
   $('start').innerHTML = cd ? 'Cancel' : 'Start game';
   $('start').classList.toggle('on', cd);
   $('start').hidden = !isH;
+  $('start').disabled = !!C.connecting || live.length < 2;
   $('setup').hidden = !!cd;
   { const st = v.set; const info = st.team ? 'Team: 10 prompts. Your depths add up. Say the same as a teammate and you both sink.' : st.rounds === 5 ? 'Blitz: a quick 5-prompt game. Rarer answers sink you deeper. Deepest diver wins.' : 'Versus: 10 prompts. Rarer answers sink you deeper. Deepest diver wins.';
     $('modeInfo').hidden = !!cd; if ($('modeInfo').textContent !== info) $('modeInfo').textContent = info; }
@@ -1464,13 +1489,14 @@ function bind() {
   addEventListener('pointerup', end); addEventListener('pointercancel', end);
   ps.addEventListener('wheel', (e) => { if (!C.view || C.view.ph === 'lobby' || e.target.closest('.dv-land')) return; DV.panHold = true; DV.pan = (DV.pan || 0) - e.deltaY; }, { passive: true });
 })();
-  $('start').addEventListener('click', () => { const v = C.view; if (!v || v.ph !== 'lobby' || C.role !== 'host' || !H) return; if (v.pl.filter(p => !p.gone && !p.off).length < 2) { toast('You need at least 2 players to start.'); return; } H.go = !H.go; H.dirty = true; broadcast(); vib(20); });
+  $('start').addEventListener('click', () => { const v = C.view; if (!v || v.ph !== 'lobby' || C.role !== 'host' || !H || C.connecting) return; if (v.pl.filter(p => !p.gone && !p.off).length < 2) { toast('You need at least 2 players to start.'); return; } H.go = !H.go; H.dirty = true; broadcast(); vib(20); });
   $('ansF').addEventListener('submit', (e) => { e.preventDefault(); submit(); });
   $('ans').addEventListener('input', () => { if (C.fb && C.fb.kind === 'no') { C.fb = null; renderFb(); } onTyping(); });
   $('orders').addEventListener('click', (e) => { const b = e.target.closest('button.slot'); if (!b) return; const i = +b.dataset.slot; const v = C.view; const cur = v && v.cr && v.cr.calls ? v.cr.calls[ME.id] : null; send('call', { slot: cur === i ? null : i }); });
   document.addEventListener('click', (e) => {
     if (DV.dragged) { DV.dragged = false; return; }
     const pc = e.target.closest('#divers .dvr[data-pid], .lboard li[data-pid]'); if (pc && C.view && C.view.ph !== 'lobby') { playerCard(pc.dataset.pid); return; }
+    const lr = e.target.closest('[data-lobby-room]'); if (lr) { if (lr.dataset.lobbyRoom !== C.code) leave(false, lr.dataset.lobbyRoom); return; }
     const rb = e.target.closest('[data-room]'); if (rb) { enterRoom(rb.dataset.room); return; }
     const em = e.target.closest('[data-emo]'); if (em) { if (C.role && C.role !== 'solo') { send('emo', { e: em.dataset.emo }); } return; }
     const sb = e.target.closest('#nextBox .seg button'); if (sb && H) { H.set.secs = +sb.dataset.v; H.dirty = true; broadcast(); $('nextBox')._sig = ''; renderReveal(C.view); return; }
@@ -1480,7 +1506,7 @@ function bind() {
     if (act === 'back') navAct();
     if (act === 'next' && H) nextRound();
     if (act === 'force' && H) forceReveal();
-    if (act === 'friends') { if (C.role === 'solo') leave(); else if (!C.role) render(); }
+    if (act === 'friends') navAct();
     if (act === 'me') openMe();
     if (act === 'howto') { $('howM').hidden = false; $('howX').focus(); }
     if (act === 'rematch' && H) { startGame(); }
