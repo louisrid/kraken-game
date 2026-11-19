@@ -32,6 +32,8 @@ Ranked data is split about half Open sea, 30% Deep water, the rest Abyss; Kraken
 
 Matching forgives capitals, accents, punctuation, plurals (strawberries, tomatoes), common aliases and small typos. In very big lists only famous answers get full typo tolerance, typos must keep the first letter, and word games need the exact word.
 
+**Profile:** best dive, average, number of dives and Krakens are kept per player. They are tied to a hashed form of your public IP (the IP itself is never stored), so devices on the same connection share them; they are mirrored on the public relays. Changing networks (mobile data, VPN) starts a separate profile.
+
 Questions are parsed the first time they are used and pre-parsed in idle time, so the big lists don't slow down loading.
 
 Rebuild after editing `tools/build-bank.mjs`:

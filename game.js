@@ -581,6 +581,9 @@ function onPhase(v, prev) {
   if (v.ph === 'final') {
     C.finalSig = ''; bubbles(26);
     if (v.solo) { const me = meIn(v); C.prevBest = LS.get('best', 0); if (me && me.pts > C.prevBest) LS.set('best', me.pts); }
+    { const me = meIn(v); if (me && !me.spec && C.recordedKey !== v.code + (v.hist || []).map(h => h.q).join()) { C.recordedKey = v.code + (v.hist || []).map(h => h.q).join();
+      let kr = 0; for (const h of v.hist || []) { const r = (h.res || []).find(x => x[0] === ME.id); const q = QMAP[h.q]; if (r && r[1] >= 0 && r[4] !== 'k' && q && q.answers[r[1]].tier === 'x') kr++; }
+      PROFILE.record(me.pts, kr, (v.hist || []).length); } }
   }
   if (v.ph === 'lobby') { wakeLock(false); C.finalSig = ''; }
 }
@@ -934,7 +937,7 @@ function renderDive(v) {
   if (crew) { $('hRL').textContent = 'Planks'; $('hR').textContent = String(v.cr.lives); }
   else if (act.length > 1 && v.set.team) { $('hRL').textContent = 'Team'; $('hR').textContent = M(act.reduce((a, p) => a + p.pts, 0)); }
   else if (act.length > 1) { const rank = act.slice().sort((a, b) => b.pts - a.pts).findIndex(p => p.id === ME.id) + 1; $('hRL').textContent = 'Rank'; $('hR').textContent = rank > 0 ? `${rank} of ${act.length}` : 'watching'; }
-  else { $('hRL').textContent = 'Best dive'; $('hR').textContent = M(LS.get('best', 0)); }
+  else { $('hRL').textContent = 'Best dive'; $('hR').textContent = M(Math.max(LS.get('best', 0), PROFILE.get().best)); }
   $('qN').textContent = `${(CATINFO[q.cat] || ['Mix'])[0]}${!crew && act.length > 1 && v.r === v.n - 1 ? ' · double depth' : ''}`;
   $('qT').textContent = q.prompt;
   const watching = !me || me.spec;
@@ -1055,6 +1058,12 @@ function render() {
 
 /* home */
 let homeBuilt = false;
+function renderStats() {
+  const st = PROFILE.get(); const el = $('hmStats'); if (!el) return;
+  const html = `<div><b>${M(st.best)}</b><span>Best dive</span></div><div><b>${M(PROFILE.avg())}</b><span>Average</span></div><div><b>${st.games}</b><span>Dives</span></div><div class="kr"><b>${st.krakens}</b><span>Krakens</span></div>`;
+  if (el._h !== html) { el._h = html; el.innerHTML = html; }
+}
+PROFILE.on(() => { renderStats(); if (C.view && C.view.solo && C.view.ph !== 'final') { const r = $('hR'); if (r && $('hRL').textContent === 'Best dive') r.textContent = M(Math.max(LS.get('best', 0), PROFILE.get().best)); } });
 function renderHome() {
   if (!homeBuilt) {
     homeBuilt = true;
@@ -1064,6 +1073,7 @@ function renderHome() {
     $('howLadder').innerHTML = ladderHTML();
   }
   document.querySelectorAll('#avs .avb').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.av === ME.av)));
+  renderStats();
   $('hmMe').textContent = ME.name; if ($('hmAv')._av !== ME.av) { $('hmAv')._av = ME.av; $('hmAv').innerHTML = avatar(ME.av); }
   const rj = SS.get('rj', null) || LS.get('rj', null);
   const rb = $('rejoin');
